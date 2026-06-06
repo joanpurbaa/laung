@@ -17,7 +17,6 @@ export const env = createEnv({
     // AUTH_DISCORD_SECRET: z.string(),
     // DATABASE_URL: z.string().url(),
     AUTH_SECRET: z.string().optional(),
-    DATABASE_URL: z.string().url().optional(),
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
@@ -26,7 +25,6 @@ export const env = createEnv({
   client: {},
 
   runtimeEnv: {
-    DATABASE_URL: process.env.DATABASE_URL,
     AUTH_SECRET: process.env.AUTH_SECRET,
 
     // ✨ Tambah dua baris ini ─────────────────────────────────────────────
