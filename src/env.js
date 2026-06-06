@@ -7,14 +7,15 @@ import { z } from "zod";
 
 export const env = createEnv({
   server: {
-    // DATABASE_URL: z.string().url(),
-    // AUTH_SECRET:
+    UPSTASH_REDIS_REST_URL: z.string().url(),
+    UPSTASH_REDIS_REST_TOKEN: z.string().min(1),
+     // AUTH_SECRET:
     //   process.env.NODE_ENV === "production"
     //     ? z.string()
     //     : z.string().optional(),
-
-    UPSTASH_REDIS_REST_URL: z.string().url(),
-    UPSTASH_REDIS_REST_TOKEN: z.string().min(1),
+    // AUTH_DISCORD_ID: z.string(),
+    // AUTH_DISCORD_SECRET: z.string(),
+    // DATABASE_URL: z.string().url(),
     AUTH_SECRET: z.string().optional(),
     DATABASE_URL: z.string().url().optional(),
     NODE_ENV: z
