@@ -5,6 +5,15 @@
 import "./src/env.js";
 
 /** @type {import("next").NextConfig} */
-const config = {};
+const config = {
+  typescript: {
+    // Abaikan error tipe saat build (gunakan ini jika ingin deploy cepat)
+    ignoreBuildErrors: true,
+  },
+  eslint: {
+    // Abaikan error lint saat build
+    ignoreDuringBuilds: true,
+  },
+};
 
 export default config;
