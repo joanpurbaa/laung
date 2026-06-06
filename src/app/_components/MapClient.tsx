@@ -1,25 +1,26 @@
-// src/app/_components/MapClient.tsx
 "use client";
 
+import { type ComponentProps } from "react";
 import dynamic from "next/dynamic";
 
-// Di sini ssr: false diizinkan karena berada di dalam Client Component
-const FishingMap = dynamic(() => import("./Map"), {
+// eslint-disable-next-line @typescript-eslint/consistent-type-imports
+type ActualMapProps = ComponentProps<typeof import("./Map").default>;
+
+const FishingMap = dynamic<ActualMapProps>(() => import("./Map"), {
   ssr: false,
   loading: () => (
-    <div className="flex h-full w-full items-center justify-center bg-slate-900 text-white">
+    <div className="flex h-full w-full items-center justify-center bg-slate-50 text-slate-700">
       <p className="animate-pulse text-sm font-medium tracking-wide">
-        Membaca Database Klorofil...
+        Menyiapkan Sistem Navigasi...
       </p>
     </div>
   ),
 });
 
-export default function MapClient() {
+export default function MapClient(props: ActualMapProps) {
   return (
     <div className="h-full w-full">
-      {/* Panggil komponen peta hasil dynamic import */}
-      <FishingMap />
+      <FishingMap {...props} />
     </div>
   );
 }
