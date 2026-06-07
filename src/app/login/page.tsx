@@ -114,7 +114,7 @@ export default function LoginPage() {
         </div>
 
         {/* Hero text */}
-        <div className="mt-12">
+        <div className="mt-7">
           <p className="mb-2 text-[11px] font-black tracking-[0.18em] text-emerald-400/80 uppercase">
             Selamat Datang
           </p>

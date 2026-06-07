@@ -164,7 +164,7 @@ export default function RegisterPage() {
         </div>
 
         {/* Hero text */}
-        <div className="mt-10">
+        <div className="mt-5">
           <p className="mb-2 text-[11px] font-black tracking-[0.18em] text-emerald-400/80 uppercase">
             Bergabung Sekarang
           </p>
