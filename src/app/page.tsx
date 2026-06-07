@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "./_components/Navbar";
+import SplashScreen from "./_components/SplashScreen";
 
 interface WeatherData {
   windSpeed: number;
@@ -235,8 +236,24 @@ export default function HomePage() {
   const tides = useTides();
   const [nowTime, setNowTime] = useState(getNowTime());
   const [mounted, setMounted] = useState(false);
+  const [showSplash, setShowSplash] = useState(false);
+  const [appReady, setAppReady] = useState(false);
 
-  // Fungsi fetch untuk merubah koordinat menjadi Nama Kabupaten/Kota
+  useEffect(() => {
+    const seen = sessionStorage.getItem("splash_seen");
+    if (!seen) {
+      setShowSplash(true);
+    } else {
+      setAppReady(true);
+    }
+  }, []);
+
+  const handleSplashDone = () => {
+    sessionStorage.setItem("splash_seen", "1");
+    setShowSplash(false);
+    setAppReady(true);
+  };
+
   const fetchCityName = async (lat: number, lon: number) => {
     try {
       const res = await fetch(
@@ -327,337 +344,344 @@ export default function HomePage() {
   });
 
   return (
-    <main
-      className="relative flex h-screen w-screen flex-col overflow-hidden bg-slate-50 select-none"
-      style={{ fontFamily: "'DM Sans', 'Geist', sans-serif" }}
-    >
-      <div
-        className="pointer-events-none absolute inset-0 opacity-[0.03]"
-        style={{
-          backgroundImage:
-            "linear-gradient(#059669 1px, transparent 1px), linear-gradient(90deg, #059669 1px, transparent 1px)",
-          backgroundSize: "32px 32px",
-        }}
-      />
-
-      <div
-        className="flex-1 overflow-y-auto px-4 pb-20"
-        style={{
-          opacity: mounted ? 1 : 0,
-          transform: mounted ? "translateY(0)" : "translateY(12px)",
-          transition: "opacity 0.5s ease, transform 0.5s ease",
-        }}
-      >
-        {/* ── HEADER ── */}
-        <div className="pt-10 pb-5">
-          <h1
-            className="text-3xl leading-tight font-black text-slate-900"
-            style={{ letterSpacing: "-0.03em" }}
-          >
-            Selamat Datang,
-            <br />
-            <span className="text-emerald-500">Nelayan</span> 🎣
-          </h1>
-          <p className="mt-1.5 text-[13px] font-medium text-slate-400 capitalize">
-            {deviceCoords.name} · {nowTime} WIB
-          </p>
-          <span className="mt-0.5 block font-mono text-[10px] text-slate-300">
-            ({deviceCoords.latitude.toFixed(4)},{" "}
-            {deviceCoords.longitude.toFixed(4)})
-          </span>
-        </div>
-
-        {/* ── STATUS SAIL WINDOW ── */}
-        <div
-          className="mb-4 flex items-center gap-3 overflow-hidden rounded-2xl p-4 shadow-sm"
-          style={{
-            backgroundColor: sailWindow.color + "12",
-            border: `1px solid ${sailWindow.color}30`,
-          }}
+    <>
+      {showSplash && <SplashScreen onComplete={handleSplashDone} />}
+      {appReady && (
+        <main
+          className="relative flex h-screen w-screen flex-col overflow-hidden bg-slate-50 select-none"
+          style={{ fontFamily: "'DM Sans', 'Geist', sans-serif" }}
         >
           <div
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-xl"
-            style={{ backgroundColor: sailWindow.color + "20" }}
-          >
-            {sailWindow.color === "#059669"
-              ? "🟢"
-              : sailWindow.color === "#0284c7"
-                ? "🔵"
-                : sailWindow.color === "#f59e0b"
-                  ? "🟡"
-                  : "⚫"}
-          </div>
-          <div className="min-w-0 flex-1">
-            <p
-              className="text-xs font-black tracking-wider uppercase"
-              style={{ color: sailWindow.color }}
-            >
-              Status Saat Ini
-            </p>
-            <p className="text-sm font-black text-slate-800">
-              {sailWindow.label}
-            </p>
-            <p className="text-[11px] font-medium text-slate-400">
-              {sailWindow.desc}
-            </p>
-          </div>
-        </div>
-
-        {/* ── WEATHER WIDGET ── */}
-        <div className="mb-4 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
-          <div className="flex items-center justify-between border-b border-slate-50 px-4 py-3">
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-[10px] font-black tracking-widest text-slate-400 uppercase">
-                Cuaca Laut {deviceCoords.name}
-              </p>
-              <p className="text-[10px] font-semibold text-slate-300">
-                Open-Meteo & Nominatim API
-              </p>
-            </div>
-            {wLoading ? (
-              <div className="h-4 w-16 animate-pulse rounded-full bg-slate-100" />
-            ) : (
-              <div
-                className={`flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-black ${
-                  weather?.safeToSail
-                    ? "bg-emerald-50 text-emerald-600"
-                    : "bg-red-50 text-red-500"
-                }`}
-              >
-                <span
-                  className={`h-1.5 w-1.5 rounded-full ${weather?.safeToSail ? "bg-emerald-500" : "bg-red-500"}`}
-                />
-                {weather?.safeToSail ? "Aman Berlayar" : "Waspada"}
-              </div>
-            )}
-          </div>
-
-          {wLoading ? (
-            <div className="space-y-3 p-4">
-              {[1, 2, 3].map((i) => (
-                <div
-                  key={i}
-                  className="h-6 animate-pulse rounded-lg bg-slate-100"
-                />
-              ))}
-            </div>
-          ) : weather ? (
-            <>
-              <div className="flex items-center gap-4 px-4 py-3">
-                <span className="text-4xl">{weather.conditionIcon}</span>
-                <div>
-                  <p className="text-lg font-black text-slate-800">
-                    {weather.condition}
-                  </p>
-                  <p className="text-[11px] font-semibold text-slate-400">
-                    {weather.tempAir}°C · Kelembapan {weather.humidity}%
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-px border-t border-slate-50 bg-slate-50">
-                <div className="bg-white px-3 py-3 text-center">
-                  <p className="text-[9px] font-black tracking-widest text-slate-400 uppercase">
-                    Angin
-                  </p>
-                  <p className="text-xl font-black text-slate-800">
-                    {weather.windSpeed}
-                  </p>
-                  <p className="text-[9px] font-semibold text-slate-400">
-                    km/h {weather.windDir}
-                  </p>
-                </div>
-                <div className="bg-white px-3 py-3 text-center">
-                  <p className="text-[9px] font-black tracking-widest text-slate-400 uppercase">
-                    Gelombang
-                  </p>
-                  <p className="text-xl font-black text-blue-600">
-                    {weather.waveHeight}
-                  </p>
-                  <p className="text-[9px] font-semibold text-slate-400">
-                    meter (est.)
-                  </p>
-                </div>
-                <div className="bg-white px-3 py-3 text-center">
-                  <p className="text-[9px] font-black tracking-widest text-slate-400 uppercase">
-                    Visibilitas
-                  </p>
-                  <p className="text-xl font-black text-slate-800">
-                    {weather.visibility}
-                  </p>
-                  <p className="text-[9px] font-semibold text-slate-400">
-                    kilometer
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-around border-t border-slate-50 bg-white px-4 py-4">
-                <div className="flex flex-col items-center gap-2">
-                  <WindCompass
-                    deg={`${weather.windDir} ${weather.windSpeed}km/h`}
-                    dir={windDegNum}
-                  />
-                  <p className="mt-6 text-[9px] font-black tracking-wider text-slate-400 uppercase">
-                    Arah Angin
-                  </p>
-                </div>
-                <div className="h-16 w-px bg-slate-100" />
-                <div className="flex flex-col items-center gap-1">
-                  <div className="flex items-end gap-1">
-                    {[0.3, 0.6, 0.9, 0.5, weather.waveHeight, 0.4, 0.7].map(
-                      (h, i) => (
-                        <WaveBar
-                          key={i}
-                          height={h}
-                          max={2.5}
-                          active={i === 4}
-                        />
-                      ),
-                    )}
-                  </div>
-                  <p className="mt-1 text-[9px] font-black tracking-wider text-slate-400 uppercase">
-                    Tinggi Gelombang
-                  </p>
-                  <p
-                    className="text-[10px] font-black"
-                    style={{
-                      color:
-                        weather.waveHeight < 0.5
-                          ? "#059669"
-                          : weather.waveHeight < 1.2
-                            ? "#0284c7"
-                            : "#ef4444",
-                    }}
-                  >
-                    {weather.waveHeight < 0.5
-                      ? "Sangat Tenang"
-                      : weather.waveHeight < 1.2
-                        ? "Normal"
-                        : "Berbahaya"}
-                  </p>
-                </div>
-              </div>
-            </>
-          ) : null}
-        </div>
-
-        {/* ── PASANG SURUT HARI INI ── */}
-        {tides.length > 0 && (
-          <div className="mb-4 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
-            <div className="border-b border-slate-50 px-4 py-3">
-              <p className="text-[10px] font-black tracking-widest text-slate-400 uppercase">
-                Pasang Surut Hari Ini
-              </p>
-            </div>
-            <div className="px-4 py-3">
-              <div className="flex items-end justify-between gap-1.5">
-                {tides.map((t, i) => {
-                  const isActive = i === activeTideIdx;
-                  const barH = Math.round((t.height / maxTide) * 52);
-                  return (
-                    <div
-                      key={i}
-                      className="flex flex-1 flex-col items-center gap-1"
-                    >
-                      <div className="relative flex w-full justify-center">
-                        <div
-                          className={`w-full rounded-t-lg transition-all ${
-                            isActive
-                              ? "bg-blue-500"
-                              : t.height >= maxTide * 0.75
-                                ? "bg-emerald-400"
-                                : "bg-slate-200"
-                          }`}
-                          style={{ height: `${barH}px` }}
-                        />
-                        {isActive && (
-                          <div className="absolute -top-4 left-1/2 -translate-x-1/2 rounded bg-blue-500 px-1 py-0.5 text-[7px] font-black whitespace-nowrap text-white">
-                            Sekarang
-                          </div>
-                        )}
-                      </div>
-                      <p className="text-[8px] font-bold text-slate-400">
-                        {t.time}
-                      </p>
-                      <p className="text-[8px] font-black text-slate-600">
-                        {t.height}m
-                      </p>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ── QUICK STATS ── */}
-        <div className="mb-4 grid grid-cols-2 gap-3">
-          <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-3.5">
-            <p className="text-[9px] font-black tracking-widest text-emerald-600 uppercase">
-              Algoritma DSS
-            </p>
-            <p className="mt-1 text-2xl font-black text-emerald-700">3</p>
-            <p className="text-[10px] font-semibold text-emerald-500">
-              Parameter aktif
-            </p>
-            <p className="mt-1.5 text-[9px] text-emerald-400">
-              Klorofil · SST · Pasut
-            </p>
-          </div>
-          <div className="rounded-2xl border border-blue-100 bg-blue-50 p-3.5">
-            <p className="text-[9px] font-black tracking-widest text-blue-600 uppercase">
-              Efisiensi BBM
-            </p>
-            <p className="mt-1 text-2xl font-black text-blue-700">~40%</p>
-            <p className="text-[10px] font-semibold text-blue-500">
-              Penghematan solar
-            </p>
-            <p className="mt-1.5 text-[9px] text-blue-400">
-              vs. metode konvensional
-            </p>
-          </div>
-        </div>
-
-        {/* ── BUTTON REDIRECT TO MAP ── */}
-        <div className="pt-3">
-          <button
-            onClick={() => router.push("/home")}
-            className="group relative flex w-full items-center justify-center gap-3 overflow-hidden rounded-2xl px-6 py-4 shadow-xl shadow-emerald-200 transition-all active:scale-[0.98]"
+            className="pointer-events-none absolute inset-0 opacity-[0.03]"
             style={{
-              background: "linear-gradient(135deg, #059669 0%, #0d9488 100%)",
+              backgroundImage:
+                "linear-gradient(#059669 1px, transparent 1px), linear-gradient(90deg, #059669 1px, transparent 1px)",
+              backgroundSize: "32px 32px",
+            }}
+          />
+
+          <div
+            className="flex-1 overflow-y-auto px-4 pb-20"
+            style={{
+              opacity: mounted ? 1 : 0,
+              transform: mounted ? "translateY(0)" : "translateY(12px)",
+              transition: "opacity 0.5s ease, transform 0.5s ease",
             }}
           >
-            <span className="relative text-xl">🗺️</span>
-            <div className="relative text-left">
-              <p className="text-sm leading-none font-black text-white">
-                Buka Peta ZPPI
+            {/* ── HEADER ── */}
+            <div className="pt-10 pb-5">
+              <h1
+                className="text-3xl leading-tight font-black text-slate-900"
+                style={{ letterSpacing: "-0.03em" }}
+              >
+                Selamat Datang,
+                <br />
+                <span className="text-emerald-500">Nelayan</span> 🎣
+              </h1>
+              <p className="mt-1.5 text-[13px] font-medium text-slate-400 capitalize">
+                {deviceCoords.name} · {nowTime} WIB
               </p>
-              <p className="mt-0.5 text-[10px] leading-none font-semibold text-emerald-200">
-                Temukan spot mancing terbaik sekarang
+              <span className="mt-0.5 block font-mono text-[10px] text-slate-300">
+                ({deviceCoords.latitude.toFixed(4)},{" "}
+                {deviceCoords.longitude.toFixed(4)})
+              </span>
+            </div>
+
+            {/* ── STATUS SAIL WINDOW ── */}
+            <div
+              className="mb-4 flex items-center gap-3 overflow-hidden rounded-2xl p-4 shadow-sm"
+              style={{
+                backgroundColor: sailWindow.color + "12",
+                border: `1px solid ${sailWindow.color}30`,
+              }}
+            >
+              <div
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-xl"
+                style={{ backgroundColor: sailWindow.color + "20" }}
+              >
+                {sailWindow.color === "#059669"
+                  ? "🟢"
+                  : sailWindow.color === "#0284c7"
+                    ? "🔵"
+                    : sailWindow.color === "#f59e0b"
+                      ? "🟡"
+                      : "⚫"}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p
+                  className="text-xs font-black tracking-wider uppercase"
+                  style={{ color: sailWindow.color }}
+                >
+                  Status Saat Ini
+                </p>
+                <p className="text-sm font-black text-slate-800">
+                  {sailWindow.label}
+                </p>
+                <p className="text-[11px] font-medium text-slate-400">
+                  {sailWindow.desc}
+                </p>
+              </div>
+            </div>
+
+            {/* ── WEATHER WIDGET ── */}
+            <div className="mb-4 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
+              <div className="flex items-center justify-between border-b border-slate-50 px-4 py-3">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[10px] font-black tracking-widest text-slate-400 uppercase">
+                    Cuaca Laut {deviceCoords.name}
+                  </p>
+                  <p className="text-[10px] font-semibold text-slate-300">
+                    Open-Meteo & Nominatim API
+                  </p>
+                </div>
+                {wLoading ? (
+                  <div className="h-4 w-16 animate-pulse rounded-full bg-slate-100" />
+                ) : (
+                  <div
+                    className={`flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-black ${
+                      weather?.safeToSail
+                        ? "bg-emerald-50 text-emerald-600"
+                        : "bg-red-50 text-red-500"
+                    }`}
+                  >
+                    <span
+                      className={`h-1.5 w-1.5 rounded-full ${weather?.safeToSail ? "bg-emerald-500" : "bg-red-500"}`}
+                    />
+                    {weather?.safeToSail ? "Aman Berlayar" : "Waspada"}
+                  </div>
+                )}
+              </div>
+
+              {wLoading ? (
+                <div className="space-y-3 p-4">
+                  {[1, 2, 3].map((i) => (
+                    <div
+                      key={i}
+                      className="h-6 animate-pulse rounded-lg bg-slate-100"
+                    />
+                  ))}
+                </div>
+              ) : weather ? (
+                <>
+                  <div className="flex items-center gap-4 px-4 py-3">
+                    <span className="text-4xl">{weather.conditionIcon}</span>
+                    <div>
+                      <p className="text-lg font-black text-slate-800">
+                        {weather.condition}
+                      </p>
+                      <p className="text-[11px] font-semibold text-slate-400">
+                        {weather.tempAir}°C · Kelembapan {weather.humidity}%
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-px border-t border-slate-50 bg-slate-50">
+                    <div className="bg-white px-3 py-3 text-center">
+                      <p className="text-[9px] font-black tracking-widest text-slate-400 uppercase">
+                        Angin
+                      </p>
+                      <p className="text-xl font-black text-slate-800">
+                        {weather.windSpeed}
+                      </p>
+                      <p className="text-[9px] font-semibold text-slate-400">
+                        km/h {weather.windDir}
+                      </p>
+                    </div>
+                    <div className="bg-white px-3 py-3 text-center">
+                      <p className="text-[9px] font-black tracking-widest text-slate-400 uppercase">
+                        Gelombang
+                      </p>
+                      <p className="text-xl font-black text-blue-600">
+                        {weather.waveHeight}
+                      </p>
+                      <p className="text-[9px] font-semibold text-slate-400">
+                        meter (est.)
+                      </p>
+                    </div>
+                    <div className="bg-white px-3 py-3 text-center">
+                      <p className="text-[9px] font-black tracking-widest text-slate-400 uppercase">
+                        Visibilitas
+                      </p>
+                      <p className="text-xl font-black text-slate-800">
+                        {weather.visibility}
+                      </p>
+                      <p className="text-[9px] font-semibold text-slate-400">
+                        kilometer
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-around border-t border-slate-50 bg-white px-4 py-4">
+                    <div className="flex flex-col items-center gap-2">
+                      <WindCompass
+                        deg={`${weather.windDir} ${weather.windSpeed}km/h`}
+                        dir={windDegNum}
+                      />
+                      <p className="mt-6 text-[9px] font-black tracking-wider text-slate-400 uppercase">
+                        Arah Angin
+                      </p>
+                    </div>
+                    <div className="h-16 w-px bg-slate-100" />
+                    <div className="flex flex-col items-center gap-1">
+                      <div className="flex items-end gap-1">
+                        {[0.3, 0.6, 0.9, 0.5, weather.waveHeight, 0.4, 0.7].map(
+                          (h, i) => (
+                            <WaveBar
+                              key={i}
+                              height={h}
+                              max={2.5}
+                              active={i === 4}
+                            />
+                          ),
+                        )}
+                      </div>
+                      <p className="mt-1 text-[9px] font-black tracking-wider text-slate-400 uppercase">
+                        Tinggi Gelombang
+                      </p>
+                      <p
+                        className="text-[10px] font-black"
+                        style={{
+                          color:
+                            weather.waveHeight < 0.5
+                              ? "#059669"
+                              : weather.waveHeight < 1.2
+                                ? "#0284c7"
+                                : "#ef4444",
+                        }}
+                      >
+                        {weather.waveHeight < 0.5
+                          ? "Sangat Tenang"
+                          : weather.waveHeight < 1.2
+                            ? "Normal"
+                            : "Berbahaya"}
+                      </p>
+                    </div>
+                  </div>
+                </>
+              ) : null}
+            </div>
+
+            {/* ── PASANG SURUT HARI INI ── */}
+            {tides.length > 0 && (
+              <div className="mb-4 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
+                <div className="border-b border-slate-50 px-4 py-3">
+                  <p className="text-[10px] font-black tracking-widest text-slate-400 uppercase">
+                    Pasang Surut Hari Ini
+                  </p>
+                </div>
+                <div className="px-4 py-3">
+                  <div className="flex items-end justify-between gap-1.5">
+                    {tides.map((t, i) => {
+                      const isActive = i === activeTideIdx;
+                      const barH = Math.round((t.height / maxTide) * 52);
+                      return (
+                        <div
+                          key={i}
+                          className="flex flex-1 flex-col items-center gap-1"
+                        >
+                          <div className="relative flex w-full justify-center">
+                            <div
+                              className={`w-full rounded-t-lg transition-all ${
+                                isActive
+                                  ? "bg-blue-500"
+                                  : t.height >= maxTide * 0.75
+                                    ? "bg-emerald-400"
+                                    : "bg-slate-200"
+                              }`}
+                              style={{ height: `${barH}px` }}
+                            />
+                            {isActive && (
+                              <div className="absolute -top-4 left-1/2 -translate-x-1/2 rounded bg-blue-500 px-1 py-0.5 text-[7px] font-black whitespace-nowrap text-white">
+                                Sekarang
+                              </div>
+                            )}
+                          </div>
+                          <p className="text-[8px] font-bold text-slate-400">
+                            {t.time}
+                          </p>
+                          <p className="text-[8px] font-black text-slate-600">
+                            {t.height}m
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ── QUICK STATS ── */}
+            <div className="mb-4 grid grid-cols-2 gap-3">
+              <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-3.5">
+                <p className="text-[9px] font-black tracking-widest text-emerald-600 uppercase">
+                  Algoritma DSS
+                </p>
+                <p className="mt-1 text-2xl font-black text-emerald-700">3</p>
+                <p className="text-[10px] font-semibold text-emerald-500">
+                  Parameter aktif
+                </p>
+                <p className="mt-1.5 text-[9px] text-emerald-400">
+                  Klorofil · SST · Pasut
+                </p>
+              </div>
+              <div className="rounded-2xl border border-blue-100 bg-blue-50 p-3.5">
+                <p className="text-[9px] font-black tracking-widest text-blue-600 uppercase">
+                  Efisiensi BBM
+                </p>
+                <p className="mt-1 text-2xl font-black text-blue-700">~40%</p>
+                <p className="text-[10px] font-semibold text-blue-500">
+                  Penghematan solar
+                </p>
+                <p className="mt-1.5 text-[9px] text-blue-400">
+                  vs. metode konvensional
+                </p>
+              </div>
+            </div>
+
+            {/* ── BUTTON REDIRECT TO MAP ── */}
+            <div className="pt-3">
+              <button
+                onClick={() => router.push("/home")}
+                className="group relative flex w-full items-center justify-center gap-3 overflow-hidden rounded-2xl px-6 py-4 shadow-xl shadow-emerald-200 transition-all active:scale-[0.98]"
+                style={{
+                  background:
+                    "linear-gradient(135deg, #059669 0%, #0d9488 100%)",
+                }}
+              >
+                <span className="relative text-xl">🗺️</span>
+                <div className="relative text-left">
+                  <p className="text-sm leading-none font-black text-white">
+                    Buka Peta ZPPI
+                  </p>
+                  <p className="mt-0.5 text-[10px] leading-none font-semibold text-emerald-200">
+                    Temukan spot mancing terbaik sekarang
+                  </p>
+                </div>
+                <svg
+                  className="relative ml-auto h-5 w-5 text-emerald-300 transition-transform duration-200 group-hover:translate-x-1"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2.5}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M13 7l5 5m0 0l-5 5m5-5H6"
+                  />
+                </svg>
+              </button>
+
+              <p className="mt-4 text-center text-[9px] font-semibold text-slate-400">
+                Sistem Informasi Maritim Nelayan © 2026 · Live GPS Tracker
+                Actived
               </p>
             </div>
-            <svg
-              className="relative ml-auto h-5 w-5 text-emerald-300 transition-transform duration-200 group-hover:translate-x-1"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2.5}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M13 7l5 5m0 0l-5 5m5-5H6"
-              />
-            </svg>
-          </button>
+          </div>
 
-          <p className="mt-4 text-center text-[9px] font-semibold text-slate-400">
-            Sistem Informasi Maritim Nelayan © 2026 · Live GPS Tracker Actived
-          </p>
-        </div>
-      </div>
-
-      <Navbar />
-    </main>
+          <Navbar />
+        </main>
+      )}
+    </>
   );
 }
