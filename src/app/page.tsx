@@ -428,9 +428,7 @@ function WaterParticles() {
   );
 }
 
-
 export default function LandingPage() {
-  const [scrollPct, setScrollPct] = useState(0);
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [activeT, setActiveT] = useState(0);
@@ -498,13 +496,6 @@ export default function LandingPage() {
             </Link>
           </div>
         </div>
-        <div
-          className="absolute bottom-0 left-0 h-[2px] transition-all duration-75"
-          style={{
-            width: `${scrollPct}%`,
-            background: "linear-gradient(90deg,#059669,#0d9488)",
-          }}
-        />
       </nav>
 
       {/* ── HERO ── */}
