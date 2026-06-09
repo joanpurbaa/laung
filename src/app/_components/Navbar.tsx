@@ -14,8 +14,8 @@ export default function Navbar() {
   const isAuth = useIsAuthenticated();
 
   const navItems = [
-    { href: "/", label: "Beranda", icon: Home, protected: false },
-    { href: "/home", label: "Peta ZPPI", icon: MapIcon, protected: false },
+    { href: "/dashboard", label: "Beranda", icon: Home, protected: false },
+    { href: "/map", label: "Peta ZPPI", icon: MapIcon, protected: false },
     { href: "/history", label: "Histori", icon: History, protected: true },
   ];
 

@@ -41,7 +41,7 @@ export default function LoginPage() {
         throw new Error(data.message ?? "Login gagal");
       }
       setState("success");
-      setTimeout(() => router.push("/"), 500);
+      setTimeout(() => router.push("/map"), 500);
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : "Terjadi kesalahan");
       setState("error");
@@ -306,7 +306,7 @@ export default function LoginPage() {
           </button>
 
           <button
-            onClick={() => router.push("/")}
+            onClick={() => router.push("/map")}
             className="mt-3 flex w-full items-center justify-center rounded-2xl py-[17px] text-[14px] font-bold text-white/50 transition-all active:scale-[0.97]"
             style={{
               background: "rgba(255,255,255,0.05)",

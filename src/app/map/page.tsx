@@ -228,7 +228,7 @@ function getBestSailWindow() {
   };
 }
 
-export default function HomePage() {
+export default function Map() {
   const router = useRouter();
   const [deviceCoords, setDeviceCoords] =
     useState<LocationCoords>(DEFAULT_LOCATION);
