@@ -14,7 +14,7 @@ Aplikasi peta nelayan berbasis data oseanografi NASA — menampilkan klorofil la
 [![Three.js](https://img.shields.io/badge/Three.js-r128-black?style=flat-square&logo=three.js)](https://threejs.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-059669?style=flat-square)](LICENSE)
 
-[Demo →](https://laung.app) · [Laporkan Bug](https://github.com/username/laung/issues) · [Request Fitur](https://github.com/username/laung/issues)
+[Demo →](https://laung-id.vercel.app) · [Laporkan Bug]([https://github.com/username/laung/issues](https://github.com/joanpurbaa/laung/issues)) · [Request Fitur]([https://github.com/username/laung/issues](https://github.com/joanpurbaa/laung/issues))
 
 </div>
 
