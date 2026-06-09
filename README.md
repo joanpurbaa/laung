@@ -48,7 +48,6 @@ Laut terbaca dari atas → Algoritma scoring → Rekomendasi spot + rute hemat s
 - **Framework** — Next.js 15 (App Router)
 - **Language** — TypeScript
 - **Styling** — Tailwind CSS
-- **3D / Animasi** — Three.js
 - **Data Satelit** — NASA AQUA MODIS (klorofil, SST)
 - **Maps** — Leaflet / Mapbox GL
 
