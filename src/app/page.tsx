@@ -1,687 +1,936 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import Navbar from "./_components/Navbar";
-import SplashScreen from "./_components/SplashScreen";
+import Image from "next/image";
+import Link from "next/link";
+import { Home, Map as MapIcon, History } from "lucide-react";
 
-interface WeatherData {
-  windSpeed: number;
-  windDir: string;
-  waveHeight: number;
-  visibility: number;
-  condition: string;
-  conditionIcon: string;
-  tempAir: number;
-  humidity: number;
-  safeToSail: boolean;
-}
-
-interface TidePoint {
-  time: string;
-  height: number;
-  status: string;
-}
-
-interface LocationCoords {
-  latitude: number;
-  longitude: number;
-  name: string;
-}
-
-const DEFAULT_LOCATION: LocationCoords = {
-  latitude: -6.465,
-  longitude: 108.452,
-  name: "Karangampel",
-};
-
-function useWeather(coords: LocationCoords) {
-  const [data, setData] = useState<WeatherData | null>(null);
-  const [loading, setLoading] = useState(true);
-
+function useInView(threshold = 0.12) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [inView, setInView] = useState(false);
   useEffect(() => {
-    const fetchWeather = async () => {
-      try {
-        setLoading(true);
-        const res = await fetch(
-          `https://api.open-meteo.com/v1/forecast?latitude=${coords.latitude}&longitude=${coords.longitude}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,wind_direction_10m,weather_code,visibility&wind_speed_unit=kmh&timezone=Asia%2FJakarta`,
-        );
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        const json = await res.json();
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-        const c = json.current;
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-        const wCode: number = c.weather_code ?? 0;
-
-        const getCondition = (
-          code: number,
-        ): { label: string; icon: string } => {
-          if (code === 0) return { label: "Cerah Sempurna", icon: "☀️" };
-          if (code <= 2) return { label: "Berawan Sebagian", icon: "⛅" };
-          if (code <= 3) return { label: "Mendung", icon: "☁️" };
-          if (code <= 48) return { label: "Berkabut", icon: "🌫️" };
-          if (code <= 67) return { label: "Hujan Ringan", icon: "🌧️" };
-          if (code <= 77) return { label: "Salju / Hujan Es", icon: "🌨️" };
-          if (code <= 82) return { label: "Hujan Lebat", icon: "⛈️" };
-          return { label: "Badai", icon: "🌪️" };
-        };
-
-        const getWindDir = (deg: number): string => {
-          const dirs = ["U", "TL", "T", "TG", "S", "BD", "B", "BL"];
-          return dirs[Math.round(deg / 45) % 8] ?? "U";
-        };
-
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-        const windKmh: number = c.wind_speed_10m ?? 0;
-        const waveEst = Math.max(0.1, (windKmh / 60) * 2.5);
-        const cond = getCondition(wCode);
-
-        setData({
-          windSpeed: Math.round(windKmh),
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
-          windDir: getWindDir(c.wind_direction_10m ?? 0),
-          waveHeight: parseFloat(waveEst.toFixed(1)),
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-          visibility: Math.round((c.visibility ?? 10000) / 1000),
-          condition: cond.label,
-          conditionIcon: cond.icon,
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
-          tempAir: Math.round(c.temperature_2m ?? 28),
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
-          humidity: Math.round(c.relative_humidity_2m ?? 75),
-          safeToSail: windKmh < 30 && wCode < 60,
-        });
-      } catch {
-        setData({
-          windSpeed: 14,
-          windDir: "TL",
-          waveHeight: 0.6,
-          visibility: 12,
-          condition: "Cerah Sebagian",
-          conditionIcon: "⛅",
-          tempAir: 29,
-          humidity: 78,
-          safeToSail: true,
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    void fetchWeather();
-    const iv = setInterval(() => void fetchWeather(), 5 * 60 * 1000);
-    return () => clearInterval(iv);
-  }, [coords.latitude, coords.longitude]);
-
-  return { data, loading };
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([e]) => {
+        if (e.isIntersecting) setInView(true);
+      },
+      { threshold },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [threshold]);
+  return { ref, inView };
 }
 
-function useTides() {
-  const [tides, setTides] = useState<TidePoint[]>([]);
-  useEffect(() => {
-    fetch("/api/tides")
-      .then((r) => r.json())
-      .then((d: unknown) => {
-        if (Array.isArray(d)) setTides(d as TidePoint[]);
-      })
-      .catch(() => null);
-  }, []);
-  return tides;
-}
-
-function WaveBar({
-  height,
-  max,
-  active,
+function Reveal({
+  children,
+  delay = 0,
+  className = "",
 }: {
-  height: number;
-  max: number;
-  active: boolean;
+  children: React.ReactNode;
+  delay?: number;
+  className?: string;
 }) {
+  const { ref, inView } = useInView();
   return (
-    <div className="flex flex-col items-center gap-1">
-      <div className="relative flex h-10 w-2 items-end overflow-hidden rounded-full bg-slate-100">
-        <div
-          className={`w-full rounded-full transition-all duration-700 ${active ? "bg-blue-500" : "bg-emerald-400"}`}
-          style={{ height: `${(height / max) * 100}%` }}
-        />
-      </div>
+    <div
+      ref={ref}
+      className={className}
+      style={{
+        opacity: inView ? 1 : 0,
+        transform: inView ? "translateY(0)" : "translateY(24px)",
+        transition: `opacity 0.6s ease ${delay}ms, transform 0.6s ease ${delay}ms`,
+      }}
+    >
+      {children}
     </div>
   );
 }
 
-function WindCompass({ deg, dir }: { deg: string; dir: number }) {
+function Counter({ to, suffix = "" }: { to: number; suffix?: string }) {
+  const [val, setVal] = useState(0);
+  const { ref, inView } = useInView(0.3);
+  useEffect(() => {
+    if (!inView) return;
+    let start = 0;
+    const step = to / 55;
+    const timer = setInterval(() => {
+      start += step;
+      if (start >= to) {
+        setVal(to);
+        clearInterval(timer);
+      } else setVal(Math.round(start));
+    }, 16);
+    return () => clearInterval(timer);
+  }, [inView, to]);
   return (
-    <div className="relative flex h-16 w-16 items-center justify-center">
-      <div className="absolute inset-0 rounded-full border-2 border-slate-100" />
-      {["U", "T", "S", "B"].map((d, i) => (
-        <span
-          key={d}
-          className="absolute text-[8px] font-black text-slate-300"
+    <span ref={ref}>
+      {val.toLocaleString("id-ID")}
+      {suffix}
+    </span>
+  );
+}
+
+// ── Mockup peta nelayan ──
+function MapMockup() {
+  return (
+    <div
+      className="relative w-full overflow-hidden rounded-2xl shadow-2xl shadow-slate-900/20"
+      style={{ background: "#f8fafc", border: "1px solid #e2e8f0" }}
+    >
+      {/* Browser chrome */}
+      <div className="flex items-center gap-2 border-b border-slate-100 bg-white px-4 py-3">
+        <div className="flex gap-1.5">
+          <div className="h-3 w-3 rounded-full bg-red-400" />
+          <div className="h-3 w-3 rounded-full bg-amber-400" />
+          <div className="h-3 w-3 rounded-full bg-emerald-400" />
+        </div>
+        <div className="mx-auto flex items-center gap-2 rounded-lg bg-slate-100 px-3 py-1 font-mono text-[11px] text-slate-400">
+          laung.app/home
+        </div>
+      </div>
+
+      {/* App content */}
+      <div className="flex" style={{ height: "380px" }}>
+        {/* Map area */}
+        <div
+          className="relative flex-1 overflow-hidden"
           style={{
-            top: i === 0 ? "2px" : i === 2 ? "auto" : "50%",
-            bottom: i === 2 ? "2px" : "auto",
-            left: i === 3 ? "2px" : i === 1 ? "auto" : "50%",
-            right: i === 1 ? "2px" : "auto",
-            transform:
-              i === 0 || i === 2 ? "translateX(-50%)" : "translateY(-50%)",
+            background:
+              "linear-gradient(160deg, #c8e6f0 0%, #a8d5e8 40%, #7ec8e0 100%)",
           }}
         >
-          {d}
-        </span>
-      ))}
-      <div
-        className="absolute h-6 w-1 origin-bottom rounded-full bg-emerald-500"
-        style={{
-          bottom: "50%",
-          left: "calc(50% - 2px)",
-          transformOrigin: "bottom center",
-          transform: `rotate(${dir}deg)`,
-        }}
-      />
-      <div className="absolute h-2 w-2 rounded-full bg-slate-800" />
-      <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[9px] font-black whitespace-nowrap text-slate-500">
-        {deg}
-      </div>
-    </div>
-  );
-}
-
-function getNowTime() {
-  return new Date().toLocaleTimeString("id-ID", {
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZone: "Asia/Jakarta",
-  });
-}
-
-function getNowHour() {
-  return new Date(
-    new Date().toLocaleString("en-US", { timeZone: "Asia/Jakarta" }),
-  ).getHours();
-}
-
-function getBestSailWindow() {
-  const h = getNowHour();
-  if (h >= 4 && h < 9)
-    return {
-      label: "Siap Berangkat!",
-      color: "#059669",
-      desc: "Kondisi angin & arus optimal sekarang",
-    };
-  if (h >= 9 && h < 15)
-    return {
-      label: "Sedang Berlayar",
-      color: "#0284c7",
-      desc: "Waktu terbaik ada di window ini",
-    };
-  if (h >= 15 && h < 18)
-    return {
-      label: "Persiapan Pulang",
-      color: "#f59e0b",
-      desc: "Mulai navigasi kembali ke pangkalan",
-    };
-  return {
-    label: "Istirahat Malam",
-    color: "#64748b",
-    desc: "Waktu terbaik besok 05:00 – 14:00 WIB",
-  };
-}
-
-export default function HomePage() {
-  const router = useRouter();
-  const [deviceCoords, setDeviceCoords] =
-    useState<LocationCoords>(DEFAULT_LOCATION);
-  const { data: weather, loading: wLoading } = useWeather(deviceCoords);
-  const tides = useTides();
-  const [nowTime, setNowTime] = useState(getNowTime());
-  const [mounted, setMounted] = useState(false);
-  const [showSplash, setShowSplash] = useState(false);
-  const [appReady, setAppReady] = useState(false);
-
-  useEffect(() => {
-    const seen = sessionStorage.getItem("splash_seen");
-    if (!seen) {
-      setShowSplash(true);
-    } else {
-      setAppReady(true);
-    }
-  }, []);
-
-  const handleSplashDone = () => {
-    sessionStorage.setItem("splash_seen", "1");
-    setShowSplash(false);
-    setAppReady(true);
-  };
-
-  const fetchCityName = async (lat: number, lon: number) => {
-    try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&addressdetails=1`,
-        {
-          headers: {
-            "User-Agent": "ZPPI-Fisherman-App", // Penting agar tidak diblokir OpenStreetMap
-          },
-        },
-      );
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const json = await res.json();
-
-      // Ambil data daerah (bisa berupa city, regency, atau county tergantung wilayah Indonesia)
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-      const address = json.address;
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const cityName =
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        address.city ??
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        address.regency ??
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        address.county ??
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        address.municipality ??
-        "Lokasi GPS";
-
-      // Bersihkan string bumbu-bumbu bawaan jika ada (misal: "Kabupaten Indramayu" -> "Indramayu")
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-      const cleanName = cityName.replace(/(Kabupaten|Kota|Regency)\s+/gi, "");
-
-      setDeviceCoords((prev) => ({
-        ...prev,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        name: cleanName,
-      }));
-    } catch (err) {
-      console.error("Gagal mendapatkan nama wilayah: ", err);
-    }
-  };
-
-  useEffect(() => {
-    setMounted(true);
-    const timeInterval = setInterval(() => setNowTime(getNowTime()), 30000);
-
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          setDeviceCoords({
-            latitude,
-            longitude,
-            name: "Mencari Lokasi...",
-          });
-          // Jalankan reverse geocoding
-          void fetchCityName(latitude, longitude);
-        },
-        () => {
-          console.log("Akses GPS ditolak, menggunakan fallback Karangampel.");
-        },
-        { enableHighAccuracy: true },
-      );
-    }
-
-    return () => clearInterval(timeInterval);
-  }, []);
-
-  const sailWindow = getBestSailWindow();
-  const currentHour = getNowHour();
-
-  const WIND_DEG_MAP: Record<string, number> = {
-    U: 0,
-    TL: 45,
-    T: 90,
-    TG: 135,
-    S: 180,
-    BD: 225,
-    B: 270,
-    BL: 315,
-  };
-  const windDegNum = WIND_DEG_MAP[weather?.windDir ?? "U"] ?? 0;
-
-  const maxTide = Math.max(...tides.map((t) => t.height), 1.5);
-  const activeTideIdx = tides.findIndex((t) => {
-    const h = parseInt(t.time.split(":")[0] ?? "0");
-    return h >= currentHour;
-  });
-
-  return (
-    <>
-      {showSplash && <SplashScreen onComplete={handleSplashDone} />}
-      {appReady && (
-        <main
-          className="relative flex h-screen w-screen flex-col overflow-hidden bg-slate-50 select-none"
-          style={{ fontFamily: "'DM Sans', 'Geist', sans-serif" }}
-        >
+          {/* Water texture */}
           <div
-            className="pointer-events-none absolute inset-0 opacity-[0.03]"
+            className="absolute inset-0 opacity-20"
             style={{
               backgroundImage:
-                "linear-gradient(#059669 1px, transparent 1px), linear-gradient(90deg, #059669 1px, transparent 1px)",
-              backgroundSize: "32px 32px",
+                "repeating-linear-gradient(0deg, transparent, transparent 18px, rgba(0,100,160,0.08) 18px, rgba(0,100,160,0.08) 19px), repeating-linear-gradient(90deg, transparent, transparent 18px, rgba(0,100,160,0.06) 18px, rgba(0,100,160,0.06) 19px)",
             }}
           />
 
+          {/* Land mass (pulau Jawa bagian) */}
           <div
-            className="flex-1 overflow-y-auto px-4 pb-20"
+            className="absolute right-0 bottom-0 left-0"
             style={{
-              opacity: mounted ? 1 : 0,
-              transform: mounted ? "translateY(0)" : "translateY(12px)",
-              transition: "opacity 0.5s ease, transform 0.5s ease",
+              height: "32%",
+              background: "linear-gradient(0deg, #8fba7a 0%, #a3c97a 100%)",
+              borderRadius: "4px 4px 0 0",
+            }}
+          />
+          <div
+            className="absolute bottom-[31%] left-0"
+            style={{
+              width: "35%",
+              height: "12%",
+              background: "#a3c97a",
+              borderRadius: "0 8px 0 0",
+            }}
+          />
+
+          {/* ZPPI circles — spot mancing */}
+          {[
+            {
+              top: "28%",
+              left: "22%",
+              size: 40,
+              color: "#059669",
+              opacity: 0.85,
+              score: 92,
+            },
+            {
+              top: "18%",
+              left: "45%",
+              size: 32,
+              color: "#059669",
+              opacity: 0.75,
+              score: 87,
+            },
+            {
+              top: "35%",
+              left: "60%",
+              size: 36,
+              color: "#10b981",
+              opacity: 0.7,
+              score: 79,
+            },
+            {
+              top: "22%",
+              left: "72%",
+              size: 28,
+              color: "#f59e0b",
+              opacity: 0.7,
+              score: 63,
+            },
+            {
+              top: "42%",
+              left: "38%",
+              size: 24,
+              color: "#10b981",
+              opacity: 0.65,
+              score: 71,
+            },
+            {
+              top: "15%",
+              left: "82%",
+              size: 22,
+              color: "#ef4444",
+              opacity: 0.6,
+              score: 44,
+            },
+            {
+              top: "30%",
+              left: "82%",
+              size: 26,
+              color: "#f59e0b",
+              opacity: 0.65,
+              score: 58,
+            },
+          ].map((d, i) => (
+            <div
+              key={i}
+              className="absolute flex items-center justify-center rounded-full"
+              style={{
+                top: d.top,
+                left: d.left,
+                width: d.size,
+                height: d.size,
+                background: d.color,
+                opacity: d.opacity,
+                transform: "translate(-50%,-50%)",
+                boxShadow: `0 0 ${d.size * 0.8}px ${d.color}50`,
+              }}
+            >
+              <span
+                style={{
+                  fontSize: d.size * 0.28,
+                  fontWeight: 900,
+                  color: "white",
+                  lineHeight: 1,
+                }}
+              >
+                {d.score}
+              </span>
+            </div>
+          ))}
+
+          {/* GPS user location */}
+          <div
+            className="absolute"
+            style={{
+              bottom: "34%",
+              left: "18%",
+              transform: "translate(-50%, 50%)",
             }}
           >
-            {/* ── HEADER ── */}
-            <div className="pt-10 pb-5">
-              <h1
-                className="text-3xl leading-tight font-black text-slate-900"
-                style={{ letterSpacing: "-0.03em" }}
+            <div className="relative flex items-center justify-center">
+              <div
+                className="h-4 w-4 animate-ping rounded-full bg-blue-500 opacity-40"
+                style={{ position: "absolute" }}
+              />
+              <div className="h-3 w-3 rounded-full border-2 border-white bg-blue-500 shadow-lg" />
+            </div>
+          </div>
+
+          {/* Top bar overlay */}
+          <div className="absolute top-3 right-3 left-3 flex items-center gap-2">
+            <div className="flex flex-1 items-center gap-2 rounded-xl bg-white/90 px-3 py-2 shadow-sm backdrop-blur-sm">
+              <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
+              <span className="text-[10px] font-bold text-emerald-600">
+                GPS Aktif
+              </span>
+              <div className="ml-auto flex items-center gap-1">
+                <div className="h-1.5 w-1.5 rounded-full bg-blue-500" />
+                <span className="text-[9px] font-bold text-blue-600">LIVE</span>
+              </div>
+            </div>
+            <div className="rounded-xl bg-white/90 px-2.5 py-2 shadow-sm backdrop-blur-sm">
+              <span className="text-base">🐟</span>
+            </div>
+          </div>
+
+          {/* Layer switcher right */}
+          <div className="absolute top-1/2 right-3 flex -translate-y-1/2 flex-col gap-1.5">
+            {[
+              { icon: "🚀", label: "ZPPI", active: true },
+              { icon: "🌿", label: "Klor" },
+              { icon: "🌡️", label: "SST" },
+            ].map((l, i) => (
+              <div
+                key={i}
+                className={`flex flex-col items-center justify-center rounded-xl px-2 py-1.5 shadow-sm ${l.active ? "bg-emerald-500 text-white" : "bg-white/90 text-slate-500"}`}
+                style={{ minWidth: "40px" }}
               >
-                Selamat Datang,
-                <br />
-                <span className="text-emerald-500">Nelayan</span> 🎣
-              </h1>
-              <p className="mt-1.5 text-[13px] font-medium text-slate-400 capitalize">
-                {deviceCoords.name} · {nowTime} WIB
-              </p>
-              <span className="mt-0.5 block font-mono text-[10px] text-slate-300">
-                ({deviceCoords.latitude.toFixed(4)},{" "}
-                {deviceCoords.longitude.toFixed(4)})
+                <span className="text-sm leading-none">{l.icon}</span>
+                <span
+                  className={`mt-0.5 text-[7px] font-black ${l.active ? "text-white/80" : "text-slate-400"}`}
+                >
+                  {l.label}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {/* Legend */}
+          <div className="absolute right-3 bottom-[34%] flex flex-col gap-1 rounded-xl bg-white/90 p-2 shadow-sm backdrop-blur-sm">
+            {[
+              ["#059669", "Sangat Baik"],
+              ["#10b981", "Baik"],
+              ["#f59e0b", "Sedang"],
+              ["#ef4444", "Rendah"],
+            ].map(([c, l]) => (
+              <div key={l} className="flex items-center gap-1.5">
+                <div
+                  className="h-2 w-2 rounded-full"
+                  style={{ background: c }}
+                />
+                <span className="text-[8px] font-semibold text-slate-600">
+                  {l}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Bottom sheet mockup */}
+        <div
+          className="absolute right-0 bottom-0 left-0 rounded-t-3xl bg-white shadow-2xl"
+          style={{ height: "140px" }}
+        >
+          <div className="flex flex-col items-center pt-2.5">
+            <div className="h-1 w-10 rounded-full bg-slate-200" />
+          </div>
+          <div className="px-4 pt-2">
+            <div className="flex items-center gap-3">
+              <div
+                className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-xl text-white"
+                style={{ background: "#059669" }}
+              >
+                <span className="text-lg leading-none font-black">92</span>
+                <span className="text-[7px] font-bold opacity-80">SKOR</span>
+              </div>
+              <div className="flex-1">
+                <p className="text-[9px] font-black tracking-wider text-slate-400 uppercase">
+                  Rekomendasi Terbaik
+                </p>
+                <p className="text-[13px] font-black text-slate-800">
+                  Spot A · Hemat 40% Solar
+                </p>
+                <p className="text-[10px] text-slate-400">
+                  12.4 Km · 09:00–15:00 WIB
+                </p>
+              </div>
+            </div>
+            <div className="mt-2.5 grid grid-cols-3 divide-x divide-slate-100 rounded-xl border border-slate-100 bg-slate-50 text-center">
+              {[
+                ["24", "Spot Aktif"],
+                ["3", "Sangat Baik"],
+                ["Pasang", "Kondisi Air"],
+              ].map(([v, l]) => (
+                <div key={l} className="py-1.5">
+                  <p className="text-[11px] font-black text-slate-800">{v}</p>
+                  <p className="text-[8px] text-slate-400">{l}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const STEPS = [
+  {
+    number: "01",
+    eyebrow: "Buka Peta ZPPI",
+    title: "Laut terbaca dari atas",
+    body: "Data klorofil, suhu permukaan, dan arus pasang surut dari satelit NASA divisualisasikan langsung di peta. Titik hijau = ikan banyak.",
+    detail: "Data NASA AQUA MODIS · resolusi 4km",
+  },
+  {
+    number: "02",
+    eyebrow: "Pilih Jenis Ikan",
+    title: "Algoritma menyesuaikan targetmu",
+    body: "Tongkol, tuna, kembung — setiap spesies punya preferensi suhu dan plankton berbeda. Sistem menyesuaikan scoring otomatis.",
+    detail: "DSS weighted scoring · 3 parameter oseanografi",
+  },
+  {
+    number: "03",
+    eyebrow: "Berangkat Lebih Hemat",
+    title: "Rute efisien, pulang lebih banyak",
+    body: "GPS menghitung jarak dari posisimu ke spot terbaik. Lihat perbandingan konsumsi solar — selisihnya bisa 30–50 liter per trip.",
+    detail: "Kalkulasi BBM otomatis · GPS real-time",
+  },
+];
+
+const TESTIMONIALS = [
+  {
+    quote:
+      "Dulu nebak-nebak. Sekarang langsung ke titiknya. Solar hemat, pulang lebih banyak ikan.",
+    name: "Pak Slamet",
+    role: "Nelayan, Karangampel · Cirebon",
+    emoji: "🎣",
+  },
+  {
+    quote:
+      "Gak perlu banyar belajar. Buka, lihat warna hijau, berangkat. Sesederhana itu.",
+    name: "Pak Wahyu",
+    role: "Nelayan tradisional, Indramayu",
+    emoji: "⛵",
+  },
+  {
+    quote:
+      "Yang saya suka ada info pasang surut juga. Jadi tahu kapan waktu terbaik keluar.",
+    name: "Pak Darsono",
+    role: "Ketua Kelompok Nelayan, Cirebon",
+    emoji: "🐟",
+  },
+];
+
+function WaterParticles() {
+  const particles = Array.from({ length: 18 }, (_, i) => ({
+    id: i,
+    size: 2 + Math.random() * 3,
+    x: Math.random() * 100,
+    delay: Math.random() * 8,
+    duration: 6 + Math.random() * 6,
+    opacity: 0.08 + Math.random() * 0.12,
+  }));
+
+  return (
+    <div className="pointer-events-none absolute inset-0 overflow-hidden">
+      {particles.map((p) => (
+        <div
+          key={p.id}
+          className="absolute rounded-full bg-emerald-500"
+          style={{
+            width: p.size,
+            height: p.size,
+            left: `${p.x}%`,
+            bottom: "-10px",
+            opacity: p.opacity,
+            animation: `floatUp ${p.duration}s ${p.delay}s infinite linear`,
+          }}
+        />
+      ))}
+      <style>{`
+        @keyframes floatUp {
+          0%   { transform: translateY(0)   translateX(0);   opacity: 0; }
+          10%  { opacity: 1; }
+          90%  { opacity: 1; }
+          100% { transform: translateY(-120vh) translateX(20px); opacity: 0; }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+
+export default function LandingPage() {
+  const [scrollPct, setScrollPct] = useState(0);
+  const router = useRouter();
+  const [mounted, setMounted] = useState(false);
+  const [activeT, setActiveT] = useState(0);
+
+  useEffect(() => {
+    setMounted(true);
+    const t = setInterval(
+      () => setActiveT((v) => (v + 1) % TESTIMONIALS.length),
+      4200,
+    );
+    return () => clearInterval(t);
+  }, []);
+
+  return (
+    <div
+      className="relative min-h-screen overflow-x-hidden"
+      style={{
+        fontFamily: "'DM Sans','Geist',sans-serif",
+        background: "#fafaf8",
+        color: "#1a1a1a",
+      }}
+    >
+      {/* ── NAV ── */}
+      <nav className="relative sticky top-0 z-50 border-b border-slate-100 bg-white/90 backdrop-blur-md">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3.5 md:px-8">
+          <div className="flex items-center gap-2.5">
+            <Image
+              src="/icon.svg"
+              width={28}
+              height={28}
+              alt="Laung"
+              className="rounded-lg"
+            />
+            <span
+              className="text-[17px] font-black text-slate-900"
+              style={{ letterSpacing: "-0.03em" }}
+            >
+              Laung
+            </span>
+          </div>
+          <div className="hidden items-center gap-6 md:flex">
+            {["Fitur", "Cara Kerja", "Manfaat"].map((l) => (
+              <a
+                key={l}
+                href={`#${l.toLowerCase().replace(" ", "-")}`}
+                className="text-[14px] font-semibold text-slate-500 transition-colors hover:text-slate-900"
+              >
+                {l}
+              </a>
+            ))}
+          </div>
+          <div className="flex items-center gap-2.5">
+            <Link
+              href="/login"
+              className="hidden text-[13px] font-bold text-slate-500 transition-colors hover:text-slate-800 md:block"
+            >
+              Masuk
+            </Link>
+            <Link
+              href="/register"
+              className="rounded-xl px-4 py-2 text-[13px] font-black text-white transition-all hover:opacity-90"
+              style={{ background: "linear-gradient(135deg,#059669,#0d9488)" }}
+            >
+              Daftar Gratis
+            </Link>
+          </div>
+        </div>
+        <div
+          className="absolute bottom-0 left-0 h-[2px] transition-all duration-75"
+          style={{
+            width: `${scrollPct}%`,
+            background: "linear-gradient(90deg,#059669,#0d9488)",
+          }}
+        />
+      </nav>
+
+      {/* ── HERO ── */}
+      <section className="mx-auto max-w-6xl px-5 pt-16 pb-16 md:px-8 md:pt-24 md:pb-20">
+        <WaterParticles />
+        <div className="flex flex-col gap-12 md:flex-row md:items-center md:gap-16">
+          {/* Left text */}
+          <div
+            className="flex-1"
+            style={{
+              opacity: mounted ? 1 : 0,
+              transform: mounted ? "none" : "translateY(20px)",
+              transition: "opacity 0.7s ease, transform 0.7s ease",
+            }}
+          >
+            {/* Eyebrow */}
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3.5 py-1.5">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
+              <span className="text-[11px] font-black tracking-[0.1em] text-emerald-700 uppercase">
+                Untuk Nelayan Indonesia
               </span>
             </div>
 
-            {/* ── STATUS SAIL WINDOW ── */}
-            <div
-              className="mb-4 flex items-center gap-3 overflow-hidden rounded-2xl p-4 shadow-sm"
-              style={{
-                backgroundColor: sailWindow.color + "12",
-                border: `1px solid ${sailWindow.color}30`,
-              }}
+            <h1
+              className="mb-5 text-[44px] leading-[1.0] font-black text-slate-900 md:text-[56px]"
+              style={{ letterSpacing: "-0.04em" }}
+            >
+              Temukan spot
+              <br />
+              mancing terbaik
+              <br />
+              <span
+                style={{
+                  background: "linear-gradient(90deg,#059669,#0d9488)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                }}
+              >
+                pakai data satelit.
+              </span>
+            </h1>
+
+            <p className="mb-8 max-w-md text-[16px] leading-relaxed font-medium text-slate-500">
+              Laung membaca klorofil laut, suhu permukaan, dan pasang surut dari
+              NASA — lalu tunjukkan persis di mana ikan berkumpul hari ini.
+            </p>
+
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <button
+                onClick={() => router.push("/register")}
+                className="relative flex items-center justify-center gap-2 overflow-hidden rounded-2xl px-6 py-3.5 text-[15px] font-black text-white transition-all hover:opacity-90 active:scale-[0.98]"
+                style={{
+                  background: "linear-gradient(135deg,#059669,#0d9488)",
+                  boxShadow: "0 6px 24px rgba(5,150,105,0.3)",
+                }}
+              >
+                <span>
+                  Install & Mulai Gratis
+                  <span
+                    className="absolute inset-0 translate-x-[-200%] -skew-x-12 animate-[shimmer_3s_ease_2s_infinite]"
+                    style={{
+                      background:
+                        "linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent)",
+                    }}
+                  />
+                  <style>{`@keyframes shimmer { to { transform: skewX(-12deg) translateX(400%); } }`}</style>
+                </span>
+              </button>
+              <button
+                onClick={() => router.push("/home")}
+                className="flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-6 py-3.5 text-[14px] font-bold text-slate-600 transition-all hover:bg-slate-50 active:scale-[0.98]"
+              >
+                Lihat Demo Peta →
+              </button>
+            </div>
+
+            <p className="mt-4 text-[12px] font-semibold text-slate-400">
+              Gratis · Tanpa kartu kredit · Install langsung di HP
+            </p>
+
+            {/* Stats row */}
+            <div className="mt-10 flex items-center gap-6 border-t border-slate-100 pt-6">
+              {[
+                { v: 3, s: "", l: "Variabel satelit" },
+                { v: 40, s: "%", l: "Hemat solar" },
+                { v: 100, s: "+", l: "Spot terpetakan" },
+              ].map((s, i) => (
+                <div key={i}>
+                  <p className="text-[22px] font-black text-slate-900">
+                    <Counter to={s.v} suffix={s.s} />
+                  </p>
+                  <p className="text-[11px] font-semibold text-slate-400">
+                    {s.l}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Right — map mockup */}
+          <div
+            className="w-full flex-1 md:max-w-[520px]"
+            style={{
+              opacity: mounted ? 1 : 0,
+              transform: mounted ? "none" : "translateY(20px) scale(0.97)",
+              transition: "opacity 0.8s ease 0.15s, transform 0.8s ease 0.15s",
+            }}
+          >
+            <MapMockup />
+          </div>
+        </div>
+      </section>
+
+      {/* ── HOW IT WORKS ── */}
+      <section
+        id="cara-kerja"
+        className="border-t border-slate-100 bg-white py-16 md:py-24"
+      >
+        <div className="mx-auto max-w-6xl px-5 md:px-8">
+          <Reveal>
+            <p className="mb-2 text-[11px] font-black tracking-[0.14em] text-emerald-600 uppercase">
+              Cara Kerja
+            </p>
+            <h2
+              className="mb-12 text-[32px] leading-tight font-black text-slate-900 md:text-[40px]"
+              style={{ letterSpacing: "-0.03em" }}
+            >
+              Tiga langkah.
+              <br />
+              Pulang lebih banyak.
+            </h2>
+          </Reveal>
+
+          <div className="grid gap-6 md:grid-cols-3">
+            {STEPS.map((step, i) => (
+              <Reveal key={i} delay={i * 100}>
+                <div className="flex h-full flex-col rounded-2xl border border-slate-100 bg-slate-50 p-6 transition-all duration-300 hover:-translate-y-1 hover:border-emerald-100 hover:shadow-md hover:shadow-emerald-100/60">
+                  <div className="mb-4 flex items-center gap-2.5">
+                    <span className="font-mono text-[11px] font-black text-emerald-500">
+                      {step.number}
+                    </span>
+                    <span className="h-px flex-1 bg-emerald-100" />
+                  </div>
+                  <p className="mb-1 text-[11px] font-black tracking-[0.1em] text-emerald-600 uppercase">
+                    {step.eyebrow}
+                  </p>
+                  <h3
+                    className="mb-3 text-[20px] leading-tight font-black text-slate-900"
+                    style={{ letterSpacing: "-0.02em" }}
+                  >
+                    {step.title}
+                  </h3>
+                  <p className="flex-1 text-[14px] leading-relaxed font-medium text-slate-500">
+                    {step.body}
+                  </p>
+                  <p className="mt-4 text-[11px] font-semibold text-emerald-500/70">
+                    {step.detail}
+                  </p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── PWA INSTALL ── */}
+      <section className="border-t border-slate-100 bg-slate-50 py-16 md:py-20">
+        <div className="mx-auto max-w-6xl px-5 md:px-8">
+          <div className="flex flex-col gap-12 md:flex-row md:items-center">
+            <Reveal className="flex-1">
+              <p className="mb-2 text-[11px] font-black tracking-[0.14em] text-emerald-600 uppercase">
+                Install sebagai App
+              </p>
+              <h2
+                className="mb-4 text-[32px] leading-tight font-black text-slate-900 md:text-[36px]"
+                style={{ letterSpacing: "-0.03em" }}
+              >
+                Laung berjalan offline
+                <br />
+                di HP-mu.
+              </h2>
+              <p className="mb-8 max-w-md text-[15px] leading-relaxed font-medium text-slate-500">
+                Tidak perlu App Store. Buka di browser → install → siap dipakai
+                di tengah laut sekalipun tanpa sinyal.
+              </p>
+              <div className="flex flex-col gap-3">
+                {[
+                  "Buka Laung di browser HP",
+                  `Tap ikon berbagi di Safari / Chrome`,
+                  `Pilih "Tambahkan ke Layar Utama"`,
+                  "Laung siap dipakai seperti app asli",
+                ].map((s, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-[11px] font-black text-emerald-700">
+                      {i + 1}
+                    </div>
+                    <span className="text-[14px] font-semibold text-slate-600">
+                      {s}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <button
+                onClick={() => router.push("/register")}
+                className="mt-8 inline-flex items-center gap-2 rounded-2xl px-6 py-3.5 text-[14px] font-black text-white transition-all hover:opacity-90 active:scale-[0.98]"
+                style={{
+                  background: "linear-gradient(135deg,#059669,#0d9488)",
+                  boxShadow: "0 6px 24px rgba(5,150,105,0.25)",
+                }}
+              >
+                Daftar & Install Sekarang
+              </button>
+            </Reveal>
+
+            {/* Phone mockup */}
+            <Reveal
+              delay={150}
+              className="flex flex-1 justify-center md:justify-end"
             >
               <div
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-xl"
-                style={{ backgroundColor: sailWindow.color + "20" }}
+                className="relative w-[240px] overflow-hidden rounded-[32px] shadow-2xl shadow-slate-300/60"
+                style={{ background: "#011a12", border: "6px solid #1e293b" }}
               >
-                {sailWindow.color === "#059669"
-                  ? "🟢"
-                  : sailWindow.color === "#0284c7"
-                    ? "🔵"
-                    : sailWindow.color === "#f59e0b"
-                      ? "🟡"
-                      : "⚫"}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p
-                  className="text-xs font-black tracking-wider uppercase"
-                  style={{ color: sailWindow.color }}
+                <div className="absolute top-0 left-1/2 z-10 h-5 w-20 -translate-x-1/2 rounded-b-xl bg-slate-900" />
+                <div
+                  style={{
+                    height: "480px",
+                    background: "linear-gradient(160deg,#022c22,#065f46)",
+                  }}
                 >
-                  Status Saat Ini
-                </p>
-                <p className="text-sm font-black text-slate-800">
-                  {sailWindow.label}
-                </p>
-                <p className="text-[11px] font-medium text-slate-400">
-                  {sailWindow.desc}
-                </p>
-              </div>
-            </div>
-
-            {/* ── WEATHER WIDGET ── */}
-            <div className="mb-4 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
-              <div className="flex items-center justify-between border-b border-slate-50 px-4 py-3">
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-[10px] font-black tracking-widest text-slate-400 uppercase">
-                    Cuaca Laut {deviceCoords.name}
-                  </p>
-                  <p className="text-[10px] font-semibold text-slate-300">
-                    Open-Meteo & Nominatim API
-                  </p>
-                </div>
-                {wLoading ? (
-                  <div className="h-4 w-16 animate-pulse rounded-full bg-slate-100" />
-                ) : (
+                  {/* Mini map inside phone */}
                   <div
-                    className={`flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-black ${
-                      weather?.safeToSail
-                        ? "bg-emerald-50 text-emerald-600"
-                        : "bg-red-50 text-red-500"
-                    }`}
+                    className="relative mx-3 mt-8 overflow-hidden rounded-2xl"
+                    style={{
+                      height: "280px",
+                      background: "linear-gradient(160deg,#c8e6f0,#a8d5e8)",
+                    }}
                   >
-                    <span
-                      className={`h-1.5 w-1.5 rounded-full ${weather?.safeToSail ? "bg-emerald-500" : "bg-red-500"}`}
-                    />
-                    {weather?.safeToSail ? "Aman Berlayar" : "Waspada"}
-                  </div>
-                )}
-              </div>
-
-              {wLoading ? (
-                <div className="space-y-3 p-4">
-                  {[1, 2, 3].map((i) => (
                     <div
-                      key={i}
-                      className="h-6 animate-pulse rounded-lg bg-slate-100"
+                      className="absolute right-0 bottom-0 left-0 h-1/3"
+                      style={{ background: "#8fba7a" }}
                     />
-                  ))}
-                </div>
-              ) : weather ? (
-                <>
-                  <div className="flex items-center gap-4 px-4 py-3">
-                    <span className="text-4xl">{weather.conditionIcon}</span>
-                    <div>
-                      <p className="text-lg font-black text-slate-800">
-                        {weather.condition}
-                      </p>
-                      <p className="text-[11px] font-semibold text-slate-400">
-                        {weather.tempAir}°C · Kelembapan {weather.humidity}%
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-px border-t border-slate-50 bg-slate-50">
-                    <div className="bg-white px-3 py-3 text-center">
-                      <p className="text-[9px] font-black tracking-widest text-slate-400 uppercase">
-                        Angin
-                      </p>
-                      <p className="text-xl font-black text-slate-800">
-                        {weather.windSpeed}
-                      </p>
-                      <p className="text-[9px] font-semibold text-slate-400">
-                        km/h {weather.windDir}
-                      </p>
-                    </div>
-                    <div className="bg-white px-3 py-3 text-center">
-                      <p className="text-[9px] font-black tracking-widest text-slate-400 uppercase">
-                        Gelombang
-                      </p>
-                      <p className="text-xl font-black text-blue-600">
-                        {weather.waveHeight}
-                      </p>
-                      <p className="text-[9px] font-semibold text-slate-400">
-                        meter (est.)
-                      </p>
-                    </div>
-                    <div className="bg-white px-3 py-3 text-center">
-                      <p className="text-[9px] font-black tracking-widest text-slate-400 uppercase">
-                        Visibilitas
-                      </p>
-                      <p className="text-xl font-black text-slate-800">
-                        {weather.visibility}
-                      </p>
-                      <p className="text-[9px] font-semibold text-slate-400">
-                        kilometer
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-around border-t border-slate-50 bg-white px-4 py-4">
-                    <div className="flex flex-col items-center gap-2">
-                      <WindCompass
-                        deg={`${weather.windDir} ${weather.windSpeed}km/h`}
-                        dir={windDegNum}
-                      />
-                      <p className="mt-6 text-[9px] font-black tracking-wider text-slate-400 uppercase">
-                        Arah Angin
-                      </p>
-                    </div>
-                    <div className="h-16 w-px bg-slate-100" />
-                    <div className="flex flex-col items-center gap-1">
-                      <div className="flex items-end gap-1">
-                        {[0.3, 0.6, 0.9, 0.5, weather.waveHeight, 0.4, 0.7].map(
-                          (h, i) => (
-                            <WaveBar
-                              key={i}
-                              height={h}
-                              max={2.5}
-                              active={i === 4}
-                            />
-                          ),
-                        )}
-                      </div>
-                      <p className="mt-1 text-[9px] font-black tracking-wider text-slate-400 uppercase">
-                        Tinggi Gelombang
-                      </p>
-                      <p
-                        className="text-[10px] font-black"
+                    {[
+                      { top: "25%", left: "30%", size: 28, color: "#059669" },
+                      { top: "18%", left: "55%", size: 22, color: "#10b981" },
+                      { top: "38%", left: "65%", size: 18, color: "#f59e0b" },
+                    ].map((d, i) => (
+                      <div
+                        key={i}
+                        className="absolute flex items-center justify-center rounded-full"
                         style={{
-                          color:
-                            weather.waveHeight < 0.5
-                              ? "#059669"
-                              : weather.waveHeight < 1.2
-                                ? "#0284c7"
-                                : "#ef4444",
+                          top: d.top,
+                          left: d.left,
+                          width: d.size,
+                          height: d.size,
+                          background: d.color,
+                          opacity: 0.85,
+                          transform: "translate(-50%,-50%)",
                         }}
-                      >
-                        {weather.waveHeight < 0.5
-                          ? "Sangat Tenang"
-                          : weather.waveHeight < 1.2
-                            ? "Normal"
-                            : "Berbahaya"}
-                      </p>
+                      />
+                    ))}
+                    {/* Topbar */}
+                    <div className="absolute top-2 right-2 left-2 flex items-center gap-1.5 rounded-xl bg-white/90 px-2.5 py-1.5 shadow-sm">
+                      <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
+                      <span className="text-[9px] font-bold text-emerald-600">
+                        GPS Aktif
+                      </span>
                     </div>
                   </div>
-                </>
-              ) : null}
-            </div>
-
-            {/* ── PASANG SURUT HARI INI ── */}
-            {tides.length > 0 && (
-              <div className="mb-4 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
-                <div className="border-b border-slate-50 px-4 py-3">
-                  <p className="text-[10px] font-black tracking-widest text-slate-400 uppercase">
-                    Pasang Surut Hari Ini
-                  </p>
-                </div>
-                <div className="px-4 py-3">
-                  <div className="flex items-end justify-between gap-1.5">
-                    {tides.map((t, i) => {
-                      const isActive = i === activeTideIdx;
-                      const barH = Math.round((t.height / maxTide) * 52);
+                  {/* Bottom sheet */}
+                  <div className="mx-3 mt-3 overflow-hidden rounded-2xl bg-white/95 p-3 shadow-lg">
+                    <div className="flex items-center gap-2.5">
+                      <div
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white"
+                        style={{ background: "#059669" }}
+                      >
+                        <div>
+                          <p className="text-[13px] leading-none font-black">
+                            92
+                          </p>
+                          <p className="text-[7px] opacity-80">SKOR</p>
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-[8px] font-black tracking-wider text-slate-400 uppercase">
+                          Terbaik Hari Ini
+                        </p>
+                        <p className="text-[11px] font-black text-slate-800">
+                          Spot A · Hemat 40%
+                        </p>
+                        <p className="text-[9px] text-slate-400">
+                          12.4 Km · 09:00–15:00
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-2 grid grid-cols-3 gap-1">
+                      {[
+                        ["24", "Spot"],
+                        ["3", "Terbaik"],
+                        ["Pasang", "Air"],
+                      ].map(([v, l]) => (
+                        <div
+                          key={l}
+                          className="rounded-lg bg-slate-50 py-1.5 text-center"
+                        >
+                          <p className="text-[10px] font-black text-slate-700">
+                            {v}
+                          </p>
+                          <p className="text-[7px] text-slate-400">{l}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  {/* Bottom nav */}
+                  <div className="absolute right-0 bottom-0 left-0 flex justify-around border-t border-white/10 bg-white/5 px-4 py-3 backdrop-blur-sm">
+                    {[
+                      { icon: Home, label: "Home" },
+                      { icon: MapIcon, label: "Map" },
+                      { icon: History, label: "History" },
+                    ].map((item, i) => {
+                      const Icon = item.icon;
                       return (
                         <div
                           key={i}
-                          className="flex flex-1 flex-col items-center gap-1"
+                          className={`flex flex-col items-center gap-0.5 transition-opacity ${
+                            i === 1 ? "opacity-100" : "opacity-40"
+                          }`}
                         >
-                          <div className="relative flex w-full justify-center">
-                            <div
-                              className={`w-full rounded-t-lg transition-all ${
-                                isActive
-                                  ? "bg-blue-500"
-                                  : t.height >= maxTide * 0.75
-                                    ? "bg-emerald-400"
-                                    : "bg-slate-200"
-                              }`}
-                              style={{ height: `${barH}px` }}
-                            />
-                            {isActive && (
-                              <div className="absolute -top-4 left-1/2 -translate-x-1/2 rounded bg-blue-500 px-1 py-0.5 text-[7px] font-black whitespace-nowrap text-white">
-                                Sekarang
-                              </div>
-                            )}
-                          </div>
-                          <p className="text-[8px] font-bold text-slate-400">
-                            {t.time}
-                          </p>
-                          <p className="text-[8px] font-black text-slate-600">
-                            {t.height}m
-                          </p>
+                          <Icon
+                            size={20}
+                            className="text-white"
+                            strokeWidth={2.5}
+                          />
+                          <div
+                            className={`mt-1 h-1 w-1 rounded-full ${
+                              i === 1 ? "bg-emerald-400" : "bg-transparent"
+                            }`}
+                          />
                         </div>
                       );
                     })}
                   </div>
                 </div>
               </div>
-            )}
+            </Reveal>
+          </div>
+        </div>
+      </section>
 
-            {/* ── QUICK STATS ── */}
-            <div className="mb-4 grid grid-cols-2 gap-3">
-              <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-3.5">
-                <p className="text-[9px] font-black tracking-widest text-emerald-600 uppercase">
-                  Algoritma DSS
-                </p>
-                <p className="mt-1 text-2xl font-black text-emerald-700">3</p>
-                <p className="text-[10px] font-semibold text-emerald-500">
-                  Parameter aktif
-                </p>
-                <p className="mt-1.5 text-[9px] text-emerald-400">
-                  Klorofil · SST · Pasut
-                </p>
-              </div>
-              <div className="rounded-2xl border border-blue-100 bg-blue-50 p-3.5">
-                <p className="text-[9px] font-black tracking-widest text-blue-600 uppercase">
-                  Efisiensi BBM
-                </p>
-                <p className="mt-1 text-2xl font-black text-blue-700">~40%</p>
-                <p className="text-[10px] font-semibold text-blue-500">
-                  Penghematan solar
-                </p>
-                <p className="mt-1.5 text-[9px] text-blue-400">
-                  vs. metode konvensional
-                </p>
-              </div>
-            </div>
+      {/* ── TESTIMONIALS ── */}
+      <section className="border-t border-slate-100 bg-white py-16 md:py-20">
+        <div className="mx-auto max-w-6xl px-5 md:px-8">
+          <Reveal>
+            <p className="mb-2 text-[11px] font-black tracking-[0.14em] text-emerald-600 uppercase">
+              Kata Nelayan
+            </p>
+            <h2
+              className="mb-10 text-[32px] leading-tight font-black text-slate-900"
+              style={{ letterSpacing: "-0.03em" }}
+            >
+              Sudah dipakai di Laut Jawa.
+            </h2>
+          </Reveal>
 
-            {/* ── BUTTON REDIRECT TO MAP ── */}
-            <div className="pt-3">
-              <button
-                onClick={() => router.push("/home")}
-                className="group relative flex w-full items-center justify-center gap-3 overflow-hidden rounded-2xl px-6 py-4 shadow-xl shadow-emerald-200 transition-all active:scale-[0.98]"
-                style={{
-                  background:
-                    "linear-gradient(135deg, #059669 0%, #0d9488 100%)",
-                }}
-              >
-                <span className="relative text-xl">🗺️</span>
-                <div className="relative text-left">
-                  <p className="text-sm leading-none font-black text-white">
-                    Buka Peta ZPPI
+          <div className="grid gap-5 md:grid-cols-3">
+            {TESTIMONIALS.map((t, i) => (
+              <Reveal key={i} delay={i * 80}>
+                <div
+                  className={`group rounded-2xl border p-5 transition-all duration-300 hover:-translate-y-0.5 ${i === activeT ? "border-emerald-200 bg-emerald-50 shadow-sm shadow-emerald-100" : "border-slate-100 bg-slate-50"}`}
+                >
+                  <span className="mb-3 block text-2xl">{t.emoji}</span>
+                  <p className="mb-4 text-[15px] leading-relaxed font-semibold text-slate-700">
+                    "{t.quote}"
                   </p>
-                  <p className="mt-0.5 text-[10px] leading-none font-semibold text-emerald-200">
-                    Temukan spot mancing terbaik sekarang
+                  <p className="text-[13px] font-black text-slate-600">
+                    {t.name}
+                  </p>
+                  <p className="text-[11px] font-semibold text-slate-400">
+                    {t.role}
                   </p>
                 </div>
-                <svg
-                  className="relative ml-auto h-5 w-5 text-emerald-300 transition-transform duration-200 group-hover:translate-x-1"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2.5}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M13 7l5 5m0 0l-5 5m5-5H6"
-                  />
-                </svg>
-              </button>
-
-              <p className="mt-4 text-center text-[9px] font-semibold text-slate-400">
-                Sistem Informasi Maritim Nelayan © 2026 · Live GPS Tracker
-                Actived
-              </p>
-            </div>
+              </Reveal>
+            ))}
           </div>
+        </div>
+      </section>
 
-          <Navbar />
-        </main>
-      )}
-    </>
+      {/* ── FINAL CTA ── */}
+      <section
+        className="border-t border-slate-100 py-16 md:py-20"
+        style={{ background: "linear-gradient(135deg,#022c22,#065f46)" }}
+      >
+        <div className="mx-auto max-w-2xl px-5 text-center md:px-8">
+          <Reveal>
+            <p className="mb-2 text-[11px] font-black tracking-[0.14em] text-emerald-400/70 uppercase">
+              Mulai Sekarang
+            </p>
+            <h2
+              className="mb-3 text-[36px] leading-tight font-black text-white md:text-[42px]"
+              style={{ letterSpacing: "-0.04em" }}
+            >
+              Spot pertamamu
+              <br />
+              sudah menunggu.
+            </h2>
+            <p className="mb-8 text-[15px] font-medium text-white/50">
+              Siap dalam 2 menit. Gratis untuk fitur dasar.
+            </p>
+            <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+              <button
+                onClick={() => router.push("/register")}
+                className="rounded-2xl bg-white px-8 py-3.5 text-[15px] font-black text-emerald-800 transition-all hover:bg-emerald-50 active:scale-[0.97]"
+                style={{ boxShadow: "0 4px 20px rgba(0,0,0,0.2)" }}
+              >
+                Daftar Gratis
+              </button>
+              <button
+                onClick={() => router.push("/home")}
+                className="rounded-2xl border border-white/20 px-8 py-3.5 text-[14px] font-bold text-white/60 transition-all hover:border-white/40 hover:text-white/80"
+              >
+                Coba tanpa akun →
+              </button>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+    </div>
   );
 }
