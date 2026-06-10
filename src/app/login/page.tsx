@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { TriangleAlert } from "lucide-react";
 import WaveBackground from "../_components/WaveBackground";
+import { loginAction } from "~/lib/actions/auth";
 
 type FormState = "idle" | "loading" | "error" | "success";
 
@@ -30,22 +31,17 @@ export default function LoginPage() {
     }
     setState("loading");
     setErrorMsg("");
-    try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-      if (!res.ok) {
-        const data = (await res.json()) as { message?: string };
-        throw new Error(data.message ?? "Login gagal");
-      }
-      setState("success");
-      setTimeout(() => router.push("/map"), 500);
-    } catch (err) {
-      setErrorMsg(err instanceof Error ? err.message : "Terjadi kesalahan");
+
+    const result = await loginAction({ email, password });
+
+    if (!result.success) {
+      setErrorMsg(result.error);
       setState("error");
+      return;
     }
+
+    setState("success");
+    router.push("/dashboard");
   };
 
   const isLoading = state === "loading";

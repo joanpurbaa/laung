@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "../_components/Navbar";
 import SplashScreen from "../_components/SplashScreen";
+import { useSession } from "next-auth/react";
 
 interface WeatherData {
   windSpeed: number;
@@ -229,6 +230,9 @@ function getBestSailWindow() {
 }
 
 export default function Dashboard() {
+  const { data: session } = useSession();
+  const userName =
+    session?.user?.name ?? session?.user?.email?.split("@")[0] ?? "Nelayan";
   const router = useRouter();
   const [deviceCoords, setDeviceCoords] =
     useState<LocationCoords>(DEFAULT_LOCATION);
@@ -368,7 +372,6 @@ export default function Dashboard() {
               transition: "opacity 0.5s ease, transform 0.5s ease",
             }}
           >
-            {/* ── HEADER ── */}
             <div className="pt-10 pb-5">
               <h1
                 className="text-3xl leading-tight font-black text-slate-900"
@@ -376,7 +379,7 @@ export default function Dashboard() {
               >
                 Selamat Datang,
                 <br />
-                <span className="text-emerald-500">Nelayan</span> 🎣
+                <span className="text-emerald-500">{userName}</span> 🎣
               </h1>
               <p className="mt-1.5 text-[13px] font-medium text-slate-400 capitalize">
                 {deviceCoords.name} · {nowTime} WIB

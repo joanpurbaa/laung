@@ -3,6 +3,7 @@ import { type Metadata } from "next";
 import { Geist } from "next/font/google";
 import "leaflet/dist/leaflet.css";
 import PWAChecker from "./_components/PWAChecker";
+import { SessionProvider } from "next-auth/react";
 
 export const metadata: Metadata = {
   title: "Laung - Untuk Pelaut",
@@ -21,7 +22,10 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${geist.variable}`}>
       <body>
-        <PWAChecker>{children}</PWAChecker>
+        <SessionProvider>
+          {" "}
+          <PWAChecker>{children}</PWAChecker>
+        </SessionProvider>{" "}
       </body>
     </html>
   );

@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { TriangleAlert } from "lucide-react";
 import WaveBackground from "../_components/WaveBackground";
+import { registerAction } from "~/lib/actions/auth";
 
 type FormState = "idle" | "loading" | "error" | "success";
 
@@ -72,22 +73,22 @@ export default function RegisterPage() {
     }
     setState("loading");
     setErrorMsg("");
-    try {
-      const res = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim(), email, password }),
-      });
-      if (!res.ok) {
-        const data = (await res.json()) as { message?: string };
-        throw new Error(data.message ?? "Pendaftaran gagal");
-      }
-      setState("success");
-      setTimeout(() => router.push("/login"), 1000);
-    } catch (err) {
-      setErrorMsg(err instanceof Error ? err.message : "Terjadi kesalahan");
+
+    const result = await registerAction({
+      name: name.trim(),
+      email,
+      password,
+      confirmPassword: password,
+    });
+
+    if (!result.success) {
+      setErrorMsg(result.error);
       setState("error");
+      return;
     }
+
+    setState("success");
+    setTimeout(() => router.push("/login"), 800);
   };
 
   const isLoading = state === "loading";
