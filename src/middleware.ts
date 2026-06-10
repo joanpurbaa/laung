@@ -1,34 +1,34 @@
-import { auth } from "~/lib/auth";
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
-export const runtime = "nodejs";
+const PROTECTED_ROUTES = ["/dashboard", "/history", "/profile"];
+const AUTH_ROUTES = ["/login", "/register"];
 
-export default auth((req) => {
-  const { nextUrl, auth: session } = req;
-  const isLoggedIn = !!session?.user;
+export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
 
-  const isProtectedRoute =
-    nextUrl.pathname.startsWith("/dashboard") ||
-    nextUrl.pathname.startsWith("/history") ||
-    nextUrl.pathname.startsWith("/profile");
+  const token =
+    request.cookies.get("authjs.session-token")?.value ??
+    request.cookies.get("__Secure-authjs.session-token")?.value;
 
-  const isAuthRoute =
-    nextUrl.pathname.startsWith("/login") ||
-    nextUrl.pathname.startsWith("/register");
+  const isLoggedIn = !!token;
 
-  if (isProtectedRoute && !isLoggedIn) {
-    const from = encodeURIComponent(nextUrl.pathname);
-    return NextResponse.redirect(new URL(`/login?from=${from}`, nextUrl));
+  const isProtected = PROTECTED_ROUTES.some((r) => pathname.startsWith(r));
+  const isAuthRoute = AUTH_ROUTES.some((r) => pathname.startsWith(r));
+
+  if (isProtected && !isLoggedIn) {
+    const from = encodeURIComponent(pathname);
+    return NextResponse.redirect(new URL(`/login?from=${from}`, request.url));
   }
 
   if (isAuthRoute && isLoggedIn) {
-    const from = nextUrl.searchParams.get("from");
+    const from = request.nextUrl.searchParams.get("from");
     const redirectTo = from?.startsWith("/") ? from : "/dashboard";
-    return NextResponse.redirect(new URL(redirectTo, nextUrl));
+    return NextResponse.redirect(new URL(redirectTo, request.url));
   }
 
   return NextResponse.next();
-});
+}
 
 export const config = {
   matcher: ["/((?!api|_next/static|_next/image|favicon.ico|icon.svg).*)"],
