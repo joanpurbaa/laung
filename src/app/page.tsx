@@ -73,7 +73,6 @@ function Counter({ to, suffix = "" }: { to: number; suffix?: string }) {
   );
 }
 
-// ── Mockup peta nelayan ──
 function MapMockup() {
   return (
     <div
@@ -92,7 +91,6 @@ function MapMockup() {
         </div>
       </div>
 
-      {/* App content */}
       <div className="flex" style={{ height: "380px" }}>
         {/* Map area */}
         <div
@@ -102,7 +100,6 @@ function MapMockup() {
               "linear-gradient(160deg, #c8e6f0 0%, #a8d5e8 40%, #7ec8e0 100%)",
           }}
         >
-          {/* Water texture */}
           <div
             className="absolute inset-0 opacity-20"
             style={{
@@ -110,8 +107,6 @@ function MapMockup() {
                 "repeating-linear-gradient(0deg, transparent, transparent 18px, rgba(0,100,160,0.08) 18px, rgba(0,100,160,0.08) 19px), repeating-linear-gradient(90deg, transparent, transparent 18px, rgba(0,100,160,0.06) 18px, rgba(0,100,160,0.06) 19px)",
             }}
           />
-
-          {/* Land mass (pulau Jawa bagian) */}
           <div
             className="absolute right-0 bottom-0 left-0"
             style={{
@@ -130,7 +125,6 @@ function MapMockup() {
             }}
           />
 
-          {/* ZPPI circles — spot mancing */}
           {[
             {
               top: "28%",
@@ -216,7 +210,6 @@ function MapMockup() {
             </div>
           ))}
 
-          {/* GPS user location */}
           <div
             className="absolute"
             style={{
@@ -234,7 +227,6 @@ function MapMockup() {
             </div>
           </div>
 
-          {/* Top bar overlay */}
           <div className="absolute top-3 right-3 left-3 flex items-center gap-2">
             <div className="flex flex-1 items-center gap-2 rounded-xl bg-white/90 px-3 py-2 shadow-sm backdrop-blur-sm">
               <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
@@ -251,7 +243,6 @@ function MapMockup() {
             </div>
           </div>
 
-          {/* Layer switcher right */}
           <div className="absolute top-1/2 right-3 flex -translate-y-1/2 flex-col gap-1.5">
             {[
               { icon: "🚀", label: "ZPPI", active: true },
@@ -273,7 +264,6 @@ function MapMockup() {
             ))}
           </div>
 
-          {/* Legend */}
           <div className="absolute right-3 bottom-[34%] flex flex-col gap-1 rounded-xl bg-white/90 p-2 shadow-sm backdrop-blur-sm">
             {[
               ["#059669", "Sangat Baik"],
@@ -294,7 +284,7 @@ function MapMockup() {
           </div>
         </div>
 
-        {/* Bottom sheet mockup */}
+        {/* Bottom sheet */}
         <div
           className="absolute right-0 bottom-0 left-0 rounded-t-3xl bg-white shadow-2xl"
           style={{ height: "140px" }}
@@ -452,33 +442,48 @@ export default function LandingPage() {
       }}
     >
       {/* ── NAV ── */}
-      <nav className="relative sticky top-0 z-50 border-b border-slate-100 bg-white/90 backdrop-blur-md">
+      <nav className="sticky top-0 z-50 border-b border-slate-100 bg-white/90 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3.5 md:px-8">
-          <div className="flex items-center gap-2.5">
+          <Link href="/" className="flex items-center gap-2.5">
             <Image
               src="/icon.svg"
-              width={28}
-              height={28}
+              width={26}
+              height={26}
               alt="Laung"
               className="rounded-lg"
             />
             <span
-              className="text-[17px] font-black text-slate-900"
+              className="text-[16px] font-black text-slate-900"
               style={{ letterSpacing: "-0.03em" }}
             >
               Laung
             </span>
-          </div>
+          </Link>
           <div className="hidden items-center gap-6 md:flex">
-            {["Fitur", "Cara Kerja", "Manfaat"].map((l) => (
-              <a
-                key={l}
-                href={`#${l.toLowerCase().replace(" ", "-")}`}
-                className="text-[14px] font-semibold text-slate-500 transition-colors hover:text-slate-900"
-              >
-                {l}
-              </a>
-            ))}
+            <Link
+              href="/#cara-kerja"
+              className="text-[14px] font-semibold text-slate-500 transition-colors hover:text-slate-900"
+            >
+              Cara Kerja
+            </Link>
+            <Link
+              href="/terms"
+              className="text-[14px] font-semibold text-slate-500 transition-colors hover:text-slate-900"
+            >
+              Terms
+            </Link>
+            <Link
+              href="/privacy"
+              className="text-[14px] font-semibold text-slate-500 transition-colors hover:text-slate-900"
+            >
+              Privacy
+            </Link>
+            <Link
+              href="/about"
+              className="text-[14px] font-semibold text-slate-500 transition-colors hover:text-slate-900"
+            >
+              About
+            </Link>
           </div>
           <div className="flex items-center gap-2.5">
             <Link
@@ -499,10 +504,9 @@ export default function LandingPage() {
       </nav>
 
       {/* ── HERO ── */}
-      <section className="mx-auto max-w-6xl px-5 pt-16 pb-16 md:px-8 md:pt-24 md:pb-20">
+      <section className="relative mx-auto max-w-6xl px-5 pt-16 pb-16 md:px-8 md:pt-24 md:pb-20">
         <WaterParticles />
         <div className="flex flex-col gap-12 md:flex-row md:items-center md:gap-16">
-          {/* Left text */}
           <div
             className="flex-1"
             style={{
@@ -511,7 +515,6 @@ export default function LandingPage() {
               transition: "opacity 0.7s ease, transform 0.7s ease",
             }}
           >
-            {/* Eyebrow */}
             <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3.5 py-1.5">
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
               <span className="text-[11px] font-black tracking-[0.1em] text-emerald-700 uppercase">
@@ -576,7 +579,6 @@ export default function LandingPage() {
               Gratis · Tanpa kartu kredit · Install langsung di HP
             </p>
 
-            {/* Stats row */}
             <div className="mt-10 flex items-center gap-6 border-t border-slate-100 pt-6">
               {[
                 { v: 3, s: "", l: "Variabel satelit" },
@@ -595,7 +597,6 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Right — map mockup */}
           <div
             className="w-full flex-1 md:max-w-[520px]"
             style={{
@@ -684,7 +685,7 @@ export default function LandingPage() {
               <div className="flex flex-col gap-3">
                 {[
                   "Buka Laung di browser HP",
-                  `Tap ikon berbagi di Safari / Chrome`,
+                  "Tap ikon berbagi di Safari / Chrome",
                   `Pilih "Tambahkan ke Layar Utama"`,
                   "Laung siap dipakai seperti app asli",
                 ].map((s, i) => (
@@ -710,7 +711,6 @@ export default function LandingPage() {
               </button>
             </Reveal>
 
-            {/* Phone mockup */}
             <Reveal
               delay={150}
               className="flex flex-1 justify-center md:justify-end"
@@ -726,7 +726,6 @@ export default function LandingPage() {
                     background: "linear-gradient(160deg,#022c22,#065f46)",
                   }}
                 >
-                  {/* Mini map inside phone */}
                   <div
                     className="relative mx-3 mt-8 overflow-hidden rounded-2xl"
                     style={{
@@ -757,7 +756,6 @@ export default function LandingPage() {
                         }}
                       />
                     ))}
-                    {/* Topbar */}
                     <div className="absolute top-2 right-2 left-2 flex items-center gap-1.5 rounded-xl bg-white/90 px-2.5 py-1.5 shadow-sm">
                       <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
                       <span className="text-[9px] font-bold text-emerald-600">
@@ -765,7 +763,6 @@ export default function LandingPage() {
                       </span>
                     </div>
                   </div>
-                  {/* Bottom sheet */}
                   <div className="mx-3 mt-3 overflow-hidden rounded-2xl bg-white/95 p-3 shadow-lg">
                     <div className="flex items-center gap-2.5">
                       <div
@@ -809,7 +806,6 @@ export default function LandingPage() {
                       ))}
                     </div>
                   </div>
-                  {/* Bottom nav */}
                   <div className="absolute right-0 bottom-0 left-0 flex justify-around border-t border-white/10 bg-white/5 px-4 py-3 backdrop-blur-sm">
                     {[
                       { icon: Home, label: "Home" },
@@ -820,9 +816,7 @@ export default function LandingPage() {
                       return (
                         <div
                           key={i}
-                          className={`flex flex-col items-center gap-0.5 transition-opacity ${
-                            i === 1 ? "opacity-100" : "opacity-40"
-                          }`}
+                          className={`flex flex-col items-center gap-0.5 transition-opacity ${i === 1 ? "opacity-100" : "opacity-40"}`}
                         >
                           <Icon
                             size={20}
@@ -830,9 +824,7 @@ export default function LandingPage() {
                             strokeWidth={2.5}
                           />
                           <div
-                            className={`mt-1 h-1 w-1 rounded-full ${
-                              i === 1 ? "bg-emerald-400" : "bg-transparent"
-                            }`}
+                            className={`mt-1 h-1 w-1 rounded-full ${i === 1 ? "bg-emerald-400" : "bg-transparent"}`}
                           />
                         </div>
                       );
@@ -859,7 +851,6 @@ export default function LandingPage() {
               Sudah dipakai di Laut Jawa.
             </h2>
           </Reveal>
-
           <div className="grid gap-5 md:grid-cols-3">
             {TESTIMONIALS.map((t, i) => (
               <Reveal key={i} delay={i * 80}>
@@ -868,7 +859,7 @@ export default function LandingPage() {
                 >
                   <span className="mb-3 block text-2xl">{t.emoji}</span>
                   <p className="mb-4 text-[15px] leading-relaxed font-semibold text-slate-700">
-                    "{t.quote}"
+                    &quot;{t.quote}&quot;
                   </p>
                   <p className="text-[13px] font-black text-slate-600">
                     {t.name}
@@ -922,6 +913,24 @@ export default function LandingPage() {
           </Reveal>
         </div>
       </section>
+
+      {/* ── FOOTER ── */}
+      <footer className="border-t border-slate-100 bg-white py-12 text-center">
+        <div className="flex justify-center gap-6 text-[13px] font-bold text-slate-400">
+          <Link href="/terms" className="hover:text-emerald-600">
+            Syarat & Ketentuan
+          </Link>
+          <Link href="/privacy" className="hover:text-emerald-600">
+            Kebijakan Privasi
+          </Link>
+          <Link href="/about" className="hover:text-emerald-600">
+            Tentang Kami
+          </Link>
+        </div>
+        <p className="mt-6 text-[12px] text-slate-400">
+          © 2026 Laung · Dibuat dengan semangat untuk laut Indonesia.
+        </p>
+      </footer>
     </div>
   );
 }

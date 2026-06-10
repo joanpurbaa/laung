@@ -302,7 +302,7 @@ export default function LoginPage() {
           </button>
 
           <button
-            onClick={() => router.push("/dashboard")}
+            onClick={() => router.push("/map")}
             className="mt-3 flex w-full items-center justify-center rounded-2xl py-[17px] text-[14px] font-bold text-white/50 transition-all active:scale-[0.97]"
             style={{
               background: "rgba(255,255,255,0.05)",
