@@ -1,10 +1,7 @@
-import NextAuth from "next-auth";
+import { auth } from "~/lib/auth";
 import { NextResponse } from "next/server";
 
-const { auth } = NextAuth({
-  secret: process.env.AUTH_SECRET,
-  providers: [],
-});
+export const runtime = "nodejs";
 
 export default auth((req) => {
   const { nextUrl, auth: session } = req;
