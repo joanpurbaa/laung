@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import Navbar from "../_components/Navbar";
 import { logoutAction } from "~/lib/actions/auth";
+import PushNotifButton from "../_components/PushNotifButton";
 
 export default function ProfilePage() {
   const { data: session, status } = useSession();
@@ -212,6 +213,13 @@ export default function ProfilePage() {
         <p className="text-center text-[10px] font-semibold text-slate-300">
           Laung v0.1.0 · Sistem Informasi Maritim Nelayan
         </p>
+      </div>
+
+      <div>
+        <p className="mb-2 text-[10px] font-black tracking-wider text-slate-400 uppercase">
+          Notifikasi
+        </p>
+        <PushNotifButton />
       </div>
 
       <Navbar />

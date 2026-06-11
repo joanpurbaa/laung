@@ -38,6 +38,7 @@
     "react-leaflet-cluster": "^4.1.3",
     "server-only": "^0.0.1",
     "superjson": "^2.2.1",
+    "web-push": "^3.6.7",
     "zod": "^3.25.76"
   },
   "devDependencies": {
@@ -49,6 +50,7 @@
     "@types/pg": "^8.20.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "@types/web-push": "^3.6.4",
     "cross-env": "^10.1.0",
     "eslint": "^9.20.0",
     "eslint-config-next": "^15.2.3",

@@ -15,11 +15,15 @@ export const env = createEnv({
         : z.string().optional(),
     AUTH_GOOGLE_ID: z.string().min(1),
     AUTH_GOOGLE_SECRET: z.string().min(1),
-
     RESEND_API_KEY: z.string().min(1),
+    VAPID_PUBLIC_KEY: z.string().min(1),
+    VAPID_PRIVATE_KEY: z.string().min(1),
+    VAPID_SUBJECT: z.string().min(1),
   },
 
-  client: {},
+  client: {
+    NEXT_PUBLIC_VAPID_PUBLIC_KEY: z.string().min(1),
+  },
 
   runtimeEnv: {
     NODE_ENV: process.env.NODE_ENV,
@@ -28,6 +32,10 @@ export const env = createEnv({
     AUTH_GOOGLE_ID: process.env.AUTH_GOOGLE_ID,
     AUTH_GOOGLE_SECRET: process.env.AUTH_GOOGLE_SECRET,
     RESEND_API_KEY: process.env.RESEND_API_KEY,
+    VAPID_PUBLIC_KEY: process.env.VAPID_PUBLIC_KEY,
+    VAPID_PRIVATE_KEY: process.env.VAPID_PRIVATE_KEY,
+    VAPID_SUBJECT: process.env.VAPID_SUBJECT,
+    NEXT_PUBLIC_VAPID_PUBLIC_KEY: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
   },
 
   skipValidation: !!process.env.SKIP_ENV_VALIDATION,
