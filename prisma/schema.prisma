@@ -24,6 +24,8 @@ model User {
   catchLogs     CatchLog[]
 
   pushSubscriptions PushSubscription[]
+  liveLocation  LiveLocation?
+  sosAlerts     SOSAlert[]
 
   @@map("users")
 }
@@ -95,4 +97,34 @@ model PushSubscription {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("push_subscriptions")
+}
+
+model LiveLocation {
+  id          String   @id @default(cuid())
+  userId      String   @unique  // 1 row per user, di-update terus
+  latitude    Float
+  longitude   Float
+  accuracy    Float?
+  isSharing   Boolean  @default(false)
+  isSOS       Boolean  @default(false)
+  lastSeen    DateTime @default(now()) @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("live_locations")
+}
+
+model SOSAlert {
+  id          String    @id @default(cuid())
+  userId      String
+  latitude    Float
+  longitude   Float
+  message     String?
+  isResolved  Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  resolvedAt  DateTime?
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sos_alerts")
 }

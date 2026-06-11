@@ -1,9 +1,13 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import dynamic from "next/dynamic";
 import Navbar from "../_components/Navbar";
 import Image from "next/image";
+import { useSession } from "next-auth/react";
+import { useFleetTracking, type FleetMember } from "~/hooks/useFleetTracking";
+import { Users, UserCheck } from "lucide-react";
+import SOSButton from "../_components/SOSButton";
 
 interface GeoSpot {
   lat: number;
@@ -97,6 +101,9 @@ export default function Map() {
   const [gpsActive, setGpsActive] = useState(false);
   const watchIdRef = useRef<number | null>(null);
   const [recenterTrigger, setRecenterTrigger] = useState(0);
+  const { data: session } = useSession();
+  const [isSharing, setIsSharing] = useState(false);
+  const [sosAlert, setSOSAlert] = useState<FleetMember | null>(null);
 
   useEffect(() => {
     if (!navigator.geolocation) return;
@@ -178,6 +185,22 @@ export default function Map() {
   };
 
   const handleRecenter = () => setRecenterTrigger((n) => n + 1);
+
+  const handleSOSReceived = useCallback((member: FleetMember) => {
+    setSOSAlert(member);
+    setTimeout(() => setSOSAlert(null), 30000);
+  }, []);
+
+  const { fleetMembers, myLocation, toggleSharing } = useFleetTracking({
+    isSharing,
+    onSOSReceived: handleSOSReceived,
+  });
+
+  const handleToggleSharing = async () => {
+    const next = !isSharing;
+    setIsSharing(next);
+    await toggleSharing(next);
+  };
 
   return (
     <main
@@ -686,6 +709,45 @@ export default function Map() {
           onClick={() => setShowFishDropdown(false)}
         />
       )}
+
+      {sosAlert && (
+        <div className="absolute top-4 right-4 left-4 z-[2000] rounded-2xl border border-red-200 bg-red-500 p-4 shadow-2xl">
+          <div className="flex items-start gap-3">
+            <span className="text-2xl">🆘</span>
+            <div className="flex-1">
+              <p className="text-[13px] font-black text-white">
+                Sinyal SOS Diterima!
+              </p>
+              <p className="text-[11px] font-medium text-red-100">
+                Nelayan membutuhkan bantuan di koordinat{" "}
+                {sosAlert.latitude.toFixed(4)}, {sosAlert.longitude.toFixed(4)}
+              </p>
+            </div>
+            <button onClick={() => setSOSAlert(null)} className="text-red-200">
+              <X size={16} />
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="absolute right-4 bottom-24 z-[1000] flex flex-col items-end gap-3">
+        <button
+          onClick={() => void handleToggleSharing()}
+          className={`flex items-center gap-2 rounded-2xl px-3 py-2.5 text-[12px] font-black shadow-lg transition-all active:scale-95 ${
+            isSharing
+              ? "bg-emerald-500 text-white shadow-emerald-200"
+              : "border border-slate-200 bg-white text-slate-600"
+          }`}
+        >
+          {isSharing ? <UserCheck size={14} /> : <Users size={14} />}
+          {isSharing
+            ? `${fleetMembers.length} Nelayan Online`
+            : "Bagikan Lokasi"}
+        </button>
+
+        {/* SOS Button */}
+        {session?.user && <SOSButton />}
+      </div>
     </main>
   );
 }

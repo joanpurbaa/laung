@@ -2,9 +2,15 @@
 
 import { type ComponentProps } from "react";
 import dynamic from "next/dynamic";
+import { type FleetMember } from "~/hooks/useFleetTracking";
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-imports
 type ActualMapProps = ComponentProps<typeof import("./Map").default>;
+
+export interface MapClientProps extends ActualMapProps {
+  fleetMembers?: FleetMember[];
+  myLocation?: GeolocationCoordinates | null;
+}
 
 const FishingMap = dynamic<ActualMapProps>(() => import("./Map"), {
   ssr: false,
@@ -17,10 +23,14 @@ const FishingMap = dynamic<ActualMapProps>(() => import("./Map"), {
   ),
 });
 
-export default function MapClient(props: ActualMapProps) {
+export default function MapClient({
+  fleetMembers,
+  myLocation,
+  ...mapProps
+}: MapClientProps) {
   return (
-    <div className="h-full w-full">
-      <FishingMap {...props} />
+    <div className="relative h-full w-full">
+      <FishingMap {...mapProps} />
     </div>
   );
 }
