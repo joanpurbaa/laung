@@ -87,7 +87,7 @@ export default function PushNotifButton() {
     <button
       onClick={status === "granted" ? handleUnsubscribe : handleSubscribe}
       disabled={subscribing || status === "denied"}
-      className={`flex w-full items-center gap-3 rounded-2xl px-4 py-3.5 text-left transition-all active:scale-[0.98] disabled:opacity-50 ${
+      className={`flex w-full items-center gap-3 rounded-2xl bg-white px-4 py-3.5 text-left shadow-sm transition-all active:scale-[0.98] disabled:opacity-50 ${
         status === "granted"
           ? "border border-emerald-100 bg-emerald-50"
           : status === "denied"

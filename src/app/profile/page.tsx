@@ -157,6 +157,13 @@ export default function ProfilePage() {
           </div>
         </div>
 
+        <div>
+          <p className="mb-2 text-[10px] font-black tracking-wider text-slate-400 uppercase">
+            Notifikasi
+          </p>
+          <PushNotifButton />
+        </div>
+
         {/* Menu */}
         <div>
           <p className="mb-2 text-[10px] font-black tracking-wider text-slate-400 uppercase">
@@ -213,13 +220,6 @@ export default function ProfilePage() {
         <p className="text-center text-[10px] font-semibold text-slate-300">
           Laung v0.1.0 · Sistem Informasi Maritim Nelayan
         </p>
-      </div>
-
-      <div>
-        <p className="mb-2 text-[10px] font-black tracking-wider text-slate-400 uppercase">
-          Notifikasi
-        </p>
-        <PushNotifButton />
       </div>
 
       <Navbar />
