@@ -5,6 +5,7 @@ import {
   MapContainer,
   TileLayer,
   Circle,
+  CircleMarker,
   Popup,
   ZoomControl,
   Marker,
@@ -13,19 +14,7 @@ import {
 } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
-
-// const customMarkerIcon = new L.Icon({
-//   iconUrl:
-//     "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
-//   iconRetinaUrl:
-//     "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
-//   shadowUrl:
-//     "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
-//   iconSize: [25, 41],
-//   iconAnchor: [12, 41],
-//   popupAnchor: [1, -34],
-//   shadowSize: [41, 41],
-// });
+import { type FleetMember } from "~/hooks/useFleetTracking";
 
 const pulsingDotIcon = (color = "#3b82f6") =>
   L.divIcon({
@@ -83,6 +72,7 @@ interface GeoSpot {
   };
 }
 
+// ← Tambah fleetMembers dan myLocation
 interface MapProps {
   viewMode: "zppi" | "chlorophyll" | "sst" | "tides";
   selectedSpot: GeoSpot | null;
@@ -91,6 +81,8 @@ interface MapProps {
   baseOrigin: { lat: number; lng: number };
   userLocation: { lat: number; lng: number } | null;
   recenterTrigger: number;
+  fleetMembers?: FleetMember[];
+  myLocation?: GeolocationCoordinates | null;
 }
 
 function LegendItem({ color, label }: { color: string; label: string }) {
@@ -138,6 +130,8 @@ export default function Map({
   baseOrigin,
   userLocation,
   recenterTrigger,
+  fleetMembers = [],
+  myLocation,
 }: MapProps) {
   const [chlorophyllSpots, setChlorophyllSpots] = useState<GeoSpot[]>([]);
   const [sstSpots, setSstSpots] = useState<GeoSpot[]>([]);
@@ -152,13 +146,11 @@ export default function Map({
       .then(([chlorData, sstData, zppiData]) => {
         if (Array.isArray(chlorData))
           setChlorophyllSpots(
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
             chlorData.filter((s) => s.value > 0.01 && s.lat < -6.15),
           );
         if (Array.isArray(sstData))
           setSstSpots(
             sstData.filter(
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
               (s) => s.value >= 26.0 && s.value <= 32.0 && s.lat < -6.15,
             ),
           );
@@ -225,6 +217,17 @@ export default function Map({
             <LegendItem color="#abd9e9" label="< 28.5°C" />
           </>
         )}
+
+        {/* Fleet legend — hanya tampil kalau ada member */}
+        {fleetMembers.length > 0 && (
+          <div className="mt-2 border-t border-slate-100 pt-2">
+            <p className="mb-1.5 text-[9px] font-black tracking-widest text-slate-400 uppercase">
+              Armada
+            </p>
+            <LegendItem color="#0ea5e9" label="Nelayan Online" />
+            <LegendItem color="#ef4444" label="SOS Aktif" />
+          </div>
+        )}
       </div>
 
       <MapContainer
@@ -246,6 +249,7 @@ export default function Map({
           baseOrigin={baseOrigin}
         />
 
+        {/* ── Posisi user sendiri ── */}
         {userLocation && (
           <Marker
             position={[userLocation.lat, userLocation.lng]}
@@ -262,6 +266,62 @@ export default function Map({
           </Marker>
         )}
 
+        {/* ── myLocation dari useFleetTracking (fallback kalau userLocation null) ── */}
+        {!userLocation && myLocation && (
+          <Marker
+            position={[myLocation.latitude, myLocation.longitude]}
+            icon={pulsingDotIcon("#3b82f6")}
+          >
+            <Popup>
+              <div className="font-sans text-xs font-bold text-blue-700">
+                📍 Posisi Kamu
+              </div>
+            </Popup>
+          </Marker>
+        )}
+
+        {/* ── Fleet members ── */}
+        {fleetMembers.map((member) => (
+          <CircleMarker
+            key={member.userId}
+            center={[member.latitude, member.longitude]}
+            radius={member.isSOS ? 14 : 9}
+            pathOptions={{
+              color: member.isSOS ? "#ef4444" : "#0ea5e9",
+              fillColor: member.isSOS ? "#ef4444" : "#0ea5e9",
+              fillOpacity: 0.85,
+              weight: member.isSOS ? 3 : 2,
+            }}
+          >
+            <Popup>
+              <div className="font-sans text-xs">
+                <p className="font-bold text-slate-800">
+                  {member.isSOS
+                    ? "🆘 SOS — Butuh Bantuan!"
+                    : "⛵ Nelayan Online"}
+                </p>
+                <p className="mt-0.5 font-mono text-[10px] text-slate-500">
+                  {member.latitude.toFixed(4)}, {member.longitude.toFixed(4)}
+                </p>
+                {member.isSOS && (
+                  <p className="mt-1 text-[10px] font-semibold text-red-500">
+                    Segera hubungi BASARNAS: 115
+                  </p>
+                )}
+                <p className="mt-0.5 text-[10px] text-slate-400">
+                  Update:{" "}
+                  {new Date(member.lastSeen).toLocaleTimeString("id-ID", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}{" "}
+                  WIB
+                </p>
+              </div>
+            </Popup>
+          </CircleMarker>
+        ))}
+
+        {/* ── Route line ke spot terpilih ── */}
         {selectedSpot && (
           <Polyline
             positions={[
@@ -277,6 +337,7 @@ export default function Map({
           />
         )}
 
+        {/* ── ZPPI / Chlorophyll / SST circles ── */}
         {currentSpots.map((spot, idx) => {
           const isSelected =
             selectedSpot?.lat === spot.lat && selectedSpot?.lng === spot.lng;

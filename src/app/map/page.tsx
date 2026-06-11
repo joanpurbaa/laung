@@ -6,7 +6,7 @@ import Navbar from "../_components/Navbar";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { useFleetTracking, type FleetMember } from "~/hooks/useFleetTracking";
-import { Users, UserCheck } from "lucide-react";
+import { Users, UserCheck, X } from "lucide-react";
 import SOSButton from "../_components/SOSButton";
 
 interface GeoSpot {
@@ -216,6 +216,8 @@ export default function Map() {
           baseOrigin={KARANGAMPEL}
           userLocation={userLocation}
           recenterTrigger={recenterTrigger}
+          fleetMembers={fleetMembers}
+          myLocation={myLocation}
         />
       </div>
 

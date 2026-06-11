@@ -10,7 +10,7 @@ export default function SOSButton() {
   const [state, setState] = useState<SOSState>("idle");
   const [holdProgress, setHoldProgress] = useState(0);
   const holdTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const progressRef = useRef<NodeJS.Timeout | null>(null);
+  const progressRef = useRef<NodeJS.Timeout | null  >(null);
 
   const handleHoldStart = () => {
     if (state === "active") return;
