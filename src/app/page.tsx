@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { Home, Map as MapIcon, History } from "lucide-react";
 
 function useInView(threshold = 0.12) {
   const ref = useRef<HTMLDivElement>(null);
@@ -49,6 +48,33 @@ function Reveal({
   );
 }
 
+function RevealFromRight({
+  children,
+  delay = 0,
+  className = "",
+}: {
+  children: React.ReactNode;
+  delay?: number;
+  className?: string;
+}) {
+  const { ref, inView } = useInView(0.1);
+  return (
+    <div
+      ref={ref}
+      className={className}
+      style={{
+        opacity: inView ? 1 : 0,
+        transform: inView
+          ? "translateX(0) scale(1) rotate(0deg)"
+          : "translateX(60px) scale(0.92) rotate(2deg)",
+        transition: `opacity 0.8s cubic-bezier(0.22,1,0.36,1) ${delay}ms, transform 0.8s cubic-bezier(0.22,1,0.36,1) ${delay}ms`,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
 function Counter({ to, suffix = "" }: { to: number; suffix?: string }) {
   const [val, setVal] = useState(0);
   const { ref, inView } = useInView(0.3);
@@ -79,7 +105,6 @@ function MapMockup() {
       className="relative w-full overflow-hidden rounded-2xl shadow-2xl shadow-slate-900/20"
       style={{ background: "#f8fafc", border: "1px solid #e2e8f0" }}
     >
-      {/* Browser chrome */}
       <div className="flex items-center gap-2 border-b border-slate-100 bg-white px-4 py-3">
         <div className="flex gap-1.5">
           <div className="h-3 w-3 rounded-full bg-red-400" />
@@ -92,7 +117,6 @@ function MapMockup() {
       </div>
 
       <div className="flex" style={{ height: "380px" }}>
-        {/* Map area */}
         <div
           className="relative flex-1 overflow-hidden"
           style={{
@@ -284,7 +308,6 @@ function MapMockup() {
           </div>
         </div>
 
-        {/* Bottom sheet */}
         <div
           className="absolute right-0 bottom-0 left-0 rounded-t-3xl bg-white shadow-2xl"
           style={{ height: "140px" }}
@@ -381,14 +404,29 @@ const TESTIMONIALS = [
 ];
 
 function WaterParticles() {
-  const particles = Array.from({ length: 18 }, (_, i) => ({
-    id: i,
-    size: 2 + Math.random() * 3,
-    x: Math.random() * 100,
-    delay: Math.random() * 8,
-    duration: 6 + Math.random() * 6,
-    opacity: 0.08 + Math.random() * 0.12,
-  }));
+  const [particles, setParticles] = useState<
+    {
+      id: number;
+      size: number;
+      x: number;
+      delay: number;
+      duration: number;
+      opacity: number;
+    }[]
+  >([]);
+
+  useEffect(() => {
+    setParticles(
+      Array.from({ length: 18 }, (_, i) => ({
+        id: i,
+        size: 2 + Math.random() * 3,
+        x: Math.random() * 100,
+        delay: Math.random() * 8,
+        duration: 6 + Math.random() * 6,
+        opacity: 0.08 + Math.random() * 0.12,
+      })),
+    );
+  }, []);
 
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -441,7 +479,6 @@ export default function LandingPage() {
         color: "#1a1a1a",
       }}
     >
-      {/* ── NAV ── */}
       <nav className="sticky top-0 z-50 border-b border-slate-100 bg-white/90 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3.5 md:px-8">
           <Link href="/" className="flex items-center gap-2.5">
@@ -467,6 +504,12 @@ export default function LandingPage() {
               Cara Kerja
             </Link>
             <Link
+              href="/about"
+              className="text-[14px] font-semibold text-slate-500 transition-colors hover:text-slate-900"
+            >
+              About
+            </Link>
+            <Link
               href="/terms"
               className="text-[14px] font-semibold text-slate-500 transition-colors hover:text-slate-900"
             >
@@ -477,12 +520,6 @@ export default function LandingPage() {
               className="text-[14px] font-semibold text-slate-500 transition-colors hover:text-slate-900"
             >
               Privacy
-            </Link>
-            <Link
-              href="/about"
-              className="text-[14px] font-semibold text-slate-500 transition-colors hover:text-slate-900"
-            >
-              About
             </Link>
           </div>
           <div className="flex items-center gap-2.5">
@@ -503,7 +540,6 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      {/* ── HERO ── */}
       <section className="relative mx-auto max-w-6xl px-5 pt-16 pb-16 md:px-8 md:pt-24 md:pb-20">
         <WaterParticles />
         <div className="flex flex-col gap-12 md:flex-row md:items-center md:gap-16">
@@ -598,19 +634,49 @@ export default function LandingPage() {
           </div>
 
           <div
-            className="w-full flex-1 md:max-w-[520px]"
+            className="flex w-full flex-1 justify-center md:justify-end"
             style={{
               opacity: mounted ? 1 : 0,
               transform: mounted ? "none" : "translateY(20px) scale(0.97)",
               transition: "opacity 0.8s ease 0.15s, transform 0.8s ease 0.15s",
             }}
           >
-            <MapMockup />
+            <div
+              style={{
+                position: "relative",
+                width: "min(480px, 90vw)",
+                alignSelf: "flex-end",
+                marginBottom: "-80px",
+              }}
+            >
+              {/* Ambient glow hijau di belakang maskot */}
+              <div
+                style={{
+                  position: "absolute",
+                  bottom: "10%",
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  width: "60%",
+                  height: "40%",
+                  background:
+                    "radial-gradient(ellipse, rgba(5,150,105,0.15) 0%, transparent 70%)",
+                  filter: "blur(40px)",
+                  pointerEvents: "none",
+                  zIndex: 0,
+                }}
+              />
+              <Image
+                className="hidden sm:block w-full h-auto relative z-10"
+                width={300}
+                height={300}
+                src="/maskot.png"
+                alt="Maskot Laung"
+              />
+            </div>
           </div>
         </div>
       </section>
 
-      {/* ── HOW IT WORKS ── */}
       <section
         id="cara-kerja"
         className="border-t border-slate-100 bg-white py-16 md:py-24"
@@ -662,11 +728,10 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── PWA INSTALL ── */}
-      <section className="border-t border-slate-100 bg-slate-50 py-16 md:py-20">
+      <section className="overflow-hidden border-t border-slate-100 bg-slate-50 pt-16 pb-10 md:pt-10">
         <div className="mx-auto max-w-6xl px-5 md:px-8">
-          <div className="flex flex-col gap-12 md:flex-row md:items-center">
-            <Reveal className="flex-1">
+          <div className="flex flex-col gap-12 md:flex-row md:items-end">
+            <Reveal className="mb-10 flex-1">
               <p className="mb-2 text-[11px] font-black tracking-[0.14em] text-emerald-600 uppercase">
                 Install sebagai App
               </p>
@@ -711,133 +776,47 @@ export default function LandingPage() {
               </button>
             </Reveal>
 
-            <Reveal
+            <RevealFromRight
               delay={150}
               className="flex flex-1 justify-center md:justify-end"
             >
               <div
-                className="relative w-[240px] overflow-hidden rounded-[32px] shadow-2xl shadow-slate-300/60"
-                style={{ background: "#011a12", border: "6px solid #1e293b" }}
+                style={{
+                  position: "relative",
+                  width: "min(520px, 95vw)",
+                  alignSelf: "flex-end",
+                  marginBottom: "-80px",
+                }}
               >
-                <div className="absolute top-0 left-1/2 z-10 h-5 w-20 -translate-x-1/2 rounded-b-xl bg-slate-900" />
                 <div
                   style={{
-                    height: "480px",
-                    background: "linear-gradient(160deg,#022c22,#065f46)",
+                    position: "absolute",
+                    inset: "-30px",
+                    background:
+                      "radial-gradient(ellipse at 55% 45%, rgba(5,150,105,0.18) 0%, transparent 65%)",
+                    filter: "blur(32px)",
+                    pointerEvents: "none",
+                    zIndex: 0,
                   }}
-                >
-                  <div
-                    className="relative mx-3 mt-8 overflow-hidden rounded-2xl"
-                    style={{
-                      height: "280px",
-                      background: "linear-gradient(160deg,#c8e6f0,#a8d5e8)",
-                    }}
-                  >
-                    <div
-                      className="absolute right-0 bottom-0 left-0 h-1/3"
-                      style={{ background: "#8fba7a" }}
-                    />
-                    {[
-                      { top: "25%", left: "30%", size: 28, color: "#059669" },
-                      { top: "18%", left: "55%", size: 22, color: "#10b981" },
-                      { top: "38%", left: "65%", size: 18, color: "#f59e0b" },
-                    ].map((d, i) => (
-                      <div
-                        key={i}
-                        className="absolute flex items-center justify-center rounded-full"
-                        style={{
-                          top: d.top,
-                          left: d.left,
-                          width: d.size,
-                          height: d.size,
-                          background: d.color,
-                          opacity: 0.85,
-                          transform: "translate(-50%,-50%)",
-                        }}
-                      />
-                    ))}
-                    <div className="absolute top-2 right-2 left-2 flex items-center gap-1.5 rounded-xl bg-white/90 px-2.5 py-1.5 shadow-sm">
-                      <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
-                      <span className="text-[9px] font-bold text-emerald-600">
-                        GPS Aktif
-                      </span>
-                    </div>
-                  </div>
-                  <div className="mx-3 mt-3 overflow-hidden rounded-2xl bg-white/95 p-3 shadow-lg">
-                    <div className="flex items-center gap-2.5">
-                      <div
-                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white"
-                        style={{ background: "#059669" }}
-                      >
-                        <div>
-                          <p className="text-[13px] leading-none font-black">
-                            92
-                          </p>
-                          <p className="text-[7px] opacity-80">SKOR</p>
-                        </div>
-                      </div>
-                      <div>
-                        <p className="text-[8px] font-black tracking-wider text-slate-400 uppercase">
-                          Terbaik Hari Ini
-                        </p>
-                        <p className="text-[11px] font-black text-slate-800">
-                          Spot A · Hemat 40%
-                        </p>
-                        <p className="text-[9px] text-slate-400">
-                          12.4 Km · 09:00–15:00
-                        </p>
-                      </div>
-                    </div>
-                    <div className="mt-2 grid grid-cols-3 gap-1">
-                      {[
-                        ["24", "Spot"],
-                        ["3", "Terbaik"],
-                        ["Pasang", "Air"],
-                      ].map(([v, l]) => (
-                        <div
-                          key={l}
-                          className="rounded-lg bg-slate-50 py-1.5 text-center"
-                        >
-                          <p className="text-[10px] font-black text-slate-700">
-                            {v}
-                          </p>
-                          <p className="text-[7px] text-slate-400">{l}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="absolute right-0 bottom-0 left-0 flex justify-around border-t border-white/10 bg-white/5 px-4 py-3 backdrop-blur-sm">
-                    {[
-                      { icon: Home, label: "Home" },
-                      { icon: MapIcon, label: "Map" },
-                      { icon: History, label: "History" },
-                    ].map((item, i) => {
-                      const Icon = item.icon;
-                      return (
-                        <div
-                          key={i}
-                          className={`flex flex-col items-center gap-0.5 transition-opacity ${i === 1 ? "opacity-100" : "opacity-40"}`}
-                        >
-                          <Icon
-                            size={20}
-                            className="text-white"
-                            strokeWidth={2.5}
-                          />
-                          <div
-                            className={`mt-1 h-1 w-1 rounded-full ${i === 1 ? "bg-emerald-400" : "bg-transparent"}`}
-                          />
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
+                />
+                <img
+                  src="/mockup.png"
+                  alt="Laung app di HP"
+                  style={{
+                    width: "100%",
+                    height: "auto",
+                    display: "block",
+                    position: "relative",
+                    zIndex: 1,
+                    filter: "drop-shadow(0 32px 56px rgba(0,0,0,0.18))",
+                  }}
+                />
               </div>
-            </Reveal>
+            </RevealFromRight>
           </div>
         </div>
       </section>
 
-      {/* ── TESTIMONIALS ── */}
       <section className="border-t border-slate-100 bg-white py-16 md:py-20">
         <div className="mx-auto max-w-6xl px-5 md:px-8">
           <Reveal>
@@ -874,7 +853,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── FINAL CTA ── */}
       <section
         className="border-t border-slate-100 py-16 md:py-20"
         style={{ background: "linear-gradient(135deg,#022c22,#065f46)" }}
@@ -914,7 +892,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── FOOTER ── */}
       <footer className="border-t border-slate-100 bg-white py-12 text-center">
         <div className="flex justify-center gap-6 text-[13px] font-bold text-slate-400">
           <Link href="/terms" className="hover:text-emerald-600">

@@ -5,9 +5,9 @@ import dynamic from "next/dynamic";
 import Navbar from "../_components/Navbar";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
-import { useFleetTracking, type FleetMember } from "~/hooks/useFleetTracking";
 import { Users, UserCheck, X } from "lucide-react";
 import SOSButton from "../_components/SOSButton";
+import { useFleetTracking, type FleetMember } from "~/hooks/useFleetTracking";
 
 interface GeoSpot {
   lat: number;

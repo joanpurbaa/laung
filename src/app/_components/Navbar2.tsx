@@ -7,7 +7,6 @@ export default function Navbar2() {
   return (
     <nav className="sticky top-0 z-50 border-b border-slate-100 bg-white/90 backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3.5 md:px-8">
-        {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5">
           <Image
             src="/icon.svg"
@@ -24,13 +23,18 @@ export default function Navbar2() {
           </span>
         </Link>
 
-        {/* Nav Links */}
         <div className="hidden items-center gap-6 md:flex">
           <Link
             href="/#cara-kerja"
             className="text-[14px] font-semibold text-slate-500 transition-colors hover:text-slate-900"
           >
             Cara Kerja
+          </Link>
+          <Link
+            href="/about"
+            className="text-[14px] font-semibold text-slate-500 transition-colors hover:text-slate-900"
+          >
+            About
           </Link>
           <Link
             href="/terms"
@@ -44,15 +48,8 @@ export default function Navbar2() {
           >
             Privacy
           </Link>
-          <Link
-            href="/about"
-            className="text-[14px] font-semibold text-slate-500 transition-colors hover:text-slate-900"
-          >
-            About
-          </Link>
         </div>
 
-        {/* CTA Buttons */}
         <div className="flex items-center gap-2.5">
           <Link
             href="/login"
