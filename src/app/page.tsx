@@ -649,7 +649,6 @@ export default function LandingPage() {
                 marginBottom: "-80px",
               }}
             >
-              {/* Ambient glow hijau di belakang maskot */}
               <div
                 style={{
                   position: "absolute",
@@ -666,9 +665,9 @@ export default function LandingPage() {
                 }}
               />
               <Image
-                className="hidden sm:block w-full h-auto relative z-10"
-                width={300}
-                height={300}
+                className="relative z-10 hidden h-auto w-full sm:block"
+                width={500}
+                height={500}
                 src="/maskot.png"
                 alt="Maskot Laung"
               />
