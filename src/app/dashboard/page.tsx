@@ -644,7 +644,7 @@ export default function Dashboard() {
             {/* ── BUTTON REDIRECT TO MAP ── */}
             <div className="pt-3">
               <button
-                onClick={() => router.push("/home")}
+                onClick={() => router.push("/map")}
                 className="group relative flex w-full items-center justify-center gap-3 overflow-hidden rounded-2xl px-6 py-4 shadow-xl shadow-emerald-200 transition-all active:scale-[0.98]"
                 style={{
                   background:
