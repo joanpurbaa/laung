@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import Navbar2 from "./_components/Navbar2";
 
 function useInView(threshold = 0.12) {
   const ref = useRef<HTMLDivElement>(null);
@@ -96,262 +97,6 @@ function Counter({ to, suffix = "" }: { to: number; suffix?: string }) {
       {val.toLocaleString("id-ID")}
       {suffix}
     </span>
-  );
-}
-
-function MapMockup() {
-  return (
-    <div
-      className="relative w-full overflow-hidden rounded-2xl shadow-2xl shadow-slate-900/20"
-      style={{ background: "#f8fafc", border: "1px solid #e2e8f0" }}
-    >
-      <div className="flex items-center gap-2 border-b border-slate-100 bg-white px-4 py-3">
-        <div className="flex gap-1.5">
-          <div className="h-3 w-3 rounded-full bg-red-400" />
-          <div className="h-3 w-3 rounded-full bg-amber-400" />
-          <div className="h-3 w-3 rounded-full bg-emerald-400" />
-        </div>
-        <div className="mx-auto flex items-center gap-2 rounded-lg bg-slate-100 px-3 py-1 font-mono text-[11px] text-slate-400">
-          laung.app/home
-        </div>
-      </div>
-
-      <div className="flex" style={{ height: "380px" }}>
-        <div
-          className="relative flex-1 overflow-hidden"
-          style={{
-            background:
-              "linear-gradient(160deg, #c8e6f0 0%, #a8d5e8 40%, #7ec8e0 100%)",
-          }}
-        >
-          <div
-            className="absolute inset-0 opacity-20"
-            style={{
-              backgroundImage:
-                "repeating-linear-gradient(0deg, transparent, transparent 18px, rgba(0,100,160,0.08) 18px, rgba(0,100,160,0.08) 19px), repeating-linear-gradient(90deg, transparent, transparent 18px, rgba(0,100,160,0.06) 18px, rgba(0,100,160,0.06) 19px)",
-            }}
-          />
-          <div
-            className="absolute right-0 bottom-0 left-0"
-            style={{
-              height: "32%",
-              background: "linear-gradient(0deg, #8fba7a 0%, #a3c97a 100%)",
-              borderRadius: "4px 4px 0 0",
-            }}
-          />
-          <div
-            className="absolute bottom-[31%] left-0"
-            style={{
-              width: "35%",
-              height: "12%",
-              background: "#a3c97a",
-              borderRadius: "0 8px 0 0",
-            }}
-          />
-
-          {[
-            {
-              top: "28%",
-              left: "22%",
-              size: 40,
-              color: "#059669",
-              opacity: 0.85,
-              score: 92,
-            },
-            {
-              top: "18%",
-              left: "45%",
-              size: 32,
-              color: "#059669",
-              opacity: 0.75,
-              score: 87,
-            },
-            {
-              top: "35%",
-              left: "60%",
-              size: 36,
-              color: "#10b981",
-              opacity: 0.7,
-              score: 79,
-            },
-            {
-              top: "22%",
-              left: "72%",
-              size: 28,
-              color: "#f59e0b",
-              opacity: 0.7,
-              score: 63,
-            },
-            {
-              top: "42%",
-              left: "38%",
-              size: 24,
-              color: "#10b981",
-              opacity: 0.65,
-              score: 71,
-            },
-            {
-              top: "15%",
-              left: "82%",
-              size: 22,
-              color: "#ef4444",
-              opacity: 0.6,
-              score: 44,
-            },
-            {
-              top: "30%",
-              left: "82%",
-              size: 26,
-              color: "#f59e0b",
-              opacity: 0.65,
-              score: 58,
-            },
-          ].map((d, i) => (
-            <div
-              key={i}
-              className="absolute flex items-center justify-center rounded-full"
-              style={{
-                top: d.top,
-                left: d.left,
-                width: d.size,
-                height: d.size,
-                background: d.color,
-                opacity: d.opacity,
-                transform: "translate(-50%,-50%)",
-                boxShadow: `0 0 ${d.size * 0.8}px ${d.color}50`,
-              }}
-            >
-              <span
-                style={{
-                  fontSize: d.size * 0.28,
-                  fontWeight: 900,
-                  color: "white",
-                  lineHeight: 1,
-                }}
-              >
-                {d.score}
-              </span>
-            </div>
-          ))}
-
-          <div
-            className="absolute"
-            style={{
-              bottom: "34%",
-              left: "18%",
-              transform: "translate(-50%, 50%)",
-            }}
-          >
-            <div className="relative flex items-center justify-center">
-              <div
-                className="h-4 w-4 animate-ping rounded-full bg-blue-500 opacity-40"
-                style={{ position: "absolute" }}
-              />
-              <div className="h-3 w-3 rounded-full border-2 border-white bg-blue-500 shadow-lg" />
-            </div>
-          </div>
-
-          <div className="absolute top-3 right-3 left-3 flex items-center gap-2">
-            <div className="flex flex-1 items-center gap-2 rounded-xl bg-white/90 px-3 py-2 shadow-sm backdrop-blur-sm">
-              <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
-              <span className="text-[10px] font-bold text-emerald-600">
-                GPS Aktif
-              </span>
-              <div className="ml-auto flex items-center gap-1">
-                <div className="h-1.5 w-1.5 rounded-full bg-blue-500" />
-                <span className="text-[9px] font-bold text-blue-600">LIVE</span>
-              </div>
-            </div>
-            <div className="rounded-xl bg-white/90 px-2.5 py-2 shadow-sm backdrop-blur-sm">
-              <span className="text-base">🐟</span>
-            </div>
-          </div>
-
-          <div className="absolute top-1/2 right-3 flex -translate-y-1/2 flex-col gap-1.5">
-            {[
-              { icon: "🚀", label: "ZPPI", active: true },
-              { icon: "🌿", label: "Klor" },
-              { icon: "🌡️", label: "SST" },
-            ].map((l, i) => (
-              <div
-                key={i}
-                className={`flex flex-col items-center justify-center rounded-xl px-2 py-1.5 shadow-sm ${l.active ? "bg-emerald-500 text-white" : "bg-white/90 text-slate-500"}`}
-                style={{ minWidth: "40px" }}
-              >
-                <span className="text-sm leading-none">{l.icon}</span>
-                <span
-                  className={`mt-0.5 text-[7px] font-black ${l.active ? "text-white/80" : "text-slate-400"}`}
-                >
-                  {l.label}
-                </span>
-              </div>
-            ))}
-          </div>
-
-          <div className="absolute right-3 bottom-[34%] flex flex-col gap-1 rounded-xl bg-white/90 p-2 shadow-sm backdrop-blur-sm">
-            {[
-              ["#059669", "Sangat Baik"],
-              ["#10b981", "Baik"],
-              ["#f59e0b", "Sedang"],
-              ["#ef4444", "Rendah"],
-            ].map(([c, l]) => (
-              <div key={l} className="flex items-center gap-1.5">
-                <div
-                  className="h-2 w-2 rounded-full"
-                  style={{ background: c }}
-                />
-                <span className="text-[8px] font-semibold text-slate-600">
-                  {l}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div
-          className="absolute right-0 bottom-0 left-0 rounded-t-3xl bg-white shadow-2xl"
-          style={{ height: "140px" }}
-        >
-          <div className="flex flex-col items-center pt-2.5">
-            <div className="h-1 w-10 rounded-full bg-slate-200" />
-          </div>
-          <div className="px-4 pt-2">
-            <div className="flex items-center gap-3">
-              <div
-                className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-xl text-white"
-                style={{ background: "#059669" }}
-              >
-                <span className="text-lg leading-none font-black">92</span>
-                <span className="text-[7px] font-bold opacity-80">SKOR</span>
-              </div>
-              <div className="flex-1">
-                <p className="text-[9px] font-black tracking-wider text-slate-400 uppercase">
-                  Rekomendasi Terbaik
-                </p>
-                <p className="text-[13px] font-black text-slate-800">
-                  Spot A · Hemat 40% Solar
-                </p>
-                <p className="text-[10px] text-slate-400">
-                  12.4 Km · 09:00–15:00 WIB
-                </p>
-              </div>
-            </div>
-            <div className="mt-2.5 grid grid-cols-3 divide-x divide-slate-100 rounded-xl border border-slate-100 bg-slate-50 text-center">
-              {[
-                ["24", "Spot Aktif"],
-                ["3", "Sangat Baik"],
-                ["Pasang", "Kondisi Air"],
-              ].map(([v, l]) => (
-                <div key={l} className="py-1.5">
-                  <p className="text-[11px] font-black text-slate-800">{v}</p>
-                  <p className="text-[8px] text-slate-400">{l}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
   );
 }
 
@@ -479,67 +224,7 @@ export default function LandingPage() {
         color: "#1a1a1a",
       }}
     >
-      <nav className="sticky top-0 z-50 border-b border-slate-100 bg-white/90 backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3.5 md:px-8">
-          <Link href="/" className="flex items-center gap-2.5">
-            <Image
-              src="/icon.svg"
-              width={26}
-              height={26}
-              alt="Laung"
-              className="rounded-lg"
-            />
-            <span
-              className="text-[16px] font-black text-slate-900"
-              style={{ letterSpacing: "-0.03em" }}
-            >
-              Laung
-            </span>
-          </Link>
-          <div className="hidden items-center gap-6 md:flex">
-            <Link
-              href="/#cara-kerja"
-              className="text-[14px] font-semibold text-slate-500 transition-colors hover:text-slate-900"
-            >
-              Cara Kerja
-            </Link>
-            <Link
-              href="/about"
-              className="text-[14px] font-semibold text-slate-500 transition-colors hover:text-slate-900"
-            >
-              About
-            </Link>
-            <Link
-              href="/terms"
-              className="text-[14px] font-semibold text-slate-500 transition-colors hover:text-slate-900"
-            >
-              Terms
-            </Link>
-            <Link
-              href="/privacy"
-              className="text-[14px] font-semibold text-slate-500 transition-colors hover:text-slate-900"
-            >
-              Privacy
-            </Link>
-          </div>
-          <div className="flex items-center gap-2.5">
-            <Link
-              href="/login"
-              className="hidden text-[13px] font-bold text-slate-500 transition-colors hover:text-slate-800 md:block"
-            >
-              Masuk
-            </Link>
-            <Link
-              href="/register"
-              className="rounded-xl px-4 py-2 text-[13px] font-black text-white transition-all hover:opacity-90"
-              style={{ background: "linear-gradient(135deg,#059669,#0d9488)" }}
-            >
-              Daftar Gratis
-            </Link>
-          </div>
-        </div>
-      </nav>
-
+      <Navbar2 />
       <section className="relative mx-auto max-w-6xl px-5 pt-16 pb-16 md:px-8 md:pt-24 md:pb-20">
         <WaterParticles />
         <div className="flex flex-col gap-12 md:flex-row md:items-center md:gap-16">
@@ -798,17 +483,12 @@ export default function LandingPage() {
                     zIndex: 0,
                   }}
                 />
-                <img
+                <Image
+                  className="relative block h-auto w-full"
                   src="/mockup.png"
                   alt="Laung app di HP"
-                  style={{
-                    width: "100%",
-                    height: "auto",
-                    display: "block",
-                    position: "relative",
-                    zIndex: 1,
-                    filter: "drop-shadow(0 32px 56px rgba(0,0,0,0.18))",
-                  }}
+                  width={1500}
+                  height={1500}
                 />
               </div>
             </RevealFromRight>
@@ -816,7 +496,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="border-t border-slate-100 bg-white py-16 md:py-20">
+      {/* <section className="border-t border-slate-100 bg-white py-16 md:py-20">
         <div className="mx-auto max-w-6xl px-5 md:px-8">
           <Reveal>
             <p className="mb-2 text-[11px] font-black tracking-[0.14em] text-emerald-600 uppercase">
@@ -850,7 +530,7 @@ export default function LandingPage() {
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
 
       <section
         className="border-t border-slate-100 py-16 md:py-20"

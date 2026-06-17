@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
+import Navbar2 from "../_components/Navbar2";
 
 const LAST_UPDATED = "10 Juni 2026";
 const CONTACT_EMAIL = "joanpurba562@gmail.com";
@@ -18,71 +18,9 @@ export default function Terms() {
         color: "#1a1a1a",
       }}
     >
-      {/* ── NAV ── */}
-      <nav className="sticky top-0 z-50 border-b border-slate-100 bg-white/90 backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3.5 md:px-8">
-          <Link href="/" className="flex items-center gap-2.5">
-            <Image
-              src="/icon.svg"
-              width={26}
-              height={26}
-              alt="Laung"
-              className="rounded-lg"
-            />
-            <span
-              className="text-[16px] font-black text-slate-900"
-              style={{ letterSpacing: "-0.03em" }}
-            >
-              Laung
-            </span>
-          </Link>
-          <div className="hidden items-center gap-6 md:flex">
-            <Link
-              href="/#cara-kerja"
-              className="text-[14px] font-semibold text-slate-500 transition-colors hover:text-slate-900"
-            >
-              Cara Kerja
-            </Link>
-            <Link
-              href="/terms"
-              className="text-[14px] font-semibold text-slate-900 transition-colors"
-            >
-              Terms
-            </Link>
-            <Link
-              href="/privacy"
-              className="text-[14px] font-semibold text-slate-500 transition-colors hover:text-slate-900"
-            >
-              Privacy
-            </Link>
-            <Link
-              href="/about"
-              className="text-[14px] font-semibold text-slate-500 transition-colors hover:text-slate-900"
-            >
-              About
-            </Link>
-          </div>
-          <div className="flex items-center gap-2.5">
-            <Link
-              href="/login"
-              className="hidden text-[13px] font-bold text-slate-500 transition-colors hover:text-slate-800 md:block"
-            >
-              Masuk
-            </Link>
-            <Link
-              href="/register"
-              className="rounded-xl px-4 py-2 text-[13px] font-black text-white transition-all hover:opacity-90"
-              style={{ background: "linear-gradient(135deg,#059669,#0d9488)" }}
-            >
-              Daftar Gratis
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <Navbar2 />
 
-      {/* ── MAIN ── */}
       <main className="mx-auto max-w-6xl px-5 py-12 md:px-8 md:py-16">
-        {/* Page Header */}
         <div className="mb-10 border-b border-slate-100 pb-8">
           <p className="mb-2 text-[11px] font-black tracking-[0.14em] text-emerald-600 uppercase">
             Dokumen Legal
@@ -110,7 +48,6 @@ export default function Terms() {
           </div>
         </div>
 
-        {/* Content */}
         <div className="max-w-3xl space-y-10 text-[15px] leading-relaxed text-slate-600">
           <section>
             <h2
@@ -345,7 +282,6 @@ export default function Terms() {
           </section>
         </div>
 
-        {/* Footer nav */}
         <div className="mt-12 flex flex-col items-center gap-4 border-t border-slate-100 pt-8 sm:flex-row sm:justify-between">
           <p className="text-[13px] font-medium text-slate-400">
             © {new Date().getFullYear()} Laung · {TEAM_NAME}
@@ -367,7 +303,6 @@ export default function Terms() {
         </div>
       </main>
 
-      {/* ── FOOTER ── */}
       <footer className="border-t border-slate-100 bg-white py-12 text-center">
         <div className="flex justify-center gap-6 text-[13px] font-bold text-slate-400">
           <Link href="/terms" className="hover:text-emerald-600">
