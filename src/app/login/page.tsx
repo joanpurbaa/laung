@@ -7,8 +7,7 @@ import Link from "next/link";
 import { TriangleAlert } from "lucide-react";
 import WaveBackground from "../_components/WaveBackground";
 import { loginAction } from "~/lib/actions/auth";
-
-type FormState = "idle" | "loading" | "error" | "success";
+import type { FormState } from "~/types/next-auth";
 
 export default function LoginPage() {
   const router = useRouter();

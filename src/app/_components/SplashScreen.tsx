@@ -3,10 +3,6 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 
-interface SplashScreenProps {
-  onComplete: () => void;
-}
-
 export default function SplashScreen({ onComplete }: SplashScreenProps) {
   const [phase, setPhase] = useState<"wave" | "logo" | "tagline" | "out">(
     "wave",
@@ -16,6 +12,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
     const t1 = setTimeout(() => setPhase("logo"), 600);
     const t2 = setTimeout(() => setPhase("tagline"), 1400);
     const t3 = setTimeout(() => setPhase("out"), 2800);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     const t4 = setTimeout(() => onComplete(), 3400);
     return () => {
       clearTimeout(t1);

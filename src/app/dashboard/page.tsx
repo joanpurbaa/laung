@@ -5,30 +5,9 @@ import { useRouter } from "next/navigation";
 import Navbar from "../_components/Navbar";
 import SplashScreen from "../_components/SplashScreen";
 import { useSession } from "next-auth/react";
-
-interface WeatherData {
-  windSpeed: number;
-  windDir: string;
-  waveHeight: number;
-  visibility: number;
-  condition: string;
-  conditionIcon: string;
-  tempAir: number;
-  humidity: number;
-  safeToSail: boolean;
-}
-
-interface TidePoint {
-  time: string;
-  height: number;
-  status: string;
-}
-
-interface LocationCoords {
-  latitude: number;
-  longitude: number;
-  name: string;
-}
+import type { LocationCoords } from "~/types/location";
+import type { WeatherData } from "~/types/weather";
+import type { TidePoint } from "~/types/tide";
 
 const DEFAULT_LOCATION: LocationCoords = {
   latitude: -6.465,

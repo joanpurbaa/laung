@@ -9,14 +9,7 @@ import {
   deleteCatchLogAction,
 } from "~/lib/actions/catch";
 import { FISH_TYPES, LOCATIONS } from "~/lib/validators/catch";
-
-interface CatchLog {
-  id: string;
-  fishType: string;
-  weight: number;
-  location: string;
-  caughtAt: Date;
-}
+import type { CatchLog } from "@prisma/client";
 
 export default function HistoryPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -25,7 +18,6 @@ export default function HistoryPage() {
   const [loadingSubmit, setLoadingSubmit] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
-  // Form state
   const [fishType, setFishType] =
     useState<(typeof FISH_TYPES)[number]>("Tongkol");
   const [weight, setWeight] = useState("");
@@ -33,7 +25,6 @@ export default function HistoryPage() {
     "Spot A (Karangampel)",
   );
 
-  // ── Fetch logs on mount ─────────────────────────────────────────────────────
   const fetchLogs = useCallback(async () => {
     setLoadingFetch(true);
     const result = await getCatchLogsAction();
@@ -47,14 +38,12 @@ export default function HistoryPage() {
     void fetchLogs();
   }, [fetchLogs]);
 
-  // ── Derived stats ───────────────────────────────────────────────────────────
   const today = new Date().toDateString();
   const todayLogs = catchLogs.filter(
     (l) => new Date(l.caughtAt).toDateString() === today,
   );
   const totalWeightToday = todayLogs.reduce((acc, l) => acc + l.weight, 0);
 
-  // ── Add catch ───────────────────────────────────────────────────────────────
   const handleAddCatch = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
@@ -74,7 +63,6 @@ export default function HistoryPage() {
     void fetchLogs();
   };
 
-  // ── Delete catch ────────────────────────────────────────────────────────────
   const handleDelete = async (id: string) => {
     await deleteCatchLogAction(id);
     void fetchLogs();

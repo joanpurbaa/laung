@@ -19,7 +19,6 @@ export default function Terms() {
       }}
     >
       <Navbar2 />
-
       <main className="mx-auto max-w-6xl px-5 py-12 md:px-8 md:py-16">
         <div className="mb-10 border-b border-slate-100 pb-8">
           <p className="mb-2 text-[11px] font-black tracking-[0.14em] text-emerald-600 uppercase">

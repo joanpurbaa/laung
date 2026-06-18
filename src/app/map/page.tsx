@@ -8,6 +8,7 @@ import { useSession } from "next-auth/react";
 import { Users, UserCheck, X } from "lucide-react";
 import SOSButton from "../_components/SOSButton";
 import { useFleetTracking, type FleetMember } from "~/hooks/useFleetTracking";
+import type { TidePoint } from "~/types/tide";
 
 interface GeoSpot {
   lat: number;
@@ -20,12 +21,6 @@ interface GeoSpot {
     sstCont: number;
     tideCont: number;
   };
-}
-
-interface TideData {
-  time: string;
-  height: number;
-  status: string;
 }
 
 const FishingMap = dynamic(() => import("../_components/Map"), {
@@ -87,7 +82,7 @@ export default function Map() {
   const [fishType, setFishType] = useState<
     "umum" | "tongkol" | "tuna" | "kembung"
   >("umum");
-  const [, setTideData] = useState<TideData[]>([]);
+  const [, setTideData] = useState<TidePoint[]>([]);
   const [zppiSpots, setZppiSpots] = useState<GeoSpot[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedSpot, setSelectedSpot] = useState<GeoSpot | null>(null);

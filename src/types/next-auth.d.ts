@@ -8,3 +8,5 @@ declare module "next-auth" {
     } & DefaultSession["user"];
   }
 }
+
+export type FormState = "idle" | "loading" | "error" | "success";

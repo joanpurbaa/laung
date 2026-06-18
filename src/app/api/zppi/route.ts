@@ -1,12 +1,7 @@
 import { NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
-
-interface RawSpot {
-  lat: number;
-  lng: number;
-  value: number;
-}
+import type { RawSpot } from "~/types/rawSpot";
 
 export async function GET(request: Request) {
   try {

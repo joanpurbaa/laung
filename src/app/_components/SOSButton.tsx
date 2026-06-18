@@ -3,14 +3,12 @@
 import { useState, useRef } from "react";
 import { AlertTriangle, X, CheckCircle } from "lucide-react";
 import { sendSOSAction, resolveSOSAction } from "~/lib/actions/location";
-
-type SOSState = "idle" | "confirm" | "sending" | "active" | "resolving";
+import type { SOSState } from "~/types/sos";
 
 export default function SOSButton() {
   const [state, setState] = useState<SOSState>("idle");
   const [holdProgress, setHoldProgress] = useState(0);
-  const holdTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const progressRef = useRef<NodeJS.Timeout | null  >(null);
+  const progressRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleHoldStart = () => {
     if (state === "active") return;
@@ -34,6 +32,7 @@ export default function SOSButton() {
   const handleConfirmSOS = async () => {
     setState("sending");
     navigator.geolocation.getCurrentPosition(
+      // eslint-disable-next-line @typescript-eslint/no-misused-promises
       async (pos) => {
         await sendSOSAction({
           latitude: pos.coords.latitude,
@@ -57,7 +56,7 @@ export default function SOSButton() {
     setState("idle");
   };
 
-  if (state === "active") {
+  if (state === "active" || state === "resolving") {
     return (
       <div className="flex flex-col items-center gap-3">
         <div className="flex h-20 w-20 animate-pulse items-center justify-center rounded-full bg-red-500 shadow-lg shadow-red-200">

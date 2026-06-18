@@ -14,7 +14,7 @@ import {
 } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
-import { type FleetMember } from "~/hooks/useFleetTracking";
+import type { GeoSpot, MapProps } from "~/types/map";
 
 const pulsingDotIcon = (color = "#3b82f6") =>
   L.divIcon({
@@ -58,32 +58,6 @@ const pulsingDotIcon = (color = "#3b82f6") =>
     iconAnchor: [18, 18],
     popupAnchor: [0, -18],
   });
-
-interface GeoSpot {
-  lat: number;
-  lng: number;
-  value: number;
-  breakdown?: {
-    chlorValue: number;
-    sstValue: number;
-    chlorCont: number;
-    sstCont: number;
-    tideCont: number;
-  };
-}
-
-// ← Tambah fleetMembers dan myLocation
-interface MapProps {
-  viewMode: "zppi" | "chlorophyll" | "sst" | "tides";
-  selectedSpot: GeoSpot | null;
-  onSpotSelect: (spot: GeoSpot) => void;
-  fishType: string;
-  baseOrigin: { lat: number; lng: number };
-  userLocation: { lat: number; lng: number } | null;
-  recenterTrigger: number;
-  fleetMembers?: FleetMember[];
-  myLocation?: GeolocationCoordinates | null;
-}
 
 function LegendItem({ color, label }: { color: string; label: string }) {
   return (
@@ -218,7 +192,6 @@ export default function Map({
           </>
         )}
 
-        {/* Fleet legend — hanya tampil kalau ada member */}
         {fleetMembers.length > 0 && (
           <div className="mt-2 border-t border-slate-100 pt-2">
             <p className="mb-1.5 text-[9px] font-black tracking-widest text-slate-400 uppercase">
@@ -249,7 +222,6 @@ export default function Map({
           baseOrigin={baseOrigin}
         />
 
-        {/* ── Posisi user sendiri ── */}
         {userLocation && (
           <Marker
             position={[userLocation.lat, userLocation.lng]}
@@ -266,7 +238,6 @@ export default function Map({
           </Marker>
         )}
 
-        {/* ── myLocation dari useFleetTracking (fallback kalau userLocation null) ── */}
         {!userLocation && myLocation && (
           <Marker
             position={[myLocation.latitude, myLocation.longitude]}
@@ -280,7 +251,6 @@ export default function Map({
           </Marker>
         )}
 
-        {/* ── Fleet members ── */}
         {fleetMembers.map((member) => (
           <CircleMarker
             key={member.userId}
@@ -321,7 +291,6 @@ export default function Map({
           </CircleMarker>
         ))}
 
-        {/* ── Route line ke spot terpilih ── */}
         {selectedSpot && (
           <Polyline
             positions={[
@@ -337,7 +306,6 @@ export default function Map({
           />
         )}
 
-        {/* ── ZPPI / Chlorophyll / SST circles ── */}
         {currentSpots.map((spot, idx) => {
           const isSelected =
             selectedSpot?.lat === spot.lat && selectedSpot?.lng === spot.lng;
