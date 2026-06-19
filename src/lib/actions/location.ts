@@ -8,6 +8,9 @@ type ActionResult<T = void> =
   | { success: true; data: T }
   | { success: false; error: string };
 
+// Radius untuk mengirim SOS alert ke nearby users (km)
+const HAVERSINE_RADIUS_KM = 50;
+
 export async function updateLocationAction(coords: {
   latitude: number;
   longitude: number;
@@ -45,13 +48,17 @@ export async function toggleShareLocationAction(
 
   await db.liveLocation.upsert({
     where: { userId: session.user.id },
-    update: { isSharing },
+    update: {
+      isSharing,
+      lastSeen: new Date(),
+    },
     create: {
       userId: session.user.id,
       latitude: 0,
       longitude: 0,
       isSharing,
       isSOS: false,
+      lastSeen: new Date(),
     },
   });
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, Fragment } from "react";
 import {
   MapContainer,
   TileLayer,
@@ -15,6 +15,12 @@ import {
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import type { GeoSpot, MapProps } from "~/types/map";
+
+// TAMBAHKAN TYPE EXTENSION DI SINI AGAR TYPESCRIPT TETAP AMAN
+interface ExtendedMapProps extends MapProps {
+  selectedMemberId?: string | null;
+  onSelectMember?: (id: string | null) => void;
+}
 
 const pulsingDotIcon = (color = "#3b82f6") =>
   L.divIcon({
@@ -106,7 +112,9 @@ export default function Map({
   recenterTrigger,
   fleetMembers = [],
   myLocation,
-}: MapProps) {
+  selectedMemberId, // PROP BARU UNTUK TALI JARAK INTERAKTIF
+  onSelectMember,   // PROP BARU UNTUK FUNGSIONALITAS KLIK MARKER
+}: ExtendedMapProps) {
   const [chlorophyllSpots, setChlorophyllSpots] = useState<GeoSpot[]>([]);
   const [sstSpots, setSstSpots] = useState<GeoSpot[]>([]);
   const [zppiSpots, setZppiSpots] = useState<GeoSpot[]>([]);
@@ -251,45 +259,73 @@ export default function Map({
           </Marker>
         )}
 
-        {fleetMembers.map((member) => (
-          <CircleMarker
-            key={member.userId}
-            center={[member.latitude, member.longitude]}
-            radius={member.isSOS ? 14 : 9}
-            pathOptions={{
-              color: member.isSOS ? "#ef4444" : "#0ea5e9",
-              fillColor: member.isSOS ? "#ef4444" : "#0ea5e9",
-              fillOpacity: 0.85,
-              weight: member.isSOS ? 3 : 2,
-            }}
-          >
-            <Popup>
-              <div className="font-sans text-xs">
-                <p className="font-bold text-slate-800">
-                  {member.isSOS
-                    ? "🆘 SOS — Butuh Bantuan!"
-                    : "⛵ Nelayan Online"}
-                </p>
-                <p className="mt-0.5 font-mono text-[10px] text-slate-500">
-                  {member.latitude.toFixed(4)}, {member.longitude.toFixed(4)}
-                </p>
-                {member.isSOS && (
-                  <p className="mt-1 text-[10px] font-semibold text-red-500">
-                    Segera hubungi BASARNAS: 115
-                  </p>
-                )}
-                <p className="mt-0.5 text-[10px] text-slate-400">
-                  Update:{" "}
-                  {new Date(member.lastSeen).toLocaleTimeString("id-ID", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}{" "}
-                  WIB
-                </p>
-              </div>
-            </Popup>
-          </CircleMarker>
-        ))}
+        {fleetMembers.map((member) => {
+          const isSelected = selectedMemberId === member.userId;
+
+          return (
+            <Fragment key={member.userId}>
+              <CircleMarker
+                center={[member.latitude, member.longitude]}
+                radius={member.isSOS ? 14 : isSelected ? 12 : 9}
+                eventHandlers={{
+                  click: () => {
+                    if (onSelectMember) {
+                      onSelectMember(isSelected ? null : member.userId);
+                    }
+                  }
+                }}
+                pathOptions={{
+                  color: member.isSOS ? "#ef4444" : isSelected ? "#3b82f6" : "#0ea5e9",
+                  fillColor: member.isSOS ? "#ef4444" : isSelected ? "#3b82f6" : "#0ea5e9",
+                  fillOpacity: 0.85,
+                  weight: member.isSOS ? 3 : isSelected ? 4 : 2,
+                }}
+              >
+                <Popup>
+                  <div className="font-sans text-xs">
+                    <p className="font-bold text-slate-800">
+                      {member.isSOS
+                        ? "🆘 SOS — Butuh Bantuan!"
+                        : `⛵ Nelayan: ${member.userName || "Tanpa Nama"}`}
+                    </p>
+                    <p className="mt-0.5 font-mono text-[10px] text-slate-500">
+                      {member.latitude.toFixed(4)}, {member.longitude.toFixed(4)}
+                    </p>
+                    {member.isSOS && (
+                      <p className="mt-1 text-[10px] font-semibold text-red-500">
+                        Segera hubungi BASARNAS: 115
+                      </p>
+                    )}
+                    <p className="mt-0.5 text-[10px] text-slate-400">
+                      Update:{" "}
+                      {new Date(member.lastSeen).toLocaleTimeString("id-ID", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}{" "}
+                      WIB
+                    </p>
+                  </div>
+                </Popup>
+              </CircleMarker>
+
+              {/* TALI JARAK INTERAKTIF ANTAR FLEET MEMBERS */}
+              {isSelected && routeOrigin && (
+                <Polyline
+                  positions={[
+                    [routeOrigin.lat, routeOrigin.lng],
+                    [member.latitude, member.longitude]
+                  ]}
+                  pathOptions={{
+                    color: "#3b82f6",
+                    weight: 2.5,
+                    dashArray: "6, 6",
+                    opacity: 0.9,
+                  }}
+                />
+              )}
+            </Fragment>
+          );
+        })}
 
         {selectedSpot && (
           <Polyline
