@@ -98,6 +98,8 @@ export default function Map() {
   const { data: session } = useSession();
   const [isSharing, setIsSharing] = useState(false);
   const [sosAlert, setSOSAlert] = useState<FleetMember | null>(null);
+  const [activeSharedMemberId, setActiveSharedMemberId] = useState<string | null>(null);
+  const [sharedSpotMemberId, setSharedSpotMemberId] = useState<string | null>(null);
   //state baru buat line antara nelayan
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
 
@@ -229,8 +231,8 @@ export default function Map() {
           recenterTrigger={recenterTrigger}
           fleetMembers={fleetMembers}
           myLocation={myLocation}
-          selectedMemberId={selectedMemberId}
-          onSelectMember={setSelectedMemberId}
+          selectedMemberId={activeSharedMemberId} // Ganti yang tadinya selectedMemberId biasa
+          onSelectMember={setActiveSharedMemberId}
         />
       </div>
 
@@ -772,17 +774,18 @@ export default function Map() {
             </div>
           </div>
 
-          <button
-            onClick={(e) => {
-              e.stopPropagation(); // Biar klik tombol kirim gak ganggu fungsi tali jarak div luar
-              handleShareSpotToFisher(member);
-            }}
-            disabled={!selectedSpot}
-            className="flex h-7 items-center gap-1.5 rounded-xl bg-emerald-500 px-3 text-[10px] font-black text-white shadow-sm shadow-emerald-100 transition-all hover:bg-emerald-600 active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
-          >
-            <Send size={10} />
-            Kirim
-          </button>
+        <button
+  onClick={(e) => {
+    e.stopPropagation();
+    handleShareSpotToFisher(member);
+    setActiveSharedMemberId(member.userId); // Mengunci ID nelayan agar tali muncul
+  }}
+  disabled={!selectedSpot}
+  className="flex h-7 items-center gap-1.5 rounded-xl bg-emerald-500 px-3 text-[10px] font-black text-white shadow-sm shadow-emerald-100 transition-all hover:bg-emerald-600 active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
+>
+  <Send size={10} />
+  Kirim
+</button>
         </div>
       );
     })

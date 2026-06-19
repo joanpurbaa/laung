@@ -131,47 +131,51 @@ export function useFleetTracking({
         },
       })
       .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "live_locations",
-          filter: "isSharing=eq.true",
-        },
-        (payload) => {
-          const record = payload.new as Record<string, unknown>;
-          const isShareActive = record.isSharing === true;
-          const userId = record.userId as string;
+  "postgres_changes",
+  {
+    event: "*",
+    schema: "public",
+    table: "live_locations",
+    filter: "isSharing=eq.true",
+  },
+  (payload) => {
+    // Kebal Crash: Jaga-jaga kalau payload.new kosong (misal pas event DELETE)
+    if (!payload.new) return;
 
-          if (!isShareActive) {
-            setFleetMembers((prev) => prev.filter((m) => m.userId !== userId));
-            return;
-          }
+    const record = payload.new as Record<string, unknown>;
+    const isShareActive = record.isSharing === true;
+    const userId = record.userId as string;
 
-          const updated: FleetMember = {
-            userId,
-            userName: userMapRef.current.get(userId) ?? null,
-            latitude: record.latitude as number,
-            longitude: record.longitude as number,
-            accuracy: record.accuracy as number | undefined,
-            isSOS: record.isSOS === true,
-            lastSeen: (record.lastSeen as string) ?? new Date().toISOString(),
-          };
+    // Kalau status sharing-nya mati, langsung tendang dari map
+    if (!isShareActive) {
+      setFleetMembers((prev) => prev.filter((m) => m.userId !== userId));
+      return;
+    }
 
-          setFleetMembers((prev) => {
-            const exists = prev.findIndex((m) => m.userId === userId);
-            if (updated.isSOS && onSOSReceived) {
-              onSOSReceived(updated);
-            }
-            if (exists >= 0) {
-              const next = [...prev];
-              next[exists] = updated;
-              return next;
-            }
-            return [...prev, updated];
-          });
-        },
-      )
+    const updated: FleetMember = {
+      userId,
+      userName: userMapRef.current.get(userId) ?? null,
+      latitude: record.latitude as number,
+      longitude: record.longitude as number,
+      accuracy: record.accuracy as number | undefined,
+      isSOS: record.isSOS === true,
+      lastSeen: (record.lastSeen as string) ?? new Date().toISOString(),
+    };
+
+    setFleetMembers((prev) => {
+      const exists = prev.findIndex((m) => m.userId === userId);
+      if (updated.isSOS && onSOSReceived) {
+        onSOSReceived(updated);
+      }
+      if (exists >= 0) {
+        const next = [...prev];
+        next[exists] = updated;
+        return next;
+      }
+      return [...prev, updated];
+    });
+  },
+)
       .subscribe();
 
     channelRef.current = channel;
