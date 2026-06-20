@@ -3,12 +3,12 @@
 import { auth } from "~/lib/auth";
 import { db } from "~/lib/prisma";
 import { sendNotifToUserAction } from "~/lib/actions/push";
+import { sendWhatsAppMessage } from "~/lib/fonnte";
 
 type ActionResult<T = void> =
   | { success: true; data: T }
   | { success: false; error: string };
 
-// Radius untuk mengirim SOS alert ke nearby users (km)
 const HAVERSINE_RADIUS_KM = 50;
 
 export async function updateLocationAction(coords: {
@@ -46,23 +46,88 @@ export async function toggleShareLocationAction(
   const session = await auth();
   if (!session?.user?.id) return { success: false, error: "Belum login" };
 
-  await db.liveLocation.upsert({
-    where: { userId: session.user.id },
-    update: {
-      isSharing,
-      lastSeen: new Date(),
-    },
-    create: {
-      userId: session.user.id,
-      latitude: 0,
-      longitude: 0,
-      isSharing,
-      isSOS: false,
-      lastSeen: new Date(),
-    },
-  });
+  try {
+    const userWithContacts = await db.user.findUnique({
+      where: { id: session.user.id },
+      include: { familyContacts: true },
+    });
 
-  return { success: true, data: undefined };
+    if (isSharing) {
+      const currentLoc = await db.liveLocation.findUnique({
+        where: { userId: session.user.id },
+      });
+      const currentLat = currentLoc?.latitude ?? 0;
+      const currentLon = currentLoc?.longitude ?? 0;
+
+      const newTrip = await db.trip.create({
+        data: {
+          userId: session.user.id,
+          status: "ACTIVE",
+          startTime: new Date(),
+        },
+      });
+
+      await db.liveLocation.upsert({
+        where: { userId: session.user.id },
+        update: { isSharing, lastSeen: new Date() },
+        create: {
+          userId: session.user.id,
+          latitude: currentLat,
+          longitude: currentLon,
+          isSharing,
+          isSOS: false,
+          lastSeen: new Date(),
+        },
+      });
+
+      if (
+        userWithContacts?.familyContacts &&
+        userWithContacts.familyContacts.length > 0
+      ) {
+        const startMessage = `⛵ *Info Keberangkatan - Laung App*\n\nAlhamdulillah, nelayan *${userWithContacts.name ?? "Nelayan"}* telah mengaktifkan radar keselamatan dan *MULAI MELAUT* sekarang.\n\nSistem Laung akan mendampingi perjalanan dan mengirimkan update posisi berkala ke nomor ini selama jaringan seluler tersedia.`;
+
+        for (const contact of userWithContacts.familyContacts) {
+          await sendWhatsAppMessage(contact.phone, startMessage);
+        }
+      }
+    } else {
+      const activeTrip = await db.trip.findFirst({
+        where: { userId: session.user.id, status: "ACTIVE" },
+        orderBy: { createdAt: "desc" },
+      });
+
+      if (activeTrip) {
+        await db.trip.update({
+          where: { id: activeTrip.id },
+          data: {
+            status: "COMPLETED",
+            endTime: new Date(),
+          },
+        });
+      }
+
+      await db.liveLocation.update({
+        where: { userId: session.user.id },
+        data: { isSharing, isSOS: false, lastSeen: new Date() },
+      });
+
+      if (
+        userWithContacts?.familyContacts &&
+        userWithContacts.familyContacts.length > 0
+      ) {
+        const endMessage = `✅ *Alhamdulillah, Sudah Mendarat! - Laung App*\n\nKabar baik, nelayan *${userWithContacts.name ?? "Nelayan"}* telah menyelesaikan aktivitas melautnya dan saat ini sudah *TIBA DI DARAT* dengan selamat.\n\nTerima kasih telah menggunakan sistem pemantauan keselamatan Laung App.`;
+
+        for (const contact of userWithContacts.familyContacts) {
+          await sendWhatsAppMessage(contact.phone, endMessage);
+        }
+      }
+    }
+
+    return { success: true, data: undefined };
+  } catch (error: any) {
+    console.error("Error toggling share location & WA update:", error);
+    return { success: false, error: "Gagal memperbarui status perjalanan" };
+  }
 }
 
 function haversineDistance(
@@ -180,7 +245,7 @@ export async function resolveSOSAction(): Promise<ActionResult> {
 
   return { success: true, data: undefined };
 }
-// ini ak buat fungsi sharespotaction
+
 export async function shareSpotAction(coords: {
   recipientId: string;
   latitude: number;

@@ -5,11 +5,12 @@ import dynamic from "next/dynamic";
 import Navbar from "../_components/Navbar";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
-import { Users, UserCheck, X, Send, Navigation } from "lucide-react"; // Tambah Send & Navigation buat estetika UI
+import { Users, UserCheck, X, Send } from "lucide-react";
 import SOSButton from "../_components/SOSButton";
 import { useFleetTracking, type FleetMember } from "~/hooks/useFleetTracking";
 import type { TidePoint } from "~/types/tide";
 import { shareSpotAction } from "~/lib/actions/location";
+import FamilyContactModal from "../_components/FamilyContactModal";
 
 interface GeoSpot {
   lat: number;
@@ -54,6 +55,7 @@ function calculateDistance(
 }
 
 const LAYER_OPTIONS = [
+  { value: "pesan", icon: "💬", label: "Pesan" },
   { value: "zppi", icon: "🚀", label: "ZPPI" },
   { value: "chlorophyll", icon: "🌿", label: "Klorofil" },
   { value: "sst", icon: "🌡️", label: "Suhu" },
@@ -99,13 +101,14 @@ export default function Map() {
   const { data: session } = useSession();
   const [isSharing, setIsSharing] = useState(false);
   const [sosAlert, setSOSAlert] = useState<FleetMember | null>(null);
-  const [activeSharedMemberId, setActiveSharedMemberId] = useState<string | null>(null);
-  const [sharedSpotMemberId, setSharedSpotMemberId] = useState<string | null>(null);
-  //state baru buat line antara nelayan
-  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
+  const [activeSharedMemberId, setActiveSharedMemberId] = useState<
+    string | null
+  >(null);
 
-  // ─── STATE BARU UNTUK MODAL LIST NELAYAN ───
+  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
   const [showFleetModal, setShowFleetModal] = useState(false);
+
+  const [showFamilyModal, setShowFamilyModal] = useState(false);
 
   useEffect(() => {
     if (!navigator.geolocation) return;
@@ -204,15 +207,17 @@ export default function Map() {
   };
 
   // ─── FUNGSI UNTUK BAGI KOORDINAT SPOT KE NELAYAN TERTENTU ───
- const handleShareSpotToFisher = async (fisher: FleetMember) => {
+  const handleShareSpotToFisher = async (fisher: FleetMember) => {
     if (!selectedSpot) {
       alert("Pilih koordinat spot ZPPI di peta terlebih dahulu!");
       return;
     }
-    
+
     // 1. Tampilkan log payload sesuai instruksi template ketua lu
-    console.log(`Mengirim Spot (${selectedSpot.lat}, ${selectedSpot.lng}) ke Nelayan: ${fisher.userName}`);
-    
+    console.log(
+      `Mengirim Spot (${selectedSpot.lat}, ${selectedSpot.lng}) ke Nelayan: ${fisher.userName}`,
+    );
+
     // 2. Eksekusi Server Action untuk simpan ke database via Prisma
     const result = await shareSpotAction({
       recipientId: fisher.userId,
@@ -249,7 +254,6 @@ export default function Map() {
         />
       </div>
 
-      {/* TOP BAR */}
       <div className="absolute top-0 right-0 left-0 z-[1010] px-3 pt-3 pb-2">
         <div className="flex items-center gap-2">
           <div className="flex flex-1 items-center gap-2.5 rounded-2xl border border-white/60 bg-white/90 px-3.5 py-2.5 shadow-lg backdrop-blur-md">
@@ -284,6 +288,14 @@ export default function Map() {
               <span className="text-[9px] font-bold text-blue-600">LIVE</span>
             </div>
           </div>
+
+          {/* <button
+            onClick={() => setShowFamilyModal(true)}
+            className="flex h-[52px] items-center gap-1.5 rounded-2xl border border-white/60 bg-white/90 px-3.5 text-xs font-bold text-slate-700 shadow-lg backdrop-blur-md transition-all hover:bg-slate-50 active:scale-95"
+          >
+            <span>⚙️</span>
+            <span className="hidden sm:inline">Atur</span> Keluarga
+          </button> */}
 
           <div className="relative">
             <button
@@ -345,29 +357,37 @@ export default function Map() {
         </div>
       </div>
 
-      {/* LAYER SWITCHER */}
       <div className="absolute top-1/2 right-3 z-[1010] flex -translate-y-1/2 flex-col gap-2">
         {LAYER_OPTIONS.map((layer) => (
           <button
             key={layer.value}
-            onClick={() => setViewMode(layer.value)}
+            onClick={() => {
+              if (layer.value === "pesan") {
+                setShowFamilyModal(true);
+              } else {
+                setViewMode(layer.value);
+              }
+            }}
             title={layer.label}
             className={`flex h-11 w-11 flex-col items-center justify-center rounded-2xl border shadow-lg backdrop-blur-md transition-all ${
-              viewMode === layer.value
+              viewMode === layer.value && layer.value !== "pesan"
                 ? "border-emerald-300 bg-emerald-500 text-white shadow-emerald-200"
                 : "border-white/60 bg-white/90 text-slate-600 hover:bg-white"
             }`}
           >
             <span className="text-base leading-none">{layer.icon}</span>
             <span
-              className={`mt-0.5 text-[8px] leading-none font-bold ${viewMode === layer.value ? "text-white/90" : "text-slate-400"}`}
+              className={`mt-0.5 text-[8px] leading-none font-bold ${
+                viewMode === layer.value && layer.value !== "pesan"
+                  ? "text-white/90"
+                  : "text-slate-400"
+              }`}
             >
               {layer.label}
             </span>
           </button>
         ))}
 
-        {/* RECENTER BUTTON */}
         <button
           onClick={handleRecenter}
           title="Ke Lokasiku"
@@ -394,7 +414,6 @@ export default function Map() {
         </button>
       </div>
 
-      {/* BOTTOM SHEET */}
       <div className="absolute right-0 bottom-16 left-0 z-[1010]">
         {!sheetExpanded ? (
           <div className="mx-3 mb-3">
@@ -620,7 +639,9 @@ export default function Map() {
                       <div>
                         <div className="mb-1 flex items-center justify-between">
                           <span className="text-[11px] font-semibold text-slate-600">
-                            🌿 Klorofil-a ({selectedSpot.breakdown.chlorValue.toFixed(2)} mg/m³)
+                            🌿 Klorofil-a (
+                            {selectedSpot.breakdown.chlorValue.toFixed(2)}{" "}
+                            mg/m³)
                           </span>
                           <span className="text-[11px] font-black text-emerald-600">
                             +{selectedSpot.breakdown.chlorCont} pts
@@ -629,14 +650,17 @@ export default function Map() {
                         <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
                           <div
                             className="h-full rounded-full bg-emerald-400"
-                            style={{ width: `${selectedSpot.breakdown.chlorCont}%` }}
+                            style={{
+                              width: `${selectedSpot.breakdown.chlorCont}%`,
+                            }}
                           />
                         </div>
                       </div>
                       <div>
                         <div className="mb-1 flex items-center justify-between">
                           <span className="text-[11px] font-semibold text-slate-600">
-                            🌡️ Suhu Permukaan ({selectedSpot.breakdown.sstValue.toFixed(1)} °C)
+                            🌡️ Suhu Permukaan (
+                            {selectedSpot.breakdown.sstValue.toFixed(1)} °C)
                           </span>
                           <span className="text-[11px] font-black text-blue-600">
                             +{selectedSpot.breakdown.sstCont} pts
@@ -645,7 +669,9 @@ export default function Map() {
                         <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
                           <div
                             className="h-full rounded-full bg-blue-400"
-                            style={{ width: `${selectedSpot.breakdown.sstCont}%` }}
+                            style={{
+                              width: `${selectedSpot.breakdown.sstCont}%`,
+                            }}
                           />
                         </div>
                       </div>
@@ -661,7 +687,9 @@ export default function Map() {
                         <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
                           <div
                             className="h-full rounded-full bg-cyan-400"
-                            style={{ width: `${selectedSpot.breakdown.tideCont}%` }}
+                            style={{
+                              width: `${selectedSpot.breakdown.tideCont}%`,
+                            }}
                           />
                         </div>
                       </div>
@@ -723,137 +751,147 @@ export default function Map() {
         />
       )}
 
-      {/* BACKDROP UNTUK LIST FLEET MODAL */}
       {showFleetModal && (
-        <div 
+        <div
           className="absolute inset-0 z-[1999] bg-slate-900/20 backdrop-blur-sm transition-all"
           onClick={() => setShowFleetModal(false)}
         />
       )}
 
-      {/* ─── GLASSMORPHISM FLEET LIST PANEL (Tampil pas klik Bagikan Lokasi) ─── */}
       {showFleetModal && (
-        <div className="absolute right-4 bottom-36 left-4 z-[2000] max-h-64 overflow-hidden rounded-3xl border border-white/60 bg-white/90 p-4 shadow-2xl backdrop-blur-xl animate-in slide-in-from-bottom-5 duration-200">
+        <div className="animate-in slide-in-from-bottom-5 absolute right-4 bottom-36 left-4 z-[2000] max-h-64 overflow-hidden rounded-3xl border border-white/60 bg-white/90 p-4 shadow-2xl backdrop-blur-xl duration-200">
           <div className="mb-3 flex items-center justify-between">
             <div>
               <p className="text-[10px] font-black tracking-widest text-slate-400 uppercase">
                 Kirim Koordinat Target
               </p>
               <h4 className="text-xs font-black text-slate-700">
-                {selectedSpot ? `Spot Skor: ${selectedSpot.value}` : "Belum Pilih Spot"}
+                {selectedSpot
+                  ? `Spot Skor: ${selectedSpot.value}`
+                  : "Belum Pilih Spot"}
               </h4>
             </div>
-            <button 
-              onClick={() => setShowFleetModal(false)} 
+            <button
+              onClick={() => setShowFleetModal(false)}
               className="rounded-full bg-slate-100 p-1 text-slate-400 hover:bg-slate-200"
             >
               <X size={14} />
             </button>
           </div>
 
-          <div className="max-h-44 overflow-y-auto space-y-1.5 pr-1">
+          <div className="max-h-44 space-y-1.5 overflow-y-auto pr-1">
             {fleetMembers.length === 0 ? (
               <div className="py-6 text-center">
-                <p className="text-xs font-semibold text-slate-400">Tidak ada nelayan aktif di sekitar.</p>
+                <p className="text-xs font-semibold text-slate-400">
+                  Tidak ada nelayan aktif di sekitar.
+                </p>
               </div>
-          ) : (
-    fleetMembers.map((member) => {
-      const isSelected = selectedMemberId === member.userId;
+            ) : (
+              fleetMembers.map((member) => {
+                const isSelected = selectedMemberId === member.userId;
 
-      return (
-        <div 
-          key={member.userId} 
-          onClick={() => setSelectedMemberId(isSelected ? null : member.userId)}
-          className={`flex items-center justify-between rounded-2xl border p-2.5 transition-all hover:bg-white cursor-pointer ${
-            isSelected 
-              ? "border-blue-500 bg-blue-50/40 shadow-sm" 
-              : "border-slate-100 bg-white/60"
-          }`}
-        >
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <div className="h-7 w-7 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-xs">
-                {(member?.userName || "unknown").substring(0, 2).toUpperCase()}
-              </div>
-              <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full bg-emerald-500 border border-white" />
-            </div>
-            <div>
-              <p className="text-xs font-black text-slate-700">{member.userName}</p>
-              <p className="text-[9px] font-medium text-slate-400">
-                {userLocation 
-                  ? `${calculateDistance(userLocation.lat, userLocation.lng, member.latitude, member.longitude).toFixed(1)} Km` 
-                  : "Lokasi tidak diketahui"}
+                return (
+                  <div
+                    key={member.userId}
+                    onClick={() =>
+                      setSelectedMemberId(isSelected ? null : member.userId)
+                    }
+                    className={`flex cursor-pointer items-center justify-between rounded-2xl border p-2.5 transition-all hover:bg-white ${
+                      isSelected
+                        ? "border-blue-500 bg-blue-50/40 shadow-sm"
+                        : "border-slate-100 bg-white/60"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="relative">
+                        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-600">
+                          {(member?.userName || "unknown")
+                            .substring(0, 2)
+                            .toUpperCase()}
+                        </div>
+                        <span className="absolute right-0 bottom-0 h-2 w-2 rounded-full border border-white bg-emerald-500" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-black text-slate-700">
+                          {member.userName}
+                        </p>
+                        <p className="text-[9px] font-medium text-slate-400">
+                          {userLocation
+                            ? `${calculateDistance(userLocation.lat, userLocation.lng, member.latitude, member.longitude).toFixed(1)} Km`
+                            : "Lokasi tidak diketahui"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleShareSpotToFisher(member);
+                        setActiveSharedMemberId(member.userId); // Mengunci ID nelayan agar tali muncul
+                      }}
+                      disabled={!selectedSpot}
+                      className="flex h-7 items-center gap-1.5 rounded-xl bg-emerald-500 px-3 text-[10px] font-black text-white shadow-sm shadow-emerald-100 transition-all hover:bg-emerald-600 active:scale-95 disabled:pointer-events-none disabled:opacity-50"
+                    >
+                      <Send size={10} />
+                      Kirim
+                    </button>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
+
+      {sosAlert && (
+        <div className="absolute top-4 right-4 left-4 z-[2000] rounded-2xl border border-red-200 bg-red-500 p-4 shadow-2xl">
+          <div className="flex items-start gap-3">
+            <span className="text-2xl">🆘</span>
+            <div className="flex-1">
+              <p className="text-[13px] font-black text-white">
+                Sinyal SOS Diterima!
+              </p>
+              <p className="text-[11px] font-medium text-red-100">
+                Nelayan membutuhkan bantuan di koordinat{" "}
+                {sosAlert.latitude.toFixed(4)}, {sosAlert.longitude.toFixed(4)}
               </p>
             </div>
+            <button onClick={() => setSOSAlert(null)} className="text-red-200">
+              <X size={16} />
+            </button>
           </div>
-
-        <button
-  onClick={(e) => {
-    e.stopPropagation();
-    handleShareSpotToFisher(member);
-    setActiveSharedMemberId(member.userId); // Mengunci ID nelayan agar tali muncul
-  }}
-  disabled={!selectedSpot}
-  className="flex h-7 items-center gap-1.5 rounded-xl bg-emerald-500 px-3 text-[10px] font-black text-white shadow-sm shadow-emerald-100 transition-all hover:bg-emerald-600 active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
->
-  <Send size={10} />
-  Kirim
-</button>
         </div>
-      );
-    })
-  )}
-</div>
-</div>
-)}
+      )}
 
-{sosAlert && (
-<div className="absolute top-4 right-4 left-4 z-[2000] rounded-2xl border border-red-200 bg-red-500 p-4 shadow-2xl">
-  <div className="flex items-start gap-3">
-    <span className="text-2xl">🆘</span>
-    <div className="flex-1">
-      <p className="text-[13px] font-black text-white">
-        Sinyal SOS Diterima!
-      </p>
-      <p className="text-[11px] font-medium text-red-100">
-        Nelayan membutuhkan bantuan di koordinat{" "}
-        {sosAlert.latitude.toFixed(4)}, {sosAlert.longitude.toFixed(4)}
-      </p>
-    </div>
-    <button onClick={() => setSOSAlert(null)} className="text-red-200">
-      <X size={16} />
-    </button>
-  </div>
-</div>
-)}
+      <div className="absolute right-4 bottom-24 z-[1000] flex flex-col items-end gap-3">
+        <button
+          onClick={() => {
+            // 1. Pastikan status share tracker internal menyala dulu
+            if (!isSharing) {
+              void handleToggleSharing();
+            }
+            // 2. Buka / tutup modal list nelayan
+            setShowFleetModal((prev) => !prev);
+          }}
+          className={`flex items-center gap-2 rounded-2xl px-3 py-2.5 text-[12px] font-black shadow-lg transition-all active:scale-95 ${
+            isSharing || showFleetModal
+              ? "bg-emerald-500 text-white shadow-emerald-200"
+              : "border border-slate-200 bg-white text-slate-600"
+          }`}
+        >
+          {isSharing ? <UserCheck size={14} /> : <Users size={14} />}
+          {isSharing
+            ? `${fleetMembers.length} Nelayan Online`
+            : "Bagikan Lokasi"}
+        </button>
 
-{/* CONTROL BUTTONS (BOTTOM RIGHT) */}
-<div className="absolute right-4 bottom-24 z-[1000] flex flex-col items-end gap-3">
-{/* BUTTON UTAMA BAGIKAN LOKASI */}
-<button
-  onClick={() => {
-    // 1. Pastikan status share tracker internal menyala dulu
-    if (!isSharing) {
-      void handleToggleSharing();
-    }
-    // 2. Buka / tutup modal list nelayan
-    setShowFleetModal((prev) => !prev);
-  }}
-  className={`flex items-center gap-2 rounded-2xl px-3 py-2.5 text-[12px] font-black shadow-lg transition-all active:scale-95 ${
-    isSharing || showFleetModal
-      ? "bg-emerald-500 text-white shadow-emerald-200"
-      : "border border-slate-200 bg-white text-slate-600"
-  }`}
->
-  {isSharing ? <UserCheck size={14} /> : <Users size={14} />}
-  {isSharing
-    ? `${fleetMembers.length} Nelayan Online`
-    : "Bagikan Lokasi"}
-</button>
+        {session?.user && <SOSButton />}
 
-{/* SOS Button */}
-{session?.user && <SOSButton />}
-</div>
-</main>
-);
+        <FamilyContactModal
+          isOpen={showFamilyModal}
+          onClose={() => setShowFamilyModal(false)}
+        />
+      </div>
+    </main>
+  );
 }

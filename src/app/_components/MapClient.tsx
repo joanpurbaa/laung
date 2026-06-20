@@ -15,7 +15,9 @@ const FishingMap = dynamic<ActualMapProps>(() => import("./Map"), {
 });
 
 export default function MapClient({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   fleetMembers,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   myLocation,
   ...mapProps
 }: MapClientProps) {
