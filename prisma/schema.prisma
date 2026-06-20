@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
+  provider = "postgresql"
 }
 
 model User {
@@ -14,18 +14,23 @@ model User {
   image         String?
   password      String?
 
-  isVerified    Boolean   @default(true) 
+  isVerified Boolean @default(true)
 
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  accounts      Account[]
-  sessions      Session[]
-  catchLogs     CatchLog[]
+  accounts       Account[]
+  sessions       Session[]
+  catchLogs      CatchLog[]
+  familyContacts FamilyContact[]
+  trips          Trip[]
 
   pushSubscriptions PushSubscription[]
-  liveLocation  LiveLocation?
-  sosAlerts     SOSAlert[]
+  liveLocation      LiveLocation?
+  sosAlerts         SOSAlert[]
+
+  sentSpots     SharedSpot[] @relation("SentSpots")
+  receivedSpots SharedSpot[] @relation("ReceivedSpots")
 
   @@map("users")
 }
@@ -44,8 +49,8 @@ model Account {
   id_token          String? @db.Text
   session_state     String?
 
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -59,12 +64,13 @@ model Session {
   userId       String
   expires      DateTime
 
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("sessions")
 }
 
 model VerificationToken {
+  id         String   @id @default(cuid())
   identifier String
   token      String
   expires    DateTime
@@ -74,16 +80,35 @@ model VerificationToken {
 }
 
 model CatchLog {
-  id        String   @id @default(cuid())
-  userId    String
-  fishType  String
-  weight    Float
-  location  String
-  caughtAt  DateTime @default(now())
+  id       String   @id @default(cuid())
+  userId   String
+  fishType String
+  weight   Float
+  location String
+  caughtAt DateTime @default(now())
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tripId String?
+  trip   Trip?   @relation(name: "CatchLogToTrip", fields: [tripId], references: [id])
 
   @@map("catch_logs")
+}
+
+model Trip {
+  id          String    @id @default(cuid())
+  userId      String
+  status      String    @default("ACTIVE")
+  startTime   DateTime  @default(now())
+  endTime     DateTime?
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  catchLogs          CatchLog[]          @relation(name: "CatchLogToTrip")
+  waNotificationLogs WaNotificationLog[]
+
+  @@map("trips")
 }
 
 model PushSubscription {
@@ -94,46 +119,76 @@ model PushSubscription {
   auth      String
   createdAt DateTime @default(now())
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("push_subscriptions")
 }
 
 model LiveLocation {
-  id          String   @id @default(cuid())
-  userId      String   @unique  // 1 row per user, di-update terus
-  latitude    Float
-  longitude   Float
-  accuracy    Float?
-  isSharing   Boolean  @default(false)
-  isSOS       Boolean  @default(false)
-  lastSeen    DateTime @default(now()) @updatedAt
+  id        String   @id @default(cuid())
+  userId    String   @unique // 1 row per user, di-update terus
+  latitude  Float
+  longitude Float
+  accuracy  Float?
+  isSharing Boolean  @default(false)
+  isSOS     Boolean  @default(false)
+  lastSeen  DateTime @default(now()) @updatedAt
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("live_locations")
 }
 
 model SOSAlert {
-  id          String    @id @default(cuid())
-  userId      String
-  latitude    Float
-  longitude   Float
-  message     String?
-  isResolved  Boolean   @default(false)
-  createdAt   DateTime  @default(now())
-  resolvedAt  DateTime?
+  id         String    @id @default(cuid())
+  userId     String
+  latitude   Float
+  longitude  Float
+  message    String?
+  isResolved Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+  resolvedAt DateTime?
 
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("sos_alerts")
 }
+
 model SharedSpot {
   id          String   @id @default(uuid())
-  senderId    String   // ID nelayan yang mengirim
-  recipientId String   // ID nelayan yang dituju
+  senderId    String // ID nelayan yang mengirim
+  recipientId String // ID nelayan yang dituju
   latitude    Float
   longitude   Float
   createdAt   DateTime @default(now())
   // kl ada relasi ke user pasang aja bang 
+
+  sender    User @relation("SentSpots", fields: [senderId], references: [id], onDelete: Cascade)
+  recipient User @relation("ReceivedSpots", fields: [recipientId], references: [id], onDelete: Cascade)
+
+  @@map("shared_spots")
+}
+
+model FamilyContact {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  phone     String
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model WaNotificationLog {
+  id             String   @id @default(cuid())
+  tripId         String
+  recipientPhone String
+  messageType    String
+  sentAt         DateTime @default(now())
+
+  trip Trip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  @@index([tripId, sentAt])
+  @@map("wa_notification_logs")
 }
