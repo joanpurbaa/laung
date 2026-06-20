@@ -128,3 +128,12 @@ model SOSAlert {
 
   @@map("sos_alerts")
 }
+model SharedSpot {
+  id          String   @id @default(uuid())
+  senderId    String   // ID nelayan yang mengirim
+  recipientId String   // ID nelayan yang dituju
+  latitude    Float
+  longitude   Float
+  createdAt   DateTime @default(now())
+  // kl ada relasi ke user pasang aja bang 
+}

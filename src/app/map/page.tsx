@@ -9,6 +9,7 @@ import { Users, UserCheck, X, Send, Navigation } from "lucide-react"; // Tambah 
 import SOSButton from "../_components/SOSButton";
 import { useFleetTracking, type FleetMember } from "~/hooks/useFleetTracking";
 import type { TidePoint } from "~/types/tide";
+import { shareSpotAction } from "~/lib/actions/location";
 
 interface GeoSpot {
   lat: number;
@@ -192,6 +193,7 @@ export default function Map() {
 
   const { fleetMembers, myLocation, toggleSharing } = useFleetTracking({
     isSharing,
+    myUserId: session?.user?.id,
     onSOSReceived: handleSOSReceived,
   });
 
@@ -202,17 +204,28 @@ export default function Map() {
   };
 
   // ─── FUNGSI UNTUK BAGI KOORDINAT SPOT KE NELAYAN TERTENTU ───
-  const handleShareSpotToFisher = (fisher: FleetMember) => {
+ const handleShareSpotToFisher = async (fisher: FleetMember) => {
     if (!selectedSpot) {
       alert("Pilih koordinat spot ZPPI di peta terlebih dahulu!");
       return;
     }
     
-    // Disini lu tinggal hit API backend lu atau kirim via WebSocket/Ably/Pusher.
-    // Contoh log payload data yang siap dikirim:
+    // 1. Tampilkan log payload sesuai instruksi template ketua lu
     console.log(`Mengirim Spot (${selectedSpot.lat}, ${selectedSpot.lng}) ke Nelayan: ${fisher.userName}`);
     
-    alert(`Koordinat Spot Berhasil dibagikan ke ${fisher.userName}!`);
+    // 2. Eksekusi Server Action untuk simpan ke database via Prisma
+    const result = await shareSpotAction({
+      recipientId: fisher.userId,
+      latitude: selectedSpot.lat,
+      longitude: selectedSpot.lng,
+    });
+
+    // 3. Beri feedback ke user berdasarkan hasil response database
+    if (result.success) {
+      alert(`Koordinat Spot Berhasil dibagikan ke ${fisher.userName}!`);
+    } else {
+      alert(`Gagal membagikan spot: ${result.error}`);
+    }
   };
 
   return (

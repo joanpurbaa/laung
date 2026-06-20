@@ -19,11 +19,13 @@ export interface FleetMember {
 
 interface UseFleetTrackingOptions {
   isSharing: boolean;
+  myUserId: string | null | undefined; // 1. Masukkan tipe data myUserId di sini
   onSOSReceived?: (member: FleetMember) => void;
 }
 
 export function useFleetTracking({
   isSharing,
+  myUserId, // 2. Destructure variabelnya di sini agar bisa dipakai di dalam useEffect
   onSOSReceived,
 }: UseFleetTrackingOptions) {
   const [fleetMembers, setFleetMembers] = useState<FleetMember[]>([]);
@@ -131,51 +133,71 @@ export function useFleetTracking({
         },
       })
       .on(
-  "postgres_changes",
-  {
-    event: "*",
-    schema: "public",
-    table: "live_locations",
-    filter: "isSharing=eq.true",
-  },
-  (payload) => {
-    // Kebal Crash: Jaga-jaga kalau payload.new kosong (misal pas event DELETE)
-    if (!payload.new) return;
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "live_locations",
+          filter: "isSharing=eq.true",
+        },
+        (payload) => {
+          if (!payload.new) return;
 
-    const record = payload.new as Record<string, unknown>;
-    const isShareActive = record.isSharing === true;
-    const userId = record.userId as string;
+          const record = payload.new as Record<string, unknown>;
+          const isShareActive = record.isSharing === true;
+          const userId = record.userId as string;
 
-    // Kalau status sharing-nya mati, langsung tendang dari map
-    if (!isShareActive) {
-      setFleetMembers((prev) => prev.filter((m) => m.userId !== userId));
-      return;
-    }
+          if (!isShareActive) {
+            setFleetMembers((prev) => prev.filter((m) => m.userId !== userId));
+            return;
+          }
 
-    const updated: FleetMember = {
-      userId,
-      userName: userMapRef.current.get(userId) ?? null,
-      latitude: record.latitude as number,
-      longitude: record.longitude as number,
-      accuracy: record.accuracy as number | undefined,
-      isSOS: record.isSOS === true,
-      lastSeen: (record.lastSeen as string) ?? new Date().toISOString(),
-    };
+          const updated: FleetMember = {
+            userId,
+            userName: userMapRef.current.get(userId) ?? null,
+            latitude: record.latitude as number,
+            longitude: record.longitude as number,
+            accuracy: record.accuracy as number | undefined,
+            isSOS: record.isSOS === true,
+            lastSeen: (record.lastSeen as string) ?? new Date().toISOString(),
+          };
 
-    setFleetMembers((prev) => {
-      const exists = prev.findIndex((m) => m.userId === userId);
-      if (updated.isSOS && onSOSReceived) {
-        onSOSReceived(updated);
-      }
-      if (exists >= 0) {
-        const next = [...prev];
-        next[exists] = updated;
-        return next;
-      }
-      return [...prev, updated];
-    });
-  },
-)
+          setFleetMembers((prev) => {
+            const exists = prev.findIndex((m) => m.userId === userId);
+            if (updated.isSOS && onSOSReceived) {
+              onSOSReceived(updated);
+            }
+            if (exists >= 0) {
+              const next = [...prev];
+              next[exists] = updated;
+              return next;
+            }
+            return [...prev, updated];
+          });
+        },
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "SharedSpot",
+        },
+        (payload) => {
+          if (!payload.new || !myUserId) return; // 3. Proteksi ekstra jika myUserId null
+          const record = payload.new as Record<string, unknown>;
+
+          if (record.recipientId === myUserId) {
+            const senderName =
+              userMapRef.current.get(record.senderId as string) ?? "Nelayan";
+            alert(`⚓ ${senderName} membagikan lokasi spot baru denganmu!`);
+
+            if (typeof (window as any).onReceiveShareLock === "function") {
+              (window as any).onReceiveShareLock(record);
+            }
+          }
+        },
+      )
       .subscribe();
 
     channelRef.current = channel;
@@ -186,7 +208,8 @@ export function useFleetTracking({
         channelRef.current = null;
       }
     };
-  }, [isSharing, onSOSReceived, fetchInitialFleetMembers]);
+    // 4. Masukkan myUserId ke dependency array di bawah ini
+  }, [isSharing, myUserId, onSOSReceived, fetchInitialFleetMembers]);
 
   const toggleSharing = useCallback(async (value: boolean) => {
     if (value) {

@@ -180,3 +180,28 @@ export async function resolveSOSAction(): Promise<ActionResult> {
 
   return { success: true, data: undefined };
 }
+// ini ak buat fungsi sharespotaction
+export async function shareSpotAction(coords: {
+  recipientId: string;
+  latitude: number;
+  longitude: number;
+}): Promise<ActionResult> {
+  const session = await auth();
+  if (!session?.user?.id) return { success: false, error: "Belum login" };
+
+  try {
+    await db.sharedSpot.create({
+      data: {
+        senderId: session.user.id,
+        recipientId: coords.recipientId,
+        latitude: coords.latitude,
+        longitude: coords.longitude,
+      },
+    });
+
+    return { success: true, data: undefined };
+  } catch (error) {
+    console.error("Gagal share spot via Prisma:", error);
+    return { success: false, error: "Gagal membagikan lokasi" };
+  }
+}
