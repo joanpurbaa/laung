@@ -112,9 +112,6 @@ export async function toggleShareLocationAction(
     },
   });
 
-<<<<<<< Updated upstream
-  return { success: true, data: undefined };
-=======
     if (isSharing) {
       // 1. Aktifkan di Redis
       await activateSharelockRedis(session.user.id);
@@ -189,7 +186,6 @@ export async function toggleShareLocationAction(
     const errorMessage = error instanceof Error ? error.message : "Terjadi kesalahan sistem";
     return { success: false, error: `Gagal memperbarui status: ${errorMessage}` };
   }
->>>>>>> Stashed changes
 }
 
 function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -303,9 +299,6 @@ export async function shareSpotAction(coords: {
     console.error("Gagal share spot via Prisma:", error);
     return { success: false, error: "Gagal membagikan lokasi" };
   }
-<<<<<<< Updated upstream
-}
-=======
 }
 
 // ── P2P Sharelock Actions ──────────────────────────────
@@ -380,4 +373,3 @@ export async function getOutgoingSharelockTargetsAction(): Promise<ActionResult<
   const targets = await redis.smembers(`${SHARELOCK_USER_TARGETS_PREFIX}${session.user.id}`);
   return { success: true, data: targets };
 }
->>>>>>> Stashed changes
