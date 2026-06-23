@@ -536,7 +536,6 @@ export default function Map() {
         </button>
       </div>
 
-      {/* FLOATING CARD DETAIL NELAYAN Z-30 */}
       {selectedMemberForDetail && (
         <div className="animate-in fade-in slide-in-from-top-4 absolute top-24 right-4 left-4 z-30 max-w-sm duration-200 sm:mx-auto">
           <div
