@@ -2,11 +2,19 @@ import { NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
 import type { RawSpot } from "~/types/rawSpot";
+import { redis } from "~/lib/redis";
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const fishType = searchParams.get("fish") ?? "umum";
+
+    const CACHE_KEY = `cache:zppi:${fishType}`;
+
+    const cachedZppi = await redis.get(CACHE_KEY);
+    if (cachedZppi) {
+      return NextResponse.json(cachedZppi);
+    }
 
     const chlorPath = path.join(process.cwd(), "src/data/chlorophyll.json");
     const sstPath = path.join(process.cwd(), "src/data/sst.json");
@@ -80,6 +88,8 @@ export async function GET(request: Request) {
           },
         };
       });
+
+    await redis.set(CACHE_KEY, zppiData, { ex: 1800 });
 
     return NextResponse.json(zppiData);
   } catch (error) {

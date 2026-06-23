@@ -114,8 +114,6 @@ export default function Map({
   selectedMemberId,
   onSelectMember,
 }: ExtendedMapProps) {
-  
-  // 1. STATE PELINDUNG MOUNTING
   const [isMounted, setIsMounted] = useState(false);
 
   const [chlorophyllSpots, setChlorophyllSpots] = useState<GeoSpot[]>([]);
@@ -124,7 +122,6 @@ export default function Map({
 
   useEffect(() => {
     setIsMounted(true);
-    // Cleanup function untuk mencegah memory leak di Strict Mode
     return () => setIsMounted(false);
   }, []);
 
@@ -174,7 +171,6 @@ export default function Map({
 
   const routeOrigin = userLocation ?? baseOrigin;
 
-  // 2. CEGAH RENDER SEBELUM DOM SIAP (Mencegah "appendChild" error)
   if (!isMounted) {
     return (
       <div className="flex h-full w-full items-center justify-center bg-slate-100">
@@ -232,7 +228,6 @@ export default function Map({
       </div>
 
       <MapContainer
-        key="main-fishing-map" // 3. GEMBOK ANTI "REUSED INSTANCE" ERROR
         center={[-6.48, 108.6]}
         zoom={9}
         minZoom={8}
@@ -282,6 +277,7 @@ export default function Map({
 
         {fleetMembers.map((member) => {
           const isSelected = selectedMemberId === member.userId;
+          const routeColor = member.isSOS ? "#ef4444" : "#3b82f6";
 
           return (
             <Fragment key={member.userId}>
@@ -319,8 +315,8 @@ export default function Map({
                     [member.latitude, member.longitude],
                   ]}
                   pathOptions={{
-                    color: "#3b82f6",
-                    weight: 2.5,
+                    color: routeColor,
+                    weight: member.isSOS ? 3.5 : 2.5,
                     dashArray: "6, 6",
                     opacity: 0.9,
                   }}

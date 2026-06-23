@@ -13,9 +13,11 @@ type ActionResult<T = void> =
 const HAVERSINE_RADIUS_KM = 50;
 
 // ── Redis Keys ──────────────────────────────────────────────
-const SHARELOCK_ACTIVE_USERS_KEY   = "sharelock:active_users";
-const SHARELOCK_RELATIONS_PREFIX   = "sharelock:relations:";      // + recipientId
-const SHARELOCK_USER_TARGETS_PREFIX = "sharelock:user_targets:";   // + senderId
+const SHARELOCK_ACTIVE_USERS_KEY = "sharelock:active_users";
+const SHARELOCK_RELATIONS_PREFIX = "sharelock:relations:"; // + recipientId
+const SHARELOCK_USER_TARGETS_PREFIX = "sharelock:user_targets:"; // + senderId
+const SHARELOCK_HEARTBEAT_PREFIX = "sharelock:heartbeat:"; // + userId
+const SHARELOCK_HEARTBEAT_TTL_SECONDS = 10 * 60;
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -31,7 +33,7 @@ async function deactivateSharelockRedis(userId: string) {
   // Ambil semua data relasi sebelum dihapus
   const targetKey = `${SHARELOCK_USER_TARGETS_PREFIX}${userId}`;
   const targets = await redis.smembers(targetKey);
-  
+
   const relationKey = `${SHARELOCK_RELATIONS_PREFIX}${userId}`;
   const senders = await redis.smembers(relationKey);
 
@@ -48,7 +50,7 @@ async function deactivateSharelockRedis(userId: string) {
   }
   pipeline.del(targetKey);
 
-  // 3. OPSI 1: Buang juga kunci yang orang lain berikan ke User ini (Sama-sama buta)
+  // 3. Buang juga kunci yang orang lain berikan ke User ini (Sama-sama buta)
   if (senders.length > 0) {
     for (const senderId of senders) {
       pipeline.srem(`${SHARELOCK_USER_TARGETS_PREFIX}${senderId}`, userId);
@@ -58,6 +60,20 @@ async function deactivateSharelockRedis(userId: string) {
 
   // Eksekusi semua perintah sapu bersih dalam satu tembakan (atomic)
   await pipeline.exec();
+}
+
+export async function pruneStaleSharelock(): Promise<void> {
+  const activeIds = await redis.smembers(SHARELOCK_ACTIVE_USERS_KEY);
+  if (activeIds.length === 0) return;
+
+  const heartbeats = await Promise.all(
+    activeIds.map((id) => redis.exists(`${SHARELOCK_HEARTBEAT_PREFIX}${id}`)),
+  );
+
+  const staleIds = activeIds.filter((_, idx) => heartbeats[idx] === 0);
+  if (staleIds.length === 0) return;
+
+  await Promise.all(staleIds.map((id) => deactivateSharelockRedis(id)));
 }
 
 // ── Actions ──────────────────────────────────────────────────
@@ -87,6 +103,10 @@ export async function updateLocationAction(coords: {
     },
   });
 
+  await redis.set(`${SHARELOCK_HEARTBEAT_PREFIX}${session.user.id}`, "1", {
+    ex: SHARELOCK_HEARTBEAT_TTL_SECONDS,
+  });
+
   return { success: true, data: undefined };
 }
 
@@ -96,108 +116,59 @@ export async function toggleShareLocationAction(
   const session = await auth();
   if (!session?.user?.id) return { success: false, error: "Belum login" };
 
-  await db.liveLocation.upsert({
-    where: { userId: session.user.id },
-    update: {
-      isSharing,
-      lastSeen: new Date(),
-    },
-    create: {
-      userId: session.user.id,
-      latitude: 0,
-      longitude: 0,
-      isSharing,
-      isSOS: false,
-      lastSeen: new Date(),
-    },
-  });
+  try {
+    await db.liveLocation.upsert({
+      where: { userId: session.user.id },
+      update: {
+        isSharing,
+        isSOS: isSharing ? undefined : false,
+        lastSeen: new Date(),
+      },
+      create: {
+        userId: session.user.id,
+        latitude: 0,
+        longitude: 0,
+        isSharing,
+        isSOS: false,
+      },
+    });
 
-<<<<<<< Updated upstream
-  return { success: true, data: undefined };
-=======
     if (isSharing) {
-      // 1. Aktifkan di Redis
       await activateSharelockRedis(session.user.id);
-
-      // 2. Database
-      const currentLoc = await db.liveLocation.findUnique({
-        where: { userId: session.user.id },
+      await redis.set(`${SHARELOCK_HEARTBEAT_PREFIX}${session.user.id}`, "1", {
+        ex: SHARELOCK_HEARTBEAT_TTL_SECONDS,
       });
-      const currentLat = currentLoc?.latitude ?? 0;
-      const currentLon = currentLoc?.longitude ?? 0;
-
-      await db.trip.create({
-        data: {
-          userId: session.user.id,
-          status: "ACTIVE",
-          startTime: new Date(),
-        },
-      });
-
-      await db.liveLocation.upsert({
-        where: { userId: session.user.id },
-        update: { isSharing, lastSeen: new Date() },
-        create: {
-          userId: session.user.id,
-          latitude: currentLat,
-          longitude: currentLon,
-          isSharing,
-          isSOS: false,
-          lastSeen: new Date(),
-        },
-      });
-
-      if (userWithContacts?.familyContacts && userWithContacts.familyContacts.length > 0) {
-        const startMessage = `⛵ *Info Keberangkatan - Laung App*\n\nAlhamdulillah, nelayan *${userWithContacts.name ?? "Nelayan"}* telah mengaktifkan radar keselamatan dan *MULAI MELAUT* sekarang.\n\nSistem Laung akan mendampingi perjalanan dan mengirimkan update posisi berkala ke nomor ini selama jaringan seluler tersedia.`;
-        for (const contact of userWithContacts.familyContacts) {
-          await sendWhatsAppMessage(contact.phone, startMessage);
-        }
-      }
     } else {
-      // 1. Nonaktifkan Redis (Sapu bersih P2P)
       await deactivateSharelockRedis(session.user.id);
-
-      // 2. Database
-      const activeTrip = await db.trip.findFirst({
-        where: { userId: session.user.id, status: "ACTIVE" },
-        orderBy: { createdAt: "desc" },
-      });
-      
-      if (activeTrip) {
-        await db.trip.update({
-          where: { id: activeTrip.id },
-          data: { status: "COMPLETED", endTime: new Date() },
-        });
-      }
-
-      await db.liveLocation.update({
-        where: { userId: session.user.id },
-        data: { isSharing, isSOS: false, lastSeen: new Date() },
-      });
-
-      if (userWithContacts?.familyContacts && userWithContacts.familyContacts.length > 0) {
-        const endMessage = `✅ *Alhamdulillah, Sudah Mendarat! - Laung App*\n\nKabar baik, nelayan *${userWithContacts.name ?? "Nelayan"}* telah menyelesaikan aktivitas melautnya dan saat ini sudah *TIBA DI DARAT* dengan selamat.\n\nTerima kasih telah menggunakan sistem pemantauan keselamatan Laung App.`;
-        for (const contact of userWithContacts.familyContacts) {
-          await sendWhatsAppMessage(contact.phone, endMessage);
-        }
-      }
+      await redis.del(`${SHARELOCK_HEARTBEAT_PREFIX}${session.user.id}`);
     }
 
     return { success: true, data: undefined };
   } catch (error: unknown) {
-    console.error("Error toggling share location & WA update:", error);
-    const errorMessage = error instanceof Error ? error.message : "Terjadi kesalahan sistem";
-    return { success: false, error: `Gagal memperbarui status: ${errorMessage}` };
+    console.error("Error toggling share location:", error);
+    const errorMessage =
+      error instanceof Error ? error.message : "Terjadi kesalahan sistem";
+    return {
+      success: false,
+      error: `Gagal memperbarui status: ${errorMessage}`,
+    };
   }
->>>>>>> Stashed changes
 }
 
-function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+function haversineDistance(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number,
+): number {
   const R = 6371;
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
   const dLon = ((lon2 - lon1) * Math.PI) / 180;
-  const a = Math.sin(dLat / 2) ** 2 +
-    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) ** 2;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
@@ -221,11 +192,11 @@ export async function sendSOSAction(coords: {
   // PAKSA isSharing jadi true agar menembus filter broadcast Supabase
   await db.liveLocation.upsert({
     where: { userId: session.user.id },
-    update: { 
-      isSOS: true, 
-      isSharing: true, 
-      latitude: coords.latitude, 
-      longitude: coords.longitude 
+    update: {
+      isSOS: true,
+      isSharing: true,
+      latitude: coords.latitude,
+      longitude: coords.longitude,
     },
     create: {
       userId: session.user.id,
@@ -236,6 +207,11 @@ export async function sendSOSAction(coords: {
     },
   });
 
+  await activateSharelockRedis(session.user.id);
+  await redis.set(`${SHARELOCK_HEARTBEAT_PREFIX}${session.user.id}`, "1", {
+    ex: SHARELOCK_HEARTBEAT_TTL_SECONDS,
+  });
+
   const nearbyUsers = await db.liveLocation.findMany({
     where: { isSharing: true, isSOS: false, userId: { not: session.user.id } },
     include: { user: { include: { pushSubscriptions: true } } },
@@ -243,22 +219,32 @@ export async function sendSOSAction(coords: {
 
   const userName = session.user.name ?? "Nelayan";
   const notifPromises = nearbyUsers
-    .filter(loc => {
-      const dist = haversineDistance(coords.latitude, coords.longitude, loc.latitude, loc.longitude);
+    .filter((loc) => {
+      const dist = haversineDistance(
+        coords.latitude,
+        coords.longitude,
+        loc.latitude,
+        loc.longitude,
+      );
       return dist <= HAVERSINE_RADIUS_KM;
     })
-    .flatMap(loc =>
-      loc.user.pushSubscriptions.map(sub =>
+    .flatMap((loc) =>
+      loc.user.pushSubscriptions.map((sub) =>
         sendNotifToUserAction(loc.userId, {
           title: "🆘 SOS — Nelayan Butuh Bantuan!",
           body: `${userName} membutuhkan pertolongan. Jarak: ~${Math.round(
-            haversineDistance(coords.latitude, coords.longitude, loc.latitude, loc.longitude)
+            haversineDistance(
+              coords.latitude,
+              coords.longitude,
+              loc.latitude,
+              loc.longitude,
+            ),
           )} km dari posisimu.`,
           tag: "sos-alert",
           url: "/map?sos=true",
           requireInteraction: true,
-        })
-      )
+        }),
+      ),
     );
 
   await Promise.allSettled(notifPromises);
@@ -277,9 +263,10 @@ export async function resolveSOSAction(): Promise<ActionResult> {
     where: { userId: session.user.id },
     data: { isSOS: false },
   });
-  
+
   return { success: true, data: undefined };
 }
+
 // ini ak buat fungsi sharespotaction
 export async function shareSpotAction(coords: {
   recipientId: string;
@@ -303,21 +290,26 @@ export async function shareSpotAction(coords: {
     console.error("Gagal share spot via Prisma:", error);
     return { success: false, error: "Gagal membagikan lokasi" };
   }
-<<<<<<< Updated upstream
-}
-=======
 }
 
 // ── P2P Sharelock Actions ──────────────────────────────
-export async function addSharelockRelationAction(recipientId: string): Promise<ActionResult> {
+export async function addSharelockRelationAction(
+  recipientId: string,
+): Promise<ActionResult> {
   const session = await auth();
   if (!session?.user?.id) return { success: false, error: "Belum login" };
   const senderId = session.user.id;
   const senderName = session.user.name ?? "Nelayan";
 
-  const isActive = await redis.sismember(SHARELOCK_ACTIVE_USERS_KEY, recipientId);
+  const isActive = await redis.sismember(
+    SHARELOCK_ACTIVE_USERS_KEY,
+    recipientId,
+  );
   if (!isActive) {
-    return { success: false, error: "Pengguna tujuan tidak sedang aktif berbagi lokasi." };
+    return {
+      success: false,
+      error: "Pengguna tujuan tidak sedang aktif berbagi lokasi.",
+    };
   }
 
   // 1. Catat ke Redis
@@ -340,44 +332,60 @@ export async function addSharelockRelationAction(recipientId: string): Promise<A
   return { success: true, data: undefined };
 }
 
-export async function removeSharelockRelationAction(recipientId: string): Promise<ActionResult> {
+export async function removeSharelockRelationAction(
+  recipientId: string,
+): Promise<ActionResult> {
   const session = await auth();
   if (!session?.user?.id) return { success: false, error: "Belum login" };
   const senderId = session.user.id;
 
   await redis.srem(`${SHARELOCK_RELATIONS_PREFIX}${recipientId}`, senderId);
   await redis.srem(`${SHARELOCK_USER_TARGETS_PREFIX}${senderId}`, recipientId);
-  
+
   return { success: true, data: undefined };
 }
 
-export async function getActiveSharelockUsersAction(): Promise<ActionResult<{ id: string; name: string }[]>> {
+export async function getActiveSharelockUsersAction(): Promise<
+  ActionResult<{ id: string; name: string }[]>
+> {
   const session = await auth();
   if (!session?.user?.id) return { success: false, error: "Belum login" };
+
+  await pruneStaleSharelock();
 
   const activeIds = await redis.smembers(SHARELOCK_ACTIVE_USERS_KEY);
   if (activeIds.length === 0) return { success: true, data: [] };
 
+  const otherIds = activeIds.filter((id) => id !== session.user.id);
+  if (otherIds.length === 0) return { success: true, data: [] };
+
   const users = await db.user.findMany({
-    where: { id: { in: activeIds } },
+    where: { id: { in: otherIds } },
     select: { id: true, name: true },
   });
 
-  const result = users.map(u => ({ id: u.id, name: u.name ?? "Nelayan" }));
+  const result = users.map((u) => ({ id: u.id, name: u.name ?? "Nelayan" }));
   return { success: true, data: result };
 }
 
-export async function getIncomingSharelockSendersAction(): Promise<ActionResult<string[]>> {
+export async function getIncomingSharelockSendersAction(): Promise<
+  ActionResult<string[]>
+> {
   const session = await auth();
   if (!session?.user?.id) return { success: false, error: "Belum login" };
-  const senders = await redis.smembers(`${SHARELOCK_RELATIONS_PREFIX}${session.user.id}`);
+  const senders = await redis.smembers(
+    `${SHARELOCK_RELATIONS_PREFIX}${session.user.id}`,
+  );
   return { success: true, data: senders };
 }
 
-export async function getOutgoingSharelockTargetsAction(): Promise<ActionResult<string[]>> {
+export async function getOutgoingSharelockTargetsAction(): Promise<
+  ActionResult<string[]>
+> {
   const session = await auth();
   if (!session?.user?.id) return { success: false, error: "Belum login" };
-  const targets = await redis.smembers(`${SHARELOCK_USER_TARGETS_PREFIX}${session.user.id}`);
+  const targets = await redis.smembers(
+    `${SHARELOCK_USER_TARGETS_PREFIX}${session.user.id}`,
+  );
   return { success: true, data: targets };
 }
->>>>>>> Stashed changes

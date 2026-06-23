@@ -38,17 +38,23 @@ export function useFleetTracking({
   onSOSReceived,
 }: UseFleetTrackingOptions) {
   const [fleetMembers, setFleetMembers] = useState<FleetMember[]>([]);
-  const [myLocation, setMyLocation] = useState<GeolocationCoordinates | null>(null);
+  const [myLocation, setMyLocation] = useState<GeolocationCoordinates | null>(
+    null,
+  );
   const [error, setError] = useState<string | null>(null);
-  
+
   const watchIdRef = useRef<number | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastSentRef = useRef<{ lat: number; lng: number } | null>(null);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const userMapRef = useRef<Map<string, string>>(new Map());
 
-  const [incomingSenders, setIncomingSenders] = useState<Set<string>>(new Set());
-  const [outgoingTargets, setOutgoingTargets] = useState<Set<string>>(new Set());
+  const [incomingSenders, setIncomingSenders] = useState<Set<string>>(
+    new Set(),
+  );
+  const [outgoingTargets, setOutgoingTargets] = useState<Set<string>>(
+    new Set(),
+  );
   const incomingSendersRef = useRef<Set<string>>(new Set());
 
   const refreshRelations = useCallback(async () => {
@@ -58,7 +64,7 @@ export function useFleetTracking({
         getIncomingSharelockSendersAction(),
         getOutgoingSharelockTargetsAction(),
       ]);
-      
+
       if (inRes.success) {
         const newSet = new Set(inRes.data);
         setIncomingSenders(newSet);
@@ -84,22 +90,19 @@ export function useFleetTracking({
     return () => clearInterval(id);
   }, [myUserId, refreshRelations]);
 
-  // ── JEMPUT BOLA (CORE FIX) ──
   useEffect(() => {
     if (!isSharing || incomingSenders.size === 0) return;
 
     const fetchInitialLocations = async () => {
-      // Pastikan kolom yang di-select sesuai dengan database ketua (user_id / userId)
       const { data, error } = await supabase
         .from("live_locations")
         .select("*")
-        .in("userId", Array.from(incomingSenders)); // Ganti ke "user_id" jika database ketua pakai itu
+        .in("userId", Array.from(incomingSenders));
 
       if (!error && data) {
         setFleetMembers((prev) => {
           const next = [...prev];
           data.forEach((record: any) => {
-            // MENGATASI PERBEDAAN NAMA KOLOM DB
             const userId = record.userId || record.user_id;
             const idx = next.findIndex((m) => m.userId === userId);
 
@@ -127,10 +130,11 @@ export function useFleetTracking({
 
   const sendLocation = useCallback(async (coords: GeolocationCoordinates) => {
     if (lastSentRef.current) {
-      const dist = Math.sqrt(
-        (coords.latitude - lastSentRef.current.lat) ** 2 +
-          (coords.longitude - lastSentRef.current.lng) ** 2,
-      ) * 111000;
+      const dist =
+        Math.sqrt(
+          (coords.latitude - lastSentRef.current.lat) ** 2 +
+            (coords.longitude - lastSentRef.current.lng) ** 2,
+        ) * 111000;
       if (dist < 10) return;
     }
     await updateLocationAction({
@@ -160,7 +164,8 @@ export function useFleetTracking({
     }
 
     return () => {
-      if (watchIdRef.current !== null) navigator.geolocation.clearWatch(watchIdRef.current);
+      if (watchIdRef.current !== null)
+        navigator.geolocation.clearWatch(watchIdRef.current);
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, [isSharing, myLocation, sendLocation]);
@@ -179,7 +184,12 @@ export function useFleetTracking({
       .channel("fleet-tracking")
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "live_locations", filter: "isSharing=eq.true" },
+        {
+          event: "*",
+          schema: "public",
+          table: "live_locations",
+          filter: "isSharing=eq.true",
+        },
         (payload) => {
           if (!payload.new) return;
           const record = payload.new as any;
@@ -213,12 +223,14 @@ export function useFleetTracking({
             }
             return [...prev, updated];
           });
-        }
+        },
       )
       .subscribe();
 
     channelRef.current = channel;
-    return () => { if (channelRef.current) void supabase.removeChannel(channelRef.current); };
+    return () => {
+      if (channelRef.current) void supabase.removeChannel(channelRef.current);
+    };
   }, [isSharing, myUserId, onSOSReceived]);
 
   const toggleSharing = useCallback(async (value: boolean) => {
@@ -228,17 +240,27 @@ export function useFleetTracking({
 
   const sharelockToUser = useCallback(async (targetUserId: string) => {
     await addSharelockRelationAction(targetUserId);
-    setOutgoingTargets(prev => new Set(prev).add(targetUserId));
+    setOutgoingTargets((prev) => new Set(prev).add(targetUserId));
   }, []);
 
   const unsharelockFromUser = useCallback(async (targetUserId: string) => {
     await removeSharelockRelationAction(targetUserId);
-    setOutgoingTargets(prev => {
+    setOutgoingTargets((prev) => {
       const next = new Set(prev);
       next.delete(targetUserId);
       return next;
     });
   }, []);
 
-  return { fleetMembers, myLocation, error, toggleSharing, incomingSenders, outgoingTargets, sharelockToUser, unsharelockFromUser, refreshRelations };
+  return {
+    fleetMembers,
+    myLocation,
+    error,
+    toggleSharing,
+    incomingSenders,
+    outgoingTargets,
+    sharelockToUser,
+    unsharelockFromUser,
+    refreshRelations,
+  };
 }

@@ -1,8 +1,8 @@
 {
   "crons": [
     {
-      "path": "/api/cron/notify",
-      "schedule": "0 3 * * *"
+      "path": "/api/cron/sharelock-prune",
+      "schedule": "*/10 * * * *"
     }
   ]
 }
