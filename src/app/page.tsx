@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import Navbar2 from "./_components/Navbar2";
+import ChatbotPopup from "./_components/ChatbotPopup";
 
 function useInView(threshold = 0.12) {
   const ref = useRef<HTMLDivElement>(null);
@@ -587,6 +588,8 @@ export default function LandingPage() {
           © 2026 Laung · Dibuat dengan semangat untuk laut Indonesia.
         </p>
       </footer>
+
+      <ChatbotPopup />
     </div>
   );
 }

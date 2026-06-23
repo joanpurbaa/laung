@@ -1,0 +1,254 @@
+[
+  {
+    "id": "1",
+    "category": "tentang_produk",
+    "question": "Apa itu Laung?",
+    "answer": "Laung adalah aplikasi berbasis web (PWA) yang membantu nelayan Indonesia menemukan spot mancing terbaik menggunakan data satelit NASA. Laung membaca data klorofil laut, suhu permukaan, dan pasang surut lalu menunjukkan lokasi di mana ikan berkumpul hari ini.",
+    "keywords": ["laung", "aplikasi", "apa itu", "tentang", "penjelasan"]
+  },
+  {
+    "id": "2",
+    "category": "tentang_produk",
+    "question": "Siapa yang membuat Laung?",
+    "answer": "Laung dikembangkan oleh Joan Orlando Purba. Laung lahir dari kesadaran bahwa nelayan tradisional Indonesia sering melaut dengan metode tebak-tebakan tanpa data akurat, sehingga hadir untuk membantu mereka dengan teknologi satelit.",
+    "keywords": ["pembuat", "developer", "siapa", "pengembang", "founder"]
+  },
+  {
+    "id": "3",
+    "category": "tentang_produk",
+    "question": "Apa visi dan misi Laung?",
+    "answer": "Visi Laung adalah menjadikan teknologi sebagai alat yang memberdayakan nelayan, bukan menjauhkan. Misi kami adalah menghadirkan akses demokratis terhadap data satelit NASA, menyederhanakan data oseanografi yang rumit menjadi skor lokasi yang mudah dibaca, membantu nelayan menentukan arah dengan lebih efisien, hemat, dan aman.",
+    "keywords": ["visi", "misi", "tujuan", "komitmen", "filosofi"]
+  },
+  {
+    "id": "4",
+    "category": "fitur",
+    "question": "Apa saja fitur utama Laung?",
+    "answer": "Fitur utama Laung meliputi: (1) Peta ZPPI dengan visualisasi data klorofil-a, suhu permukaan laut, dan pasang surut dari satelit NASA, (2) Sistem scoring otomatis berdasarkan jenis ikan target, (3) Kalkulasi rute efisien dan estimasi konsumsi BBM/solar, (4) Histori pencatatan hasil tangkapan, (5) Informasi cuaca maritim, (6) GPS real-time, dan (7) Mode offline sebagai PWA.",
+    "keywords": ["fitur", "fungsi", "apa saja", "kemampuan", "layanan"]
+  },
+  {
+    "id": "5",
+    "category": "fitur",
+    "question": "Data satelit apa yang digunakan Laung?",
+    "answer": "Laung menggunakan data dari satelit NASA AQUA MODIS dengan resolusi 4km. Data yang diambil mencakup tiga variabel oseanografi: klorofil-a (indikator keberadaan plankton/ikan), suhu permukaan laut (SST), dan data arus pasang surut.",
+    "keywords": [
+      "satelit",
+      "NASA",
+      "data",
+      "MODIS",
+      "sumber data",
+      "klorofil",
+      "SST"
+    ]
+  },
+  {
+    "id": "6",
+    "category": "fitur",
+    "question": "Bagaimana cara kerja sistem scoring ZPPI di Laung?",
+    "answer": "Laung menggunakan algoritma Decision Support System (DSS) dengan weighted scoring dari 3 parameter oseanografi: klorofil-a (bobot 45%), suhu permukaan laut/SST (bobot 35%), dan pasang surut (bobot 20%). Hasilnya divisualisasikan di peta — titik hijau berarti konsentrasi ikan tinggi.",
+    "keywords": [
+      "scoring",
+      "ZPPI",
+      "algoritma",
+      "cara kerja",
+      "DSS",
+      "bobot",
+      "weighted"
+    ]
+  },
+  {
+    "id": "7",
+    "category": "fitur",
+    "question": "Ikan apa saja yang bisa dipilih di Laung?",
+    "answer": "Laung mendukung berbagai jenis ikan seperti tongkol, tuna, dan kembung. Setiap spesies memiliki preferensi suhu dan plankton yang berbeda, sehingga sistem menyesuaikan scoring secara otomatis berdasarkan jenis ikan yang kamu target.",
+    "keywords": [
+      "jenis ikan",
+      "tongkol",
+      "tuna",
+      "kembung",
+      "spesies",
+      "target ikan"
+    ]
+  },
+  {
+    "id": "8",
+    "category": "fitur",
+    "question": "Apakah Laung bisa menghitung konsumsi solar?",
+    "answer": "Ya. Laung memiliki fitur kalkulasi BBM otomatis yang menghitung jarak dari posisimu ke spot terbaik dan memperkirakan konsumsi solar. Selisih efisiensinya bisa mencapai 30–50 liter per trip dibanding berlayar tanpa panduan data.",
+    "keywords": [
+      "solar",
+      "BBM",
+      "bahan bakar",
+      "hemat",
+      "konsumsi",
+      "kalkulasi"
+    ]
+  },
+  {
+    "id": "9",
+    "category": "cara_pakai",
+    "question": "Bagaimana cara menggunakan Laung?",
+    "answer": "Ada 3 langkah utama: (1) Buka Peta ZPPI — lihat visualisasi data satelit, titik hijau menandakan banyak ikan. (2) Pilih jenis ikan target — sistem menyesuaikan scoring otomatis. (3) Berangkat lebih hemat — GPS menghitung rute efisien ke spot terbaik dan memperlihatkan estimasi konsumsi solar.",
+    "keywords": [
+      "cara pakai",
+      "cara menggunakan",
+      "langkah",
+      "tutorial",
+      "panduan"
+    ]
+  },
+  {
+    "id": "10",
+    "category": "cara_pakai",
+    "question": "Bagaimana cara install Laung di HP?",
+    "answer": "Laung adalah PWA (Progressive Web App) jadi tidak perlu App Store. Caranya: (1) Buka laung-id.vercel.app di browser HP, (2) Tap ikon berbagi di Safari atau Chrome, (3) Pilih 'Tambahkan ke Layar Utama', (4) Laung siap dipakai seperti app asli. Proses ini hanya butuh sekitar 2 menit.",
+    "keywords": [
+      "install",
+      "download",
+      "cara install",
+      "PWA",
+      "layar utama",
+      "App Store"
+    ]
+  },
+  {
+    "id": "11",
+    "category": "cara_pakai",
+    "question": "Apakah Laung bisa dipakai tanpa sinyal internet?",
+    "answer": "Ya, Laung dirancang sebagai PWA yang bisa berjalan offline di HP-mu. Kamu bisa menggunakannya di tengah laut sekalipun tanpa sinyal internet setelah sebelumnya membuka aplikasi saat masih ada koneksi.",
+    "keywords": [
+      "offline",
+      "tanpa sinyal",
+      "internet",
+      "di laut",
+      "PWA",
+      "tanpa koneksi"
+    ]
+  },
+  {
+    "id": "12",
+    "category": "harga",
+    "question": "Apakah Laung gratis?",
+    "answer": "Ya, Laung gratis untuk fitur dasar dan bisa langsung digunakan tanpa kartu kredit. Kamu juga bisa mencoba Laung tanpa mendaftar akun terlebih dahulu melalui opsi 'Coba tanpa akun'.",
+    "keywords": ["gratis", "harga", "biaya", "bayar", "free", "berbayar"]
+  },
+  {
+    "id": "13",
+    "category": "harga",
+    "question": "Apakah perlu daftar akun untuk pakai Laung?",
+    "answer": "Tidak wajib. Kamu bisa mencoba Laung tanpa akun. Namun untuk menyimpan histori tangkapan dan data personal, disarankan mendaftar akun gratis di laung-id.vercel.app.",
+    "keywords": [
+      "daftar",
+      "akun",
+      "registrasi",
+      "login",
+      "tanpa akun",
+      "sign up"
+    ]
+  },
+  {
+    "id": "14",
+    "category": "akurasi_data",
+    "question": "Seberapa akurat rekomendasi spot ikan dari Laung?",
+    "answer": "Rekomendasi spot dari Laung bersifat indikatif dan tidak menjamin keberhasilan tangkapan. Data satelit NASA AQUA MODIS memiliki resolusi 4km dan bisa terkendala tutupan awan atau keterlambatan pembaruan. Skor ZPPI adalah hasil kalkulasi algoritma yang tidak menggantikan pengalaman dan pengetahuan lokal nelayan.",
+    "keywords": [
+      "akurat",
+      "akurasi",
+      "jaminan",
+      "pasti",
+      "rekomendasi",
+      "seberapa tepat"
+    ]
+  },
+  {
+    "id": "15",
+    "category": "akurasi_data",
+    "question": "Apakah data cuaca di Laung bisa diandalkan untuk keselamatan berlayar?",
+    "answer": "Data cuaca di Laung bersifat estimasi dan TIDAK menggantikan prakiraan resmi. Selalu periksa informasi cuaca resmi dari BMKG sebelum berangkat melaut. Keselamatan jiwa adalah prioritas — Laung tidak bertanggung jawab atas kecelakaan yang terjadi selama kegiatan berlayar.",
+    "keywords": ["cuaca", "keselamatan", "BMKG", "prakiraan", "aman", "bahaya"]
+  },
+  {
+    "id": "16",
+    "category": "privasi",
+    "question": "Data pribadi saya aman di Laung?",
+    "answer": "Ya. Laung mengumpulkan data akun (nama, email), data lokasi GPS, dan data penggunaan. Kami tidak menjual data pribadi kamu ke pihak ketiga. Data lokasi hanya digunakan untuk keperluan layanan rekomendasi spot ikan. Kami menggunakan Supabase sebagai database dengan standar keamanan tinggi.",
+    "keywords": [
+      "privasi",
+      "data pribadi",
+      "aman",
+      "keamanan",
+      "dijual",
+      "rahasia"
+    ]
+  },
+  {
+    "id": "17",
+    "category": "privasi",
+    "question": "Apakah Laung menjual data lokasi saya?",
+    "answer": "Tidak. Data lokasi GPS kamu tidak diperjualbelikan kepada pihak ketiga. Data lokasi hanya digunakan semata-mata untuk meningkatkan akurasi rekomendasi spot ikan yang kamu terima.",
+    "keywords": ["lokasi", "GPS", "jual data", "pihak ketiga", "privasi lokasi"]
+  },
+  {
+    "id": "18",
+    "category": "privasi",
+    "question": "Apa hak saya sebagai pengguna Laung?",
+    "answer": "Sebagai pengguna Laung, kamu berhak: (1) Meminta akses ke data pribadi yang kami simpan, (2) Meminta penghapusan data atau penutupan akun, (3) Menarik persetujuan penggunaan lokasi kapan saja melalui pengaturan perangkat.",
+    "keywords": [
+      "hak pengguna",
+      "hapus data",
+      "akses data",
+      "tutup akun",
+      "persetujuan"
+    ]
+  },
+  {
+    "id": "19",
+    "category": "legal",
+    "question": "Apakah Laung sudah resmi atau masih prototype?",
+    "answer": "Laung saat ini berstatus prototipe/MVP yang dikembangkan untuk tujuan penelitian dan kompetisi inovasi. Fitur dan layanan dapat berubah sewaktu-waktu. Laung tersedia di https://laung-id.vercel.app.",
+    "keywords": ["resmi", "prototype", "MVP", "status", "beta", "kompetisi"]
+  },
+  {
+    "id": "20",
+    "category": "kontak",
+    "question": "Bagaimana cara menghubungi tim Laung?",
+    "answer": "Kamu bisa menghubungi pengembang Laung melalui: Email: joanpurba562@gmail.com atau melalui website: https://laung-id.vercel.app",
+    "keywords": [
+      "kontak",
+      "hubungi",
+      "email",
+      "support",
+      "bantuan",
+      "customer service"
+    ]
+  },
+  {
+    "id": "21",
+    "category": "teknis",
+    "question": "Di browser apa saja Laung bisa diinstall?",
+    "answer": "Laung bisa diinstall sebagai PWA di Safari (iPhone/iPad) maupun Chrome (Android/desktop). Cukup buka laung-id.vercel.app, tap ikon berbagi, lalu pilih 'Tambahkan ke Layar Utama'.",
+    "keywords": [
+      "browser",
+      "Safari",
+      "Chrome",
+      "install",
+      "iPhone",
+      "Android",
+      "kompatibel"
+    ]
+  },
+  {
+    "id": "22",
+    "category": "teknis",
+    "question": "Berapa banyak spot ikan yang sudah terpetakan di Laung?",
+    "answer": "Laung telah memetakan lebih dari 100 spot ikan di perairan Indonesia berdasarkan data satelit NASA.",
+    "keywords": [
+      "jumlah spot",
+      "berapa spot",
+      "terpetakan",
+      "coverage",
+      "wilayah"
+    ]
+  }
+]
