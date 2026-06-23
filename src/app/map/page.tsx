@@ -109,6 +109,7 @@ export default function Map() {
   const [loading, setLoading] = useState(true);
   const [selectedSpot, setSelectedSpot] = useState<GeoSpot | null>(null);
   const [sheetExpanded, setSheetExpanded] = useState(false);
+  const [showDetail, setShowDetail] = useState(false);
   const [showFishDropdown, setShowFishDropdown] = useState(false);
   const [userLocation, setUserLocation] = useState<{
     lat: number;
@@ -227,6 +228,7 @@ export default function Map() {
     setSelectedSpot(spot);
     setSheetExpanded(true);
     setActiveTab("rute");
+    setShowDetail(false);
   }, []);
 
   const handleRecenter = () => setRecenterTrigger((n) => n + 1);
@@ -274,7 +276,6 @@ export default function Map() {
           await fetchActiveUsers();
           setShowActiveUsersModal(true);
 
-          // 🚨 PEMICU IZIN NOTIFIKASI OTOMATIS
           if (typeof window !== "undefined" && "Notification" in window) {
             if (Notification.permission === "default") {
               await Notification.requestPermission();
@@ -357,7 +358,6 @@ export default function Map() {
     setActiveSharedMemberId(memberId);
     if (memberId) {
       const member = fleetMembers.find((m) => m.userId === memberId) ?? null;
-
       setSelectedMemberForDetail(member);
     } else {
       setSelectedMemberForDetail(null);
@@ -419,14 +419,6 @@ export default function Map() {
               <span className="text-[9px] font-bold text-blue-600">LIVE</span>
             </div>
           </div>
-
-          {/* <button
-            onClick={() => setShowFamilyModal(true)}
-            className="flex h-[52px] items-center gap-1.5 rounded-2xl border border-white/60 bg-white/90 px-3.5 text-xs font-bold text-slate-700 shadow-lg backdrop-blur-md transition-all hover:bg-slate-50 active:scale-95"
-          >
-            <span>⚙️</span>
-            <span className="hidden sm:inline">Atur</span> Keluarga
-          </button> */}
 
           <div className="relative">
             <button
@@ -610,21 +602,31 @@ export default function Map() {
         </div>
       )}
 
-      <div className="absolute right-4 bottom-24 z-10 flex flex-col items-end gap-3">
-        <button
-          onClick={handleToggleSharingClick}
-          className={`flex items-center gap-2 rounded-2xl px-3 py-2.5 text-[12px] font-black shadow-lg transition-all active:scale-95 ${
-            isSharing
-              ? "bg-emerald-500 text-white shadow-emerald-200"
-              : "border border-slate-200 bg-white text-slate-600"
-          }`}
-        >
-          {isSharing ? <UserCheck size={14} /> : <Users size={14} />}
-          {isSharing ? "Lobi Armada Aktif" : "Bagikan Lokasi"}
-        </button>
-      </div>
+      <div className="absolute right-0 bottom-[80px] left-0 z-10 flex flex-col gap-2">
+        <div className="mx-3 flex justify-between">
+          <div className="flex flex-col items-start gap-3">
+            <button
+              onClick={handleSendSOSFromCardClick}
+              className="flex items-center gap-2 rounded-2xl bg-red-600 px-4 py-2.5 text-[12px] font-black text-white shadow-lg ring-2 shadow-red-500/40 ring-red-500/20 transition-all hover:bg-red-700 active:scale-95"
+            >
+              <AlertTriangle size={14} /> DARURAT SOS
+            </button>
+          </div>
+          <div className="flex flex-col items-end gap-3">
+            <button
+              onClick={handleToggleSharingClick}
+              className={`flex items-center gap-2 rounded-2xl px-3 py-2.5 text-[12px] font-black shadow-lg transition-all active:scale-95 ${
+                isSharing
+                  ? "bg-emerald-500 text-white shadow-emerald-200"
+                  : "border border-slate-200 bg-white text-slate-600"
+              }`}
+            >
+              {isSharing ? <UserCheck size={14} /> : <Users size={14} />}
+              {isSharing ? "Lobi Armada Aktif" : "Bagikan Lokasi"}
+            </button>
+          </div>
+        </div>
 
-      <div className="absolute right-0 bottom-4 left-0 z-10">
         {!sheetExpanded ? (
           <div className="mx-3">
             <button
@@ -652,16 +654,29 @@ export default function Map() {
                         Rekomendasi Terbaik Hari Ini
                       </p>
                       <p className="text-sm font-black text-slate-800">
-                        Spot Utama · Hemat {fuelSavingPercent}% Solar
+                        Spot A · Hemat {fuelSavingPercent}% Solar
                       </p>
                       <p className="text-[10px] font-semibold text-slate-400">
                         {userLocation
                           ? `${distance.toFixed(1)} Km dari posisimu`
-                          : "Menunggu GPS…"}
+                          : "Menunggu GPS…"}{" "}
+                        · 09:00–15:00 WIB
                       </p>
                     </div>
-                    <div className="rounded-lg bg-emerald-50 px-2 py-1 text-xs font-bold text-emerald-600">
-                      Tap Detail
+                    <div className="shrink-0">
+                      <svg
+                        className="h-5 w-5 text-slate-300"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M5 15l7-7 7 7"
+                        />
+                      </svg>
                     </div>
                   </>
                 )}
@@ -673,184 +688,233 @@ export default function Map() {
                   </p>
                 )}
               </div>
+
+              <div className="grid grid-cols-3 divide-x divide-slate-100 border-t border-slate-100">
+                <div className="py-2 text-center">
+                  <p className="text-[9px] font-bold tracking-wider text-slate-400 uppercase">
+                    Potensial
+                  </p>
+                  <p className="text-sm font-black text-emerald-600">
+                    {zppiSpots.filter((s) => s.value >= 70).length}
+                  </p>
+                </div>
+                <div className="py-2 text-center">
+                  <p className="text-[9px] font-bold tracking-wider text-slate-400 uppercase">
+                    Sangat Baik
+                  </p>
+                  <p className="text-sm font-black text-blue-600">
+                    {zppiSpots.filter((s) => s.value >= 85).length}
+                  </p>
+                </div>
+                <div className="py-2 text-center">
+                  <p className="text-[9px] font-bold tracking-wider text-slate-400 uppercase">
+                    Kondisi Air
+                  </p>
+                  <p className="text-sm font-black text-cyan-600">Optimal</p>
+                </div>
+              </div>
             </button>
           </div>
         ) : (
-          <div className="mx-3 flex h-[260px] flex-col overflow-hidden rounded-3xl border border-white/60 bg-white/97 shadow-2xl backdrop-blur-md">
+          <div className="mx-3 overflow-hidden rounded-3xl border border-white/60 bg-white/97 shadow-2xl backdrop-blur-md">
             <button
-              onClick={() => setSheetExpanded(false)}
-              className="flex w-full shrink-0 flex-col items-center border-b border-slate-100 bg-slate-50 pt-2 pb-1"
+              onClick={() => {
+                setSheetExpanded(false);
+                setShowDetail(false);
+              }}
+              className="flex w-full flex-col items-center pt-3 pb-1"
             >
-              <div className="h-1 w-10 rounded-full bg-slate-300" />
+              <div className="h-1 w-10 rounded-full bg-slate-200" />
             </button>
 
             {selectedSpot ? (
-              <div className="flex flex-1 flex-col overflow-hidden">
-                <div className="flex shrink-0 items-center justify-between border-b border-slate-100 bg-slate-50 px-4 py-2">
-                  <div className="flex items-center gap-2">
-                    <span
-                      className="inline-block rounded-md px-1.5 py-0.5 text-[9px] font-black text-white uppercase"
-                      style={{ backgroundColor: scoreInfo?.color }}
-                    >
-                      {scoreInfo?.label} ({selectedSpot.value})
+              <div className="px-4 pb-4">
+                <div className="mb-3 flex items-center gap-3">
+                  <div
+                    className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-2xl text-white shadow-md"
+                    style={{ backgroundColor: scoreInfo?.color }}
+                  >
+                    <span className="text-2xl leading-none font-black">
+                      {selectedSpot.value}
                     </span>
-                    <span className="font-mono text-[10px] text-slate-400">
-                      {selectedSpot.lat.toFixed(4)},{" "}
-                      {selectedSpot.lng.toFixed(4)}
+                    <span className="text-[8px] leading-none font-bold uppercase opacity-80">
+                      / 100
                     </span>
                   </div>
+                  <div className="flex-1">
+                    <span
+                      className="inline-block rounded-lg px-2 py-0.5 text-[10px] font-black tracking-wider text-white uppercase"
+                      style={{ backgroundColor: scoreInfo?.color }}
+                    >
+                      {scoreInfo?.label}
+                    </span>
+                    <p className="mt-0.5 font-mono text-[11px] text-slate-400">
+                      {selectedSpot.lat.toFixed(4)},{" "}
+                      {selectedSpot.lng.toFixed(4)}
+                    </p>
+                    <p className="mt-0.5 text-[10px] font-semibold text-slate-400">
+                      {gpsActive
+                        ? "📍 Dihitung dari posisi GPS kamu"
+                        : "⏳ Menunggu sinyal GPS…"}
+                    </p>
+                  </div>
                   <button
-                    onClick={() => setSheetExpanded(false)}
-                    className="text-[10px] font-bold text-slate-400 hover:text-slate-600"
+                    onClick={() => setShowDetail((v) => !v)}
+                    className={`rounded-xl border px-3 py-2 text-[10px] font-black tracking-wider uppercase transition-colors ${
+                      showDetail
+                        ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                        : "border-slate-200 bg-slate-50 text-slate-600"
+                    }`}
                   >
-                    Tutup
+                    {showDetail ? "Tutup" : "Detail"}
                   </button>
                 </div>
 
-                <div className="flex shrink-0 border-b border-slate-100 bg-white">
-                  <button
-                    onClick={() => setActiveTab("rute")}
-                    className={`flex flex-1 items-center justify-center gap-1.5 border-b-2 py-2.5 text-xs font-bold transition-all ${activeTab === "rute" ? "border-emerald-500 bg-emerald-50/30 text-emerald-600" : "border-transparent text-slate-500 hover:bg-slate-50"}`}
-                  >
-                    <Navigation size={12} /> Info Rute
-                  </button>
-                  <button
-                    onClick={() => setActiveTab("analisis")}
-                    className={`flex flex-1 items-center justify-center gap-1.5 border-b-2 py-2.5 text-xs font-bold transition-all ${activeTab === "analisis" ? "border-emerald-500 bg-emerald-50/30 text-emerald-600" : "border-transparent text-slate-500 hover:bg-slate-50"}`}
-                  >
-                    <BarChart3 size={12} /> Analisis Satelit
-                  </button>
-                  <button
-                    onClick={() => setActiveTab("top_spot")}
-                    className={`flex flex-1 items-center justify-center gap-1.5 border-b-2 py-2.5 text-xs font-bold transition-all ${activeTab === "top_spot" ? "border-emerald-500 bg-emerald-50/30 text-emerald-600" : "border-transparent text-slate-500 hover:bg-slate-50"}`}
-                  >
-                    <Layers size={12} /> Spot Lain
-                  </button>
+                <div className="mb-3 grid grid-cols-3 gap-2">
+                  <div className="rounded-2xl bg-slate-50 p-2.5 text-center">
+                    <p className="text-[9px] font-bold tracking-wider text-slate-400 uppercase">
+                      Jarak
+                    </p>
+                    <p className="text-base font-black text-slate-800">
+                      {userLocation ? distance.toFixed(1) : "—"}
+                    </p>
+                    <p className="text-[9px] font-semibold text-slate-400">
+                      Km
+                    </p>
+                  </div>
+                  <div className="rounded-2xl bg-slate-50 p-2.5 text-center">
+                    <p className="text-[9px] font-bold tracking-wider text-slate-400 uppercase">
+                      Waktu
+                    </p>
+                    <p className="text-base font-black text-slate-800">
+                      {userLocation ? Math.round(distance * 3.2) : "—"}
+                    </p>
+                    <p className="text-[9px] font-semibold text-slate-400">
+                      Menit
+                    </p>
+                  </div>
+                  <div className="rounded-2xl bg-emerald-500 p-2.5 text-center shadow-sm shadow-emerald-200">
+                    <p className="text-[9px] font-bold tracking-wider text-emerald-100 uppercase">
+                      Hemat BBM
+                    </p>
+                    <p className="text-base font-black text-white">
+                      {userLocation ? `${fuelSavingPercent}%` : "—"}
+                    </p>
+                    <p className="text-[9px] font-semibold text-emerald-200">
+                      Solar
+                    </p>
+                  </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto bg-white p-4">
-                  {activeTab === "rute" && (
-                    <div className="animate-in fade-in space-y-3 duration-150">
-                      <div className="grid grid-cols-3 gap-2">
-                        <div className="rounded-xl bg-slate-50 p-2 text-center">
-                          <p className="text-[9px] font-bold tracking-wider text-slate-400 uppercase">
-                            Jarak
-                          </p>
-                          <p className="text-base font-black text-slate-800">
-                            {userLocation ? `${distance.toFixed(1)} Km` : "—"}
-                          </p>
+                <div className="mb-3 flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50 px-4 py-2.5">
+                  <div className="text-center">
+                    <p className="text-[9px] font-bold tracking-wider text-slate-400 uppercase">
+                      Metode Acak
+                    </p>
+                    <p className="text-sm font-black text-red-400 line-through">
+                      {traditionalFuel} L
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-slate-300">
+                    <div className="h-px w-6 bg-slate-200" />
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={1.5}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M13 7l5 5m0 0l-5 5m5-5H6"
+                      />
+                    </svg>
+                    <div className="h-px w-6 bg-slate-200" />
+                  </div>
+                  <div className="text-center">
+                    <p className="text-[9px] font-bold tracking-wider text-slate-400 uppercase">
+                      Rute ZPPI
+                    </p>
+                    <p className="text-sm font-black text-emerald-600">
+                      {zppiFuel} L
+                    </p>
+                  </div>
+                </div>
+
+                {showDetail && selectedSpot.breakdown && (
+                  <div className="rounded-2xl border border-slate-100 bg-slate-50 p-3">
+                    <p className="mb-2 text-[10px] font-black tracking-wider text-slate-400 uppercase">
+                      Analisis Multi-Kriteria
+                    </p>
+                    <div className="space-y-2">
+                      <div>
+                        <div className="mb-1 flex items-center justify-between">
+                          <span className="text-[11px] font-semibold text-slate-600">
+                            🌿 Klorofil-a (
+                            {selectedSpot.breakdown.chlorValue.toFixed(2)}{" "}
+                            mg/m³)
+                          </span>
+                          <span className="text-[11px] font-black text-emerald-600">
+                            +{selectedSpot.breakdown.chlorCont} pts
+                          </span>
                         </div>
-                        <div className="rounded-xl bg-slate-50 p-2 text-center">
-                          <p className="text-[9px] font-bold tracking-wider text-slate-400 uppercase">
-                            Waktu Tempuh
-                          </p>
-                          <p className="text-base font-black text-slate-800">
-                            {userLocation
-                              ? `${Math.round(distance * 3.2)} Mnt`
-                              : "—"}
-                          </p>
-                        </div>
-                        <div className="rounded-xl bg-emerald-500 p-2 text-center text-white shadow-sm shadow-emerald-100">
-                          <p className="text-[9px] font-bold tracking-wider text-emerald-100 uppercase">
-                            Hemat Solar
-                          </p>
-                          <p className="text-base font-black">
-                            {userLocation ? `${fuelSavingPercent}%` : "—"}
-                          </p>
+                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
+                          <div
+                            className="h-full rounded-full bg-emerald-400"
+                            style={{
+                              width: `${selectedSpot.breakdown.chlorCont}%`,
+                            }}
+                          />
                         </div>
                       </div>
-                      <div className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/50 px-3 py-2 text-xs">
-                        <div>
-                          <span className="text-[10px] text-slate-400">
-                            Rute Normal:
-                          </span>{" "}
-                          <span className="font-bold text-red-500 line-through">
-                            {traditionalFuel} Liter
+                      <div>
+                        <div className="mb-1 flex items-center justify-between">
+                          <span className="text-[11px] font-semibold text-slate-600">
+                            🌡️ Suhu Permukaan (
+                            {selectedSpot.breakdown.sstValue.toFixed(1)} °C)
+                          </span>
+                          <span className="text-[11px] font-black text-blue-600">
+                            +{selectedSpot.breakdown.sstCont} pts
                           </span>
                         </div>
-                        <div className="text-slate-300">➔</div>
-                        <div>
-                          <span className="text-[10px] text-slate-400">
-                            Rute ZPPI:
-                          </span>{" "}
-                          <span className="font-bold text-emerald-600">
-                            {zppiFuel} Liter
+                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
+                          <div
+                            className="h-full rounded-full bg-blue-400"
+                            style={{
+                              width: `${selectedSpot.breakdown.sstCont}%`,
+                            }}
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <div className="mb-1 flex items-center justify-between">
+                          <span className="text-[11px] font-semibold text-slate-600">
+                            🌊 Kontribusi Pasut Alami
                           </span>
+                          <span className="text-[11px] font-black text-cyan-600">
+                            +{selectedSpot.breakdown.tideCont} pts
+                          </span>
+                        </div>
+                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
+                          <div
+                            className="h-full rounded-full bg-cyan-400"
+                            style={{
+                              width: `${selectedSpot.breakdown.tideCont}%`,
+                            }}
+                          />
                         </div>
                       </div>
                     </div>
-                  )}
+                  </div>
+                )}
 
-                  {activeTab === "analisis" && (
-                    <div className="animate-in fade-in space-y-2.5 duration-150">
-                      {selectedSpot.breakdown ? (
-                        <div className="space-y-2">
-                          <div>
-                            <div className="mb-0.5 flex items-center justify-between text-[11px] font-semibold text-slate-600">
-                              <span>
-                                🌿 Klorofil-a (
-                                {selectedSpot.breakdown.chlorValue.toFixed(2)}{" "}
-                                mg/m³)
-                              </span>
-                              <span className="font-bold text-emerald-600">
-                                +{selectedSpot.breakdown.chlorCont} pts
-                              </span>
-                            </div>
-                            <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
-                              <div
-                                className="h-full rounded-full bg-emerald-400"
-                                style={{
-                                  width: `${selectedSpot.breakdown.chlorCont}%`,
-                                }}
-                              />
-                            </div>
-                          </div>
-                          <div>
-                            <div className="mb-0.5 flex items-center justify-between text-[11px] font-semibold text-slate-600">
-                              <span>
-                                🌡️ Suhu Permukaan (
-                                {selectedSpot.breakdown.sstValue.toFixed(1)} °C)
-                              </span>
-                              <span className="font-bold text-blue-600">
-                                +{selectedSpot.breakdown.sstCont} pts
-                              </span>
-                            </div>
-                            <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
-                              <div
-                                className="h-full rounded-full bg-blue-400"
-                                style={{
-                                  width: `${selectedSpot.breakdown.sstCont}%`,
-                                }}
-                              />
-                            </div>
-                          </div>
-                          <div>
-                            <div className="mb-0.5 flex items-center justify-between text-[11px] font-semibold text-slate-600">
-                              <span>🌊 Kontribusi Pasut Alami</span>
-                              <span className="font-bold text-cyan-600">
-                                +{selectedSpot.breakdown.tideCont} pts
-                              </span>
-                            </div>
-                            <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
-                              <div
-                                className="h-full rounded-full bg-cyan-400"
-                                style={{
-                                  width: `${selectedSpot.breakdown.tideCont}%`,
-                                }}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      ) : (
-                        <p className="py-4 text-center text-xs text-slate-400">
-                          Data kriteria satelit tidak tersedia.
-                        </p>
-                      )}
-                    </div>
-                  )}
-
-                  {activeTab === "top_spot" && (
-                    <div className="animate-in fade-in flex gap-2 duration-150">
+                {!showDetail && (
+                  <div>
+                    <p className="mb-2 text-[10px] font-black tracking-wider text-slate-400 uppercase">
+                      Top Spot Lainnya
+                    </p>
+                    <div className="flex gap-2">
                       {topSpots.map((spot, i) => {
                         const isActive =
                           selectedSpot?.lat === spot.lat &&
@@ -859,14 +923,20 @@ export default function Map() {
                           <button
                             key={i}
                             onClick={() => setSelectedSpot(spot)}
-                            className={`flex flex-1 flex-col items-center rounded-xl border py-2.5 transition-all ${isActive ? "border-emerald-300 bg-emerald-50/50" : "border-slate-100 bg-white hover:bg-slate-50"}`}
+                            className={`flex flex-1 flex-col items-center rounded-2xl border py-2 transition-all ${
+                              isActive
+                                ? "border-emerald-200 bg-emerald-50"
+                                : "border-slate-100 bg-white hover:bg-slate-50"
+                            }`}
                           >
                             <span className="text-[9px] font-bold tracking-wider text-slate-400 uppercase">
                               Spot {String.fromCharCode(65 + i)}
                             </span>
                             <span
-                              className="mt-0.5 text-sm font-black"
-                              style={{ color: getScoreLabel(spot.value).color }}
+                              className="text-sm font-black"
+                              style={{
+                                color: getScoreLabel(spot.value).color,
+                              }}
                             >
                               {spot.value}
                             </span>
@@ -874,12 +944,12 @@ export default function Map() {
                         );
                       })}
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             ) : (
-              <div className="px-4 py-8 pb-4 text-center text-sm text-slate-400">
-                Pilih titik pada peta
+              <div className="px-4 pb-4 text-center text-sm text-slate-400">
+                {loading ? "Memuat data ZPPI..." : "Pilih titik pada peta"}
               </div>
             )}
           </div>
@@ -967,12 +1037,6 @@ export default function Map() {
             >
               Tutup Lobi
             </button>
-            <button
-              onClick={handleSendSOSFromCardClick}
-              className="mt-3 w-full rounded-xl border border-red-400 bg-red-500 py-2.5 text-sm font-bold text-white transition hover:bg-red-600 active:scale-95"
-            >
-              Kirim Sinyal SOS
-            </button>
           </div>
         </div>
       )}
@@ -1010,9 +1074,6 @@ export default function Map() {
                 {confirmDialog.confirmText}
               </button>
             </div>
-            <button onClick={() => setSOSAlert(null)} className="text-red-200">
-              <X size={16} />
-            </button>
           </div>
         </div>
       )}
