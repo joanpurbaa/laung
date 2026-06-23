@@ -16,7 +16,6 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import type { GeoSpot, MapProps } from "~/types/map";
 
-// TAMBAHKAN TYPE EXTENSION DI SINI AGAR TYPESCRIPT TETAP AMAN
 interface ExtendedMapProps extends MapProps {
   selectedMemberId?: string | null;
   onSelectMember?: (id: string | null) => void;
@@ -112,12 +111,22 @@ export default function Map({
   recenterTrigger,
   fleetMembers = [],
   myLocation,
-  selectedMemberId, // PROP BARU UNTUK TALI JARAK INTERAKTIF
-  onSelectMember,   // PROP BARU UNTUK FUNGSIONALITAS KLIK MARKER
+  selectedMemberId,
+  onSelectMember,
 }: ExtendedMapProps) {
+  
+  // 1. STATE PELINDUNG MOUNTING
+  const [isMounted, setIsMounted] = useState(false);
+
   const [chlorophyllSpots, setChlorophyllSpots] = useState<GeoSpot[]>([]);
   const [sstSpots, setSstSpots] = useState<GeoSpot[]>([]);
   const [zppiSpots, setZppiSpots] = useState<GeoSpot[]>([]);
+
+  useEffect(() => {
+    setIsMounted(true);
+    // Cleanup function untuk mencegah memory leak di Strict Mode
+    return () => setIsMounted(false);
+  }, []);
 
   useEffect(() => {
     Promise.all([
@@ -165,9 +174,20 @@ export default function Map({
 
   const routeOrigin = userLocation ?? baseOrigin;
 
+  // 2. CEGAH RENDER SEBELUM DOM SIAP (Mencegah "appendChild" error)
+  if (!isMounted) {
+    return (
+      <div className="flex h-full w-full items-center justify-center bg-slate-100">
+        <p className="animate-pulse text-sm font-medium text-slate-500">
+          Sinkronisasi Peta...
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="relative h-full w-full">
-      <div className="absolute top-20 right-3 z-1010 w-40 space-y-1 rounded-2xl border border-white/60 bg-white/90 px-3 py-2.5 shadow-lg backdrop-blur-md">
+      <div className="absolute top-20 right-3 z-[1010] w-40 space-y-1 rounded-2xl border border-white/60 bg-white/90 px-3 py-2.5 shadow-lg backdrop-blur-md">
         {viewMode === "zppi" || viewMode === "tides" ? (
           <>
             <p className="mb-1.5 text-[9px] font-black tracking-widest text-slate-400 uppercase">
@@ -212,6 +232,7 @@ export default function Map({
       </div>
 
       <MapContainer
+        key="main-fishing-map" // 3. GEMBOK ANTI "REUSED INSTANCE" ERROR
         center={[-6.48, 108.6]}
         zoom={9}
         minZoom={8}
@@ -272,48 +293,30 @@ export default function Map({
                     if (onSelectMember) {
                       onSelectMember(isSelected ? null : member.userId);
                     }
-                  }
+                  },
                 }}
                 pathOptions={{
-                  color: member.isSOS ? "#ef4444" : isSelected ? "#3b82f6" : "#0ea5e9",
-                  fillColor: member.isSOS ? "#ef4444" : isSelected ? "#3b82f6" : "#0ea5e9",
+                  color: member.isSOS
+                    ? "#ef4444"
+                    : isSelected
+                      ? "#3b82f6"
+                      : "#0ea5e9",
+                  fillColor: member.isSOS
+                    ? "#ef4444"
+                    : isSelected
+                      ? "#3b82f6"
+                      : "#0ea5e9",
                   fillOpacity: 0.85,
                   weight: member.isSOS ? 3 : isSelected ? 4 : 2,
                 }}
-              >
-                <Popup>
-                  <div className="font-sans text-xs">
-                    <p className="font-bold text-slate-800">
-                      {member.isSOS
-                        ? "🆘 SOS — Butuh Bantuan!"
-                        : `⛵ Nelayan: ${member.userName || "Tanpa Nama"}`}
-                    </p>
-                    <p className="mt-0.5 font-mono text-[10px] text-slate-500">
-                      {member.latitude.toFixed(4)}, {member.longitude.toFixed(4)}
-                    </p>
-                    {member.isSOS && (
-                      <p className="mt-1 text-[10px] font-semibold text-red-500">
-                        Segera hubungi BASARNAS: 115
-                      </p>
-                    )}
-                    <p className="mt-0.5 text-[10px] text-slate-400">
-                      Update:{" "}
-                      {new Date(member.lastSeen).toLocaleTimeString("id-ID", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}{" "}
-                      WIB
-                    </p>
-                  </div>
-                </Popup>
-              </CircleMarker>
+              />
 
               {/* TALI JARAK INTERAKTIF ANTAR FLEET MEMBERS */}
               {isSelected && routeOrigin && (
                 <Polyline
                   positions={[
                     [routeOrigin.lat, routeOrigin.lng],
-                    [member.latitude, member.longitude]
+                    [member.latitude, member.longitude],
                   ]}
                   pathOptions={{
                     color: "#3b82f6",
