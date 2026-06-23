@@ -75,6 +75,7 @@ function calculateDistance(
 }
 
 const LAYER_OPTIONS = [
+  { value: "pesan", icon: "💬", label: "Pesan" },
   { value: "zppi", icon: "🚀", label: "ZPPI" },
   { value: "chlorophyll", icon: "🌿", label: "Klorofil" },
   { value: "sst", icon: "🌡️", label: "Suhu" },
@@ -494,15 +495,18 @@ export default function Map() {
         {LAYER_OPTIONS.map((layer) => (
           <button
             key={layer.value}
-            onClick={() =>
-              layer.value === "pesan"
-                ? setShowFamilyModal(true)
-                : setViewMode(layer.value)
-            }
+            onClick={() => {
+              if (layer.value === "pesan") {
+                setShowFamilyModal(true);
+              } else {
+                setViewMode(layer.value);
+              }
+            }}
+            title={layer.label}
             className={`flex h-11 w-11 flex-col items-center justify-center rounded-2xl border shadow-lg backdrop-blur-md transition-all ${
-              viewMode === layer.value
+              viewMode === layer.value && layer.value !== "pesan"
                 ? "border-emerald-300 bg-emerald-500 text-white shadow-emerald-200"
-                : "border-white/60 bg-white/90 text-slate-600"
+                : "border-white/60 bg-white/90 text-slate-600 hover:bg-white"
             }`}
           >
             <span className="text-base leading-none">{layer.icon}</span>
@@ -532,6 +536,7 @@ export default function Map() {
         </button>
       </div>
 
+      {/* FLOATING CARD DETAIL NELAYAN Z-30 */}
       {selectedMemberForDetail && (
         <div className="animate-in fade-in slide-in-from-top-4 absolute top-24 right-4 left-4 z-30 max-w-sm duration-200 sm:mx-auto">
           <div
