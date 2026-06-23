@@ -420,14 +420,6 @@ export default function Map() {
             </div>
           </div>
 
-          {/* <button
-            onClick={() => setShowFamilyModal(true)}
-            className="flex h-[52px] items-center gap-1.5 rounded-2xl border border-white/60 bg-white/90 px-3.5 text-xs font-bold text-slate-700 shadow-lg backdrop-blur-md transition-all hover:bg-slate-50 active:scale-95"
-          >
-            <span>⚙️</span>
-            <span className="hidden sm:inline">Atur</span> Keluarga
-          </button> */}
-
           <div className="relative">
             <button
               onClick={() => setShowFishDropdown((v) => !v)}
@@ -610,7 +602,18 @@ export default function Map() {
         </div>
       )}
 
-      <div className="absolute right-4 bottom-24 z-10 flex flex-col items-end gap-3">
+      {/* TOMBOL SOS TERPISAH (Kiri Bawah) */}
+      <div className={`absolute left-4 z-10 flex flex-col items-start gap-3 transition-all duration-300 ${sheetExpanded ? "bottom-[280px]" : "bottom-24"}`}>
+        <button
+          onClick={handleSendSOSFromCardClick}
+          className="flex items-center gap-2 rounded-2xl bg-red-600 px-4 py-2.5 text-[12px] font-black text-white shadow-lg shadow-red-500/40 ring-2 ring-red-500/20 transition-all hover:bg-red-700 active:scale-95"
+        >
+          <AlertTriangle size={14} /> DARURAT SOS
+        </button>
+      </div>
+
+      {/* TOMBOL LOBI & BAGIKAN LOKASI (Kanan Bawah) */}
+      <div className={`absolute right-4 z-10 flex flex-col items-end gap-3 transition-all duration-300 ${sheetExpanded ? "bottom-[280px]" : "bottom-24"}`}>
         <button
           onClick={handleToggleSharingClick}
           className={`flex items-center gap-2 rounded-2xl px-3 py-2.5 text-[12px] font-black shadow-lg transition-all active:scale-95 ${
@@ -966,12 +969,6 @@ export default function Map() {
               className="mt-5 w-full rounded-xl border border-slate-200 py-2.5 text-sm font-bold text-slate-500 transition hover:bg-slate-50 active:scale-95"
             >
               Tutup Lobi
-            </button>
-            <button
-              onClick={handleSendSOSFromCardClick}
-              className="mt-3 w-full rounded-xl border border-red-400 bg-red-500 py-2.5 text-sm font-bold text-white transition hover:bg-red-600 active:scale-95"
-            >
-              Kirim Sinyal SOS
             </button>
           </div>
         </div>
