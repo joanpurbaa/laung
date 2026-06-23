@@ -10,9 +10,11 @@ import {
   UserCheck,
   X,
   AlertTriangle,
-  Navigation,
-  BarChart3,
-  Layers,
+  MessageCircle,
+  Rocket,
+  Leaf,
+  Thermometer,
+  Satellite,
   TriangleAlert,
 } from "lucide-react";
 import { useFleetTracking, type FleetMember } from "~/hooks/useFleetTracking";
@@ -75,10 +77,10 @@ function calculateDistance(
 }
 
 const LAYER_OPTIONS = [
-  { value: "pesan", icon: "💬", label: "Pesan" },
-  { value: "zppi", icon: "🚀", label: "ZPPI" },
-  { value: "chlorophyll", icon: "🌿", label: "Klorofil" },
-  { value: "sst", icon: "🌡️", label: "Suhu" },
+  { value: "pesan", icon: MessageCircle, label: "Pesan" },
+  { value: "zppi", icon: Rocket, label: "ZPPI" },
+  { value: "chlorophyll", icon: Leaf, label: "Klorofil" },
+  { value: "sst", icon: Thermometer, label: "Suhu" },
 ] as const;
 
 const FISH_OPTIONS = [
@@ -493,46 +495,36 @@ export default function Map() {
       )}
 
       <div className="absolute top-1/2 right-3 z-10 flex -translate-y-1/2 flex-col gap-2">
-        {LAYER_OPTIONS.map((layer) => (
-          <button
-            key={layer.value}
-            onClick={() => {
-              if (layer.value === "pesan") {
-                setShowFamilyModal(true);
-              } else {
-                setViewMode(layer.value);
-              }
-            }}
-            title={layer.label}
-            className={`flex h-11 w-11 flex-col items-center justify-center rounded-2xl border shadow-lg backdrop-blur-md transition-all ${
-              viewMode === layer.value && layer.value !== "pesan"
-                ? "border-emerald-300 bg-emerald-500 text-white shadow-emerald-200"
-                : "border-white/60 bg-white/90 text-slate-600 hover:bg-white"
-            }`}
-          >
-            <span className="text-base leading-none">{layer.icon}</span>
-            <span className="mt-0.5 text-[8px] font-bold">{layer.label}</span>
-          </button>
-        ))}
+        {LAYER_OPTIONS.map((layer) => {
+          const IconComponent = layer.icon;
+          return (
+            <button
+              key={layer.value}
+              onClick={() => {
+                if (layer.value === "pesan") {
+                  setShowFamilyModal(true);
+                } else {
+                  setViewMode(layer.value);
+                }
+              }}
+              title={layer.label}
+              className={`flex h-11 w-11 flex-col items-center justify-center rounded-2xl border shadow-lg backdrop-blur-md transition-all ${
+                viewMode === layer.value && layer.value !== "pesan"
+                  ? "border-emerald-300 bg-emerald-500 text-white shadow-emerald-200"
+                  : "border-white/60 bg-white/90 text-slate-600 hover:bg-white"
+              }`}
+            >
+              <IconComponent size={18} strokeWidth={2} />
+              <span className="mt-0.5 text-[8px] font-bold">{layer.label}</span>
+            </button>
+          );
+        })}
 
         <button
           onClick={handleRecenter}
           className="flex h-11 w-11 flex-col items-center justify-center rounded-2xl border border-white/60 bg-white/90 text-blue-500 shadow-lg backdrop-blur-md"
         >
-          <svg
-            className="h-5 w-5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-          >
-            <circle cx="12" cy="12" r="3" fill="#3b82f6" stroke="none" />
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M12 2v3m0 14v3M2 12h3m14 0h3"
-            />
-          </svg>
+          <Satellite size={18} strokeWidth={2} />
           <span className="mt-0.5 text-[8px] font-bold">GPS</span>
         </button>
       </div>
