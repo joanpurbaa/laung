@@ -1,15 +1,26 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import dynamic from "next/dynamic";
 import Navbar from "../_components/Navbar";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
-import { Users, UserCheck, X, Send } from "lucide-react";
-import SOSButton from "../_components/SOSButton";
+import {
+  Users,
+  UserCheck,
+  X,
+  AlertTriangle,
+  Navigation,
+  BarChart3,
+  Layers,
+  TriangleAlert,
+} from "lucide-react";
 import { useFleetTracking, type FleetMember } from "~/hooks/useFleetTracking";
 import type { TidePoint } from "~/types/tide";
-import { shareSpotAction } from "~/lib/actions/location";
+import {
+  sendSOSAction,
+  getActiveSharelockUsersAction,
+} from "~/lib/actions/location";
 import FamilyContactModal from "../_components/FamilyContactModal";
 
 interface GeoSpot {
@@ -23,6 +34,15 @@ interface GeoSpot {
     sstCont: number;
     tideCont: number;
   };
+}
+
+interface ConfirmDialogState {
+  isOpen: boolean;
+  title: string;
+  message: string;
+  confirmText: string;
+  type: "info" | "danger" | "success";
+  action: () => void | Promise<void>;
 }
 
 const FishingMap = dynamic(() => import("../_components/Map"), {
@@ -75,7 +95,7 @@ function getScoreLabel(score: number) {
   return { label: "Rendah", color: "#ef4444" };
 }
 
-const KARANGAMPEL = { lat: -6.465, lng: 108.452 };
+const baseOrigin = { lat: -6.48, lng: 108.6 };
 
 export default function Map() {
   const [viewMode, setViewMode] = useState<
@@ -89,7 +109,6 @@ export default function Map() {
   const [loading, setLoading] = useState(true);
   const [selectedSpot, setSelectedSpot] = useState<GeoSpot | null>(null);
   const [sheetExpanded, setSheetExpanded] = useState(false);
-  const [showDetail, setShowDetail] = useState(false);
   const [showFishDropdown, setShowFishDropdown] = useState(false);
   const [userLocation, setUserLocation] = useState<{
     lat: number;
@@ -99,14 +118,25 @@ export default function Map() {
   const watchIdRef = useRef<number | null>(null);
   const [recenterTrigger, setRecenterTrigger] = useState(0);
   const { data: session } = useSession();
+
   const [isSharing, setIsSharing] = useState(false);
   const [sosAlert, setSOSAlert] = useState<FleetMember | null>(null);
-  const [activeSharedMemberId, setActiveSharedMemberId] = useState<
-    string | null
-  >(null);
+  const [, setActiveSharedMemberId] = useState<string | null>(null);
 
-  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
-  const [showFleetModal, setShowFleetModal] = useState(false);
+  const [showActiveUsersModal, setShowActiveUsersModal] = useState(false);
+  const [activeUsersList, setActiveUsersList] = useState<
+    { id: string; name: string }[]
+  >([]);
+  const [selectedMemberForDetail, setSelectedMemberForDetail] =
+    useState<FleetMember | null>(null);
+
+  const [confirmDialog, setConfirmDialog] = useState<ConfirmDialogState | null>(
+    null,
+  );
+
+  const [activeTab, setActiveTab] = useState<"rute" | "analisis" | "top_spot">(
+    "rute",
+  );
 
   const [showFamilyModal, setShowFamilyModal] = useState(false);
 
@@ -141,14 +171,21 @@ export default function Map() {
   }, []);
 
   useEffect(() => {
-    setLoading(true);
-    setShowDetail(false);
-    Promise.all([
-      fetch("/api/tides").then((r) => r.json()),
-      fetch(`/api/zppi?fish=${fishType}`).then((r) => r.json()),
-    ])
-      .then(([tides, zppi]) => {
+    fetch("/api/tides")
+      .then((r) => r.json())
+      .then((tides) => {
         if (Array.isArray(tides)) setTideData(tides);
+      })
+      .catch((err) => console.error(err));
+  }, []);
+
+  useEffect(() => {
+    setLoading(true);
+    setSheetExpanded(false);
+
+    fetch(`/api/zppi?fish=${fishType}`)
+      .then((r) => r.json())
+      .then((zppi) => {
         if (Array.isArray(zppi)) {
           setZppiSpots(zppi);
           const sorted = [...zppi].sort((a, b) => b.value - a.value);
@@ -159,8 +196,13 @@ export default function Map() {
       .catch(() => setLoading(false));
   }, [fishType]);
 
-  const topSpot = [...zppiSpots].sort((a, b) => b.value - a.value)[0] ?? null;
-  const topSpots = [...zppiSpots].sort((a, b) => b.value - a.value).slice(0, 3);
+  const sortedSpots = useMemo(() => {
+    if (zppiSpots.length === 0) return [];
+    return [...zppiSpots].sort((a, b) => b.value - a.value);
+  }, [zppiSpots]);
+
+  const topSpot = sortedSpots[0] ?? null;
+  const topSpots = useMemo(() => sortedSpots.slice(0, 3), [sortedSpots]);
 
   const distance =
     selectedSpot && userLocation
@@ -181,11 +223,11 @@ export default function Map() {
   const activeFish = FISH_OPTIONS.find((f) => f.value === fishType)!;
   const scoreInfo = selectedSpot ? getScoreLabel(selectedSpot.value) : null;
 
-  const handleSpotSelect = (spot: GeoSpot) => {
+  const handleSpotSelect = useCallback((spot: GeoSpot) => {
     setSelectedSpot(spot);
     setSheetExpanded(true);
-    setShowDetail(false);
-  };
+    setActiveTab("rute");
+  }, []);
 
   const handleRecenter = () => setRecenterTrigger((n) => n + 1);
 
@@ -194,67 +236,156 @@ export default function Map() {
     setTimeout(() => setSOSAlert(null), 30000);
   }, []);
 
-  const { fleetMembers, myLocation, toggleSharing } = useFleetTracking({
+  const {
+    fleetMembers,
+    myLocation,
+    toggleSharing,
+    incomingSenders,
+    outgoingTargets,
+    sharelockToUser,
+    unsharelockFromUser,
+  } = useFleetTracking({
     isSharing,
     myUserId: session?.user?.id,
     onSOSReceived: handleSOSReceived,
   });
 
-  const handleToggleSharing = async () => {
-    const next = !isSharing;
-    setIsSharing(next);
-    await toggleSharing(next);
+  const fetchActiveUsers = async () => {
+    const res = await getActiveSharelockUsersAction();
+    if (res.success) {
+      setActiveUsersList(res.data);
+    } else {
+      alert("Gagal mengambil daftar nelayan");
+    }
   };
 
-  // ─── FUNGSI UNTUK BAGI KOORDINAT SPOT KE NELAYAN TERTENTU ───
-  const handleShareSpotToFisher = async (fisher: FleetMember) => {
-    if (!selectedSpot) {
-      alert("Pilih koordinat spot ZPPI di peta terlebih dahulu!");
+  const handleToggleSharingClick = async () => {
+    if (!isSharing) {
+      setConfirmDialog({
+        isOpen: true,
+        title: "Aktifkan Sharelock?",
+        message:
+          "Anda akan masuk ke lobi dan bisa melihat nelayan lain. Nelayan lain belum bisa melihat Anda sampai Anda membagikannya.",
+        confirmText: "Ya, Masuk Lobi",
+        type: "success",
+        action: async () => {
+          setIsSharing(true);
+          await toggleSharing(true);
+          await fetchActiveUsers();
+          setShowActiveUsersModal(true);
+
+          // 🚨 PEMICU IZIN NOTIFIKASI OTOMATIS
+          if (typeof window !== "undefined" && "Notification" in window) {
+            if (Notification.permission === "default") {
+              await Notification.requestPermission();
+            }
+          }
+        },
+      });
+    } else {
+      setConfirmDialog({
+        isOpen: true,
+        title: "Masuk Mode Siluman?",
+        message:
+          "Matikan Sharelock? Anda tidak akan bisa melihat nelayan lain, dan nelayan lain tidak bisa melihat Anda.",
+        confirmText: "Ya, Matikan",
+        type: "danger",
+        action: async () => {
+          setIsSharing(false);
+          await toggleSharing(false);
+          setShowActiveUsersModal(false);
+          setSelectedMemberForDetail(null);
+        },
+      });
+    }
+  };
+
+  const confirmShareToUser = (userId: string, userName: string) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: "Bagikan Lokasi?",
+      message: `Bagikan lokasimu secara langsung ke ${userName}? Mereka akan bisa melihat posisposimu di peta.`,
+      confirmText: "Bagikan",
+      type: "success",
+      action: async () => {
+        await sharelockToUser(userId);
+      },
+    });
+  };
+
+  const confirmUnshareFromUser = (userId: string, userName: string) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: "Cabut Akses Lokasi?",
+      message: `Berhenti membagikan lokasi ke ${userName}? Mereka tidak akan bisa lagi melihat posisimu.`,
+      confirmText: "Cabut Akses",
+      type: "danger",
+      action: async () => {
+        await unsharelockFromUser(userId);
+        setSelectedMemberForDetail(null);
+      },
+    });
+  };
+
+  const handleSendSOSFromCardClick = () => {
+    if (!myLocation) {
+      alert("GPS belum siap");
       return;
     }
-
-    // 1. Tampilkan log payload sesuai instruksi template ketua lu
-    console.log(
-      `Mengirim Spot (${selectedSpot.lat}, ${selectedSpot.lng}) ke Nelayan: ${fisher.userName}`,
-    );
-
-    // 2. Eksekusi Server Action untuk simpan ke database via Prisma
-    const result = await shareSpotAction({
-      recipientId: fisher.userId,
-      latitude: selectedSpot.lat,
-      longitude: selectedSpot.lng,
+    setConfirmDialog({
+      isOpen: true,
+      title: "DARURAT SOS",
+      message:
+        "Kirim sinyal bahaya sekarang? Semua nelayan dalam radius 50km akan diberitahu lokasi akurat Anda.",
+      confirmText: "KIRIM SOS SEKARANG",
+      type: "danger",
+      action: async () => {
+        const result = await sendSOSAction({
+          latitude: myLocation.latitude,
+          longitude: myLocation.longitude,
+          message: "Butuh bantuan segera!",
+        });
+        if (result.success) {
+          alert("Sinyal SOS telah dikirim ke seluruh armada terdekat!");
+        }
+        setSelectedMemberForDetail(null);
+      },
     });
+  };
 
-    // 3. Beri feedback ke user berdasarkan hasil response database
-    if (result.success) {
-      alert(`Koordinat Spot Berhasil dibagikan ke ${fisher.userName}!`);
+  const handleMapMemberSelect = (memberId: string | null) => {
+    setActiveSharedMemberId(memberId);
+    if (memberId) {
+      const member = fleetMembers.find((m) => m.userId === memberId) ?? null;
+
+      setSelectedMemberForDetail(member);
     } else {
-      alert(`Gagal membagikan spot: ${result.error}`);
+      setSelectedMemberForDetail(null);
     }
   };
 
   return (
     <main
-      className="relative h-screen w-screen overflow-hidden select-none"
+      className="relative h-screen w-screen overflow-hidden bg-slate-900 select-none"
       style={{ fontFamily: "'DM Sans', 'Geist', sans-serif" }}
     >
       <div className="absolute inset-0 z-0">
         <FishingMap
           viewMode={viewMode}
-          onSpotSelect={handleSpotSelect}
           selectedSpot={selectedSpot}
+          onSpotSelect={handleSpotSelect}
           fishType={fishType}
-          baseOrigin={KARANGAMPEL}
+          baseOrigin={baseOrigin}
           userLocation={userLocation}
           recenterTrigger={recenterTrigger}
           fleetMembers={fleetMembers}
           myLocation={myLocation}
-          selectedMemberId={activeSharedMemberId} // Ganti yang tadinya selectedMemberId biasa
-          onSelectMember={setActiveSharedMemberId}
+          selectedMemberId={selectedMemberForDetail?.userId ?? null}
+          onSelectMember={handleMapMemberSelect}
         />
       </div>
 
-      <div className="absolute top-0 right-0 left-0 z-[1010] px-3 pt-3 pb-2">
+      <div className="absolute top-0 right-0 left-0 z-10 px-3 pt-3 pb-2">
         <div className="flex items-center gap-2">
           <div className="flex flex-1 items-center gap-2.5 rounded-2xl border border-white/60 bg-white/90 px-3.5 py-2.5 shadow-lg backdrop-blur-md">
             <Image
@@ -270,14 +401,14 @@ export default function Map() {
                   <>
                     <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
                     <span className="text-[9px] font-bold text-emerald-600">
-                      GPS Terhubung (Akurasi Tinggi)
+                      GPS Terhubung
                     </span>
                   </>
                 ) : (
                   <>
                     <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-amber-400" />
                     <span className="text-[9px] font-bold text-amber-600">
-                      Menunggu sinyal GPS…
+                      Menunggu GPS…
                     </span>
                   </>
                 )}
@@ -300,7 +431,7 @@ export default function Map() {
           <div className="relative">
             <button
               onClick={() => setShowFishDropdown((v) => !v)}
-              className="flex h-[52px] items-center gap-1.5 rounded-2xl border border-white/60 bg-white/90 px-3 shadow-lg backdrop-blur-md"
+              className="relative z-10 flex h-[52px] items-center gap-1.5 rounded-2xl border border-white/60 bg-white/90 px-3 shadow-lg backdrop-blur-md"
             >
               <span className="text-base">{activeFish.emoji}</span>
               <svg
@@ -318,7 +449,7 @@ export default function Map() {
               </svg>
             </button>
             {showFishDropdown && (
-              <div className="absolute top-full right-0 mt-1.5 w-44 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-xl">
+              <div className="absolute top-full right-0 z-20 mt-1.5 w-44 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-xl">
                 {FISH_OPTIONS.map((f) => (
                   <button
                     key={f.value}
@@ -334,21 +465,6 @@ export default function Map() {
                   >
                     <span className="text-sm">{f.emoji}</span>
                     {f.label}
-                    {fishType === f.value && (
-                      <svg
-                        className="ml-auto h-3.5 w-3.5 text-emerald-500"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={2.5}
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
-                    )}
                   </button>
                 ))}
               </div>
@@ -357,7 +473,34 @@ export default function Map() {
         </div>
       </div>
 
-      <div className="absolute top-1/2 right-3 z-[1010] flex -translate-y-1/2 flex-col gap-2">
+      {showFishDropdown && (
+        <div
+          className="absolute inset-0 z-20"
+          onClick={() => setShowFishDropdown(false)}
+        />
+      )}
+
+      {sosAlert && (
+        <div className="animate-in fade-in slide-in-from-top-4 absolute top-20 right-4 left-4 z-40 rounded-2xl border border-red-200 bg-red-500 p-4 shadow-2xl">
+          <div className="flex items-start gap-3">
+            <TriangleAlert className="text-white" />
+            <div className="flex-1">
+              <p className="text-[13px] font-black text-white">
+                Sinyal SOS Diterima!
+              </p>
+              <p className="text-[11px] font-medium text-red-100">
+                Nelayan butuh bantuan di koordinat{" "}
+                {sosAlert.latitude.toFixed(4)}, {sosAlert.longitude.toFixed(4)}
+              </p>
+            </div>
+            <button onClick={() => setSOSAlert(null)} className="text-red-200">
+              <X size={16} />
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="absolute top-1/2 right-3 z-10 flex -translate-y-1/2 flex-col gap-2">
         {LAYER_OPTIONS.map((layer) => (
           <button
             key={layer.value}
@@ -376,25 +519,16 @@ export default function Map() {
             }`}
           >
             <span className="text-base leading-none">{layer.icon}</span>
-            <span
-              className={`mt-0.5 text-[8px] leading-none font-bold ${
-                viewMode === layer.value && layer.value !== "pesan"
-                  ? "text-white/90"
-                  : "text-slate-400"
-              }`}
-            >
-              {layer.label}
-            </span>
+            <span className="mt-0.5 text-[8px] font-bold">{layer.label}</span>
           </button>
         ))}
 
         <button
           onClick={handleRecenter}
-          title="Ke Lokasiku"
-          className="flex h-11 w-11 flex-col items-center justify-center rounded-2xl border border-white/60 bg-white/90 shadow-lg backdrop-blur-md transition-all hover:border-blue-200 hover:bg-blue-50 active:scale-95"
+          className="flex h-11 w-11 flex-col items-center justify-center rounded-2xl border border-white/60 bg-white/90 text-blue-500 shadow-lg backdrop-blur-md"
         >
           <svg
-            className="h-5 w-5 text-blue-500"
+            className="h-5 w-5"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -406,17 +540,93 @@ export default function Map() {
               strokeLinejoin="round"
               d="M12 2v3m0 14v3M2 12h3m14 0h3"
             />
-            <circle cx="12" cy="12" r="7" strokeDasharray="3 2" />
           </svg>
-          <span className="mt-0.5 text-[8px] leading-none font-bold text-blue-500">
-            GPS
-          </span>
+          <span className="mt-0.5 text-[8px] font-bold">GPS</span>
         </button>
       </div>
 
-      <div className="absolute right-0 bottom-16 left-0 z-[1010]">
+      {selectedMemberForDetail && (
+        <div className="animate-in fade-in slide-in-from-top-4 absolute top-24 right-4 left-4 z-30 max-w-sm duration-200 sm:mx-auto">
+          <div
+            className="w-full rounded-2xl border border-slate-100 bg-white/95 p-4 shadow-2xl backdrop-blur-md"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-2.5 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span
+                  className={`h-2.5 w-2.5 rounded-full ${selectedMemberForDetail.isSOS ? "animate-ping bg-red-500" : "bg-blue-500"}`}
+                />
+                <h4 className="text-sm font-black text-slate-800">
+                  {selectedMemberForDetail.userName ?? "Nelayan"}
+                  {selectedMemberForDetail.isSOS && (
+                    <span className="ml-1 text-xs font-extrabold text-red-600">
+                      (DARURAT)
+                    </span>
+                  )}
+                </h4>
+              </div>
+              <button
+                onClick={() => setSelectedMemberForDetail(null)}
+                className="rounded-lg p-1 text-slate-400"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="flex gap-2">
+              {outgoingTargets.has(selectedMemberForDetail.userId) ? (
+                <button
+                  onClick={() =>
+                    confirmUnshareFromUser(
+                      selectedMemberForDetail.userId,
+                      selectedMemberForDetail.userName ?? "Nelayan",
+                    )
+                  }
+                  className="flex-1 rounded-xl border border-red-200 bg-red-50 py-2 text-xs font-bold text-red-600"
+                >
+                  Cabut Akses Lokasi
+                </button>
+              ) : (
+                <button
+                  onClick={() =>
+                    confirmShareToUser(
+                      selectedMemberForDetail.userId,
+                      selectedMemberForDetail.userName ?? "Nelayan",
+                    )
+                  }
+                  className="flex-1 rounded-xl bg-emerald-500 py-2 text-xs font-bold text-white"
+                >
+                  Bagikan Lokasiku
+                </button>
+              )}
+              <button
+                onClick={handleSendSOSFromCardClick}
+                className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-red-600 py-2 text-xs font-black text-white"
+              >
+                <AlertTriangle size={14} /> SOS
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="absolute right-4 bottom-24 z-10 flex flex-col items-end gap-3">
+        <button
+          onClick={handleToggleSharingClick}
+          className={`flex items-center gap-2 rounded-2xl px-3 py-2.5 text-[12px] font-black shadow-lg transition-all active:scale-95 ${
+            isSharing
+              ? "bg-emerald-500 text-white shadow-emerald-200"
+              : "border border-slate-200 bg-white text-slate-600"
+          }`}
+        >
+          {isSharing ? <UserCheck size={14} /> : <Users size={14} />}
+          {isSharing ? "Lobi Armada Aktif" : "Bagikan Lokasi"}
+        </button>
+      </div>
+
+      <div className="absolute right-0 bottom-4 left-0 z-10">
         {!sheetExpanded ? (
-          <div className="mx-3 mb-3">
+          <div className="mx-3">
             <button
               onClick={() => setSheetExpanded(true)}
               className="w-full overflow-hidden rounded-3xl border border-white/60 bg-white/95 shadow-2xl backdrop-blur-md"
@@ -442,29 +652,16 @@ export default function Map() {
                         Rekomendasi Terbaik Hari Ini
                       </p>
                       <p className="text-sm font-black text-slate-800">
-                        Spot A · Hemat {fuelSavingPercent}% Solar
+                        Spot Utama · Hemat {fuelSavingPercent}% Solar
                       </p>
                       <p className="text-[10px] font-semibold text-slate-400">
                         {userLocation
                           ? `${distance.toFixed(1)} Km dari posisimu`
-                          : "Menunggu GPS…"}{" "}
-                        · 09:00–15:00 WIB
+                          : "Menunggu GPS…"}
                       </p>
                     </div>
-                    <div className="shrink-0">
-                      <svg
-                        className="h-5 w-5 text-slate-300"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={2}
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M5 15l7-7 7 7"
-                        />
-                      </svg>
+                    <div className="rounded-lg bg-emerald-50 px-2 py-1 text-xs font-bold text-emerald-600">
+                      Tap Detail
                     </div>
                   </>
                 )}
@@ -476,233 +673,184 @@ export default function Map() {
                   </p>
                 )}
               </div>
-
-              <div className="grid grid-cols-3 divide-x divide-slate-100 border-t border-slate-100">
-                <div className="py-2 text-center">
-                  <p className="text-[9px] font-bold tracking-wider text-slate-400 uppercase">
-                    Potensial
-                  </p>
-                  <p className="text-sm font-black text-emerald-600">
-                    {zppiSpots.filter((s) => s.value >= 70).length}
-                  </p>
-                </div>
-                <div className="py-2 text-center">
-                  <p className="text-[9px] font-bold tracking-wider text-slate-400 uppercase">
-                    Sangat Baik
-                  </p>
-                  <p className="text-sm font-black text-blue-600">
-                    {zppiSpots.filter((s) => s.value >= 85).length}
-                  </p>
-                </div>
-                <div className="py-2 text-center">
-                  <p className="text-[9px] font-bold tracking-wider text-slate-400 uppercase">
-                    Kondisi Air
-                  </p>
-                  <p className="text-sm font-black text-cyan-600">Optimal</p>
-                </div>
-              </div>
             </button>
           </div>
         ) : (
-          <div className="mx-3 mb-3 overflow-hidden rounded-3xl border border-white/60 bg-white/97 shadow-2xl backdrop-blur-md">
+          <div className="mx-3 flex h-[260px] flex-col overflow-hidden rounded-3xl border border-white/60 bg-white/97 shadow-2xl backdrop-blur-md">
             <button
-              onClick={() => {
-                setSheetExpanded(false);
-                setShowDetail(false);
-              }}
-              className="flex w-full flex-col items-center pt-3 pb-1"
+              onClick={() => setSheetExpanded(false)}
+              className="flex w-full shrink-0 flex-col items-center border-b border-slate-100 bg-slate-50 pt-2 pb-1"
             >
-              <div className="h-1 w-10 rounded-full bg-slate-200" />
+              <div className="h-1 w-10 rounded-full bg-slate-300" />
             </button>
 
             {selectedSpot ? (
-              <div className="px-4 pb-4">
-                <div className="mb-3 flex items-center gap-3">
-                  <div
-                    className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-2xl text-white shadow-md"
-                    style={{ backgroundColor: scoreInfo?.color }}
-                  >
-                    <span className="text-2xl leading-none font-black">
-                      {selectedSpot.value}
-                    </span>
-                    <span className="text-[8px] leading-none font-bold uppercase opacity-80">
-                      / 100
-                    </span>
-                  </div>
-                  <div className="flex-1">
+              <div className="flex flex-1 flex-col overflow-hidden">
+                <div className="flex shrink-0 items-center justify-between border-b border-slate-100 bg-slate-50 px-4 py-2">
+                  <div className="flex items-center gap-2">
                     <span
-                      className="inline-block rounded-lg px-2 py-0.5 text-[10px] font-black tracking-wider text-white uppercase"
+                      className="inline-block rounded-md px-1.5 py-0.5 text-[9px] font-black text-white uppercase"
                       style={{ backgroundColor: scoreInfo?.color }}
                     >
-                      {scoreInfo?.label}
+                      {scoreInfo?.label} ({selectedSpot.value})
                     </span>
-                    <p className="mt-0.5 font-mono text-[11px] text-slate-400">
+                    <span className="font-mono text-[10px] text-slate-400">
                       {selectedSpot.lat.toFixed(4)},{" "}
                       {selectedSpot.lng.toFixed(4)}
-                    </p>
-                    <p className="mt-0.5 text-[10px] font-semibold text-slate-400">
-                      {gpsActive
-                        ? "📍 Dihitung dari posisi GPS kamu"
-                        : "⏳ Menunggu sinyal GPS…"}
-                    </p>
+                    </span>
                   </div>
                   <button
-                    onClick={() => setShowDetail((v) => !v)}
-                    className={`rounded-xl border px-3 py-2 text-[10px] font-black tracking-wider uppercase transition-colors ${
-                      showDetail
-                        ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                        : "border-slate-200 bg-slate-50 text-slate-600"
-                    }`}
+                    onClick={() => setSheetExpanded(false)}
+                    className="text-[10px] font-bold text-slate-400 hover:text-slate-600"
                   >
-                    {showDetail ? "Tutup" : "Detail"}
+                    Tutup
                   </button>
                 </div>
 
-                <div className="mb-3 grid grid-cols-3 gap-2">
-                  <div className="rounded-2xl bg-slate-50 p-2.5 text-center">
-                    <p className="text-[9px] font-bold tracking-wider text-slate-400 uppercase">
-                      Jarak
-                    </p>
-                    <p className="text-base font-black text-slate-800">
-                      {userLocation ? distance.toFixed(1) : "—"}
-                    </p>
-                    <p className="text-[9px] font-semibold text-slate-400">
-                      Km
-                    </p>
-                  </div>
-                  <div className="rounded-2xl bg-slate-50 p-2.5 text-center">
-                    <p className="text-[9px] font-bold tracking-wider text-slate-400 uppercase">
-                      Waktu
-                    </p>
-                    <p className="text-base font-black text-slate-800">
-                      {userLocation ? Math.round(distance * 3.2) : "—"}
-                    </p>
-                    <p className="text-[9px] font-semibold text-slate-400">
-                      Menit
-                    </p>
-                  </div>
-                  <div className="rounded-2xl bg-emerald-500 p-2.5 text-center shadow-sm shadow-emerald-200">
-                    <p className="text-[9px] font-bold tracking-wider text-emerald-100 uppercase">
-                      Hemat BBM
-                    </p>
-                    <p className="text-base font-black text-white">
-                      {userLocation ? `${fuelSavingPercent}%` : "—"}
-                    </p>
-                    <p className="text-[9px] font-semibold text-emerald-200">
-                      Solar
-                    </p>
-                  </div>
+                <div className="flex shrink-0 border-b border-slate-100 bg-white">
+                  <button
+                    onClick={() => setActiveTab("rute")}
+                    className={`flex flex-1 items-center justify-center gap-1.5 border-b-2 py-2.5 text-xs font-bold transition-all ${activeTab === "rute" ? "border-emerald-500 bg-emerald-50/30 text-emerald-600" : "border-transparent text-slate-500 hover:bg-slate-50"}`}
+                  >
+                    <Navigation size={12} /> Info Rute
+                  </button>
+                  <button
+                    onClick={() => setActiveTab("analisis")}
+                    className={`flex flex-1 items-center justify-center gap-1.5 border-b-2 py-2.5 text-xs font-bold transition-all ${activeTab === "analisis" ? "border-emerald-500 bg-emerald-50/30 text-emerald-600" : "border-transparent text-slate-500 hover:bg-slate-50"}`}
+                  >
+                    <BarChart3 size={12} /> Analisis Satelit
+                  </button>
+                  <button
+                    onClick={() => setActiveTab("top_spot")}
+                    className={`flex flex-1 items-center justify-center gap-1.5 border-b-2 py-2.5 text-xs font-bold transition-all ${activeTab === "top_spot" ? "border-emerald-500 bg-emerald-50/30 text-emerald-600" : "border-transparent text-slate-500 hover:bg-slate-50"}`}
+                  >
+                    <Layers size={12} /> Spot Lain
+                  </button>
                 </div>
 
-                <div className="mb-3 flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50 px-4 py-2.5">
-                  <div className="text-center">
-                    <p className="text-[9px] font-bold tracking-wider text-slate-400 uppercase">
-                      Metode Acak
-                    </p>
-                    <p className="text-sm font-black text-red-400 line-through">
-                      {traditionalFuel} L
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-slate-300">
-                    <div className="h-px w-6 bg-slate-200" />
-                    <svg
-                      className="h-4 w-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={1.5}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M13 7l5 5m0 0l-5 5m5-5H6"
-                      />
-                    </svg>
-                    <div className="h-px w-6 bg-slate-200" />
-                  </div>
-                  <div className="text-center">
-                    <p className="text-[9px] font-bold tracking-wider text-slate-400 uppercase">
-                      Rute ZPPI
-                    </p>
-                    <p className="text-sm font-black text-emerald-600">
-                      {zppiFuel} L
-                    </p>
-                  </div>
-                </div>
-
-                {showDetail && selectedSpot.breakdown && (
-                  <div className="rounded-2xl border border-slate-100 bg-slate-50 p-3">
-                    <p className="mb-2 text-[10px] font-black tracking-wider text-slate-400 uppercase">
-                      Analisis Multi-Kriteria
-                    </p>
-                    <div className="space-y-2">
-                      <div>
-                        <div className="mb-1 flex items-center justify-between">
-                          <span className="text-[11px] font-semibold text-slate-600">
-                            🌿 Klorofil-a (
-                            {selectedSpot.breakdown.chlorValue.toFixed(2)}{" "}
-                            mg/m³)
-                          </span>
-                          <span className="text-[11px] font-black text-emerald-600">
-                            +{selectedSpot.breakdown.chlorCont} pts
-                          </span>
+                <div className="flex-1 overflow-y-auto bg-white p-4">
+                  {activeTab === "rute" && (
+                    <div className="animate-in fade-in space-y-3 duration-150">
+                      <div className="grid grid-cols-3 gap-2">
+                        <div className="rounded-xl bg-slate-50 p-2 text-center">
+                          <p className="text-[9px] font-bold tracking-wider text-slate-400 uppercase">
+                            Jarak
+                          </p>
+                          <p className="text-base font-black text-slate-800">
+                            {userLocation ? `${distance.toFixed(1)} Km` : "—"}
+                          </p>
                         </div>
-                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
-                          <div
-                            className="h-full rounded-full bg-emerald-400"
-                            style={{
-                              width: `${selectedSpot.breakdown.chlorCont}%`,
-                            }}
-                          />
+                        <div className="rounded-xl bg-slate-50 p-2 text-center">
+                          <p className="text-[9px] font-bold tracking-wider text-slate-400 uppercase">
+                            Waktu Tempuh
+                          </p>
+                          <p className="text-base font-black text-slate-800">
+                            {userLocation
+                              ? `${Math.round(distance * 3.2)} Mnt`
+                              : "—"}
+                          </p>
+                        </div>
+                        <div className="rounded-xl bg-emerald-500 p-2 text-center text-white shadow-sm shadow-emerald-100">
+                          <p className="text-[9px] font-bold tracking-wider text-emerald-100 uppercase">
+                            Hemat Solar
+                          </p>
+                          <p className="text-base font-black">
+                            {userLocation ? `${fuelSavingPercent}%` : "—"}
+                          </p>
                         </div>
                       </div>
-                      <div>
-                        <div className="mb-1 flex items-center justify-between">
-                          <span className="text-[11px] font-semibold text-slate-600">
-                            🌡️ Suhu Permukaan (
-                            {selectedSpot.breakdown.sstValue.toFixed(1)} °C)
-                          </span>
-                          <span className="text-[11px] font-black text-blue-600">
-                            +{selectedSpot.breakdown.sstCont} pts
-                          </span>
-                        </div>
-                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
-                          <div
-                            className="h-full rounded-full bg-blue-400"
-                            style={{
-                              width: `${selectedSpot.breakdown.sstCont}%`,
-                            }}
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <div className="mb-1 flex items-center justify-between">
-                          <span className="text-[11px] font-semibold text-slate-600">
-                            🌊 Kontribusi Pasut Alami
-                          </span>
-                          <span className="text-[11px] font-black text-cyan-600">
-                            +{selectedSpot.breakdown.tideCont} pts
+                      <div className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/50 px-3 py-2 text-xs">
+                        <div>
+                          <span className="text-[10px] text-slate-400">
+                            Rute Normal:
+                          </span>{" "}
+                          <span className="font-bold text-red-500 line-through">
+                            {traditionalFuel} Liter
                           </span>
                         </div>
-                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
-                          <div
-                            className="h-full rounded-full bg-cyan-400"
-                            style={{
-                              width: `${selectedSpot.breakdown.tideCont}%`,
-                            }}
-                          />
+                        <div className="text-slate-300">➔</div>
+                        <div>
+                          <span className="text-[10px] text-slate-400">
+                            Rute ZPPI:
+                          </span>{" "}
+                          <span className="font-bold text-emerald-600">
+                            {zppiFuel} Liter
+                          </span>
                         </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {!showDetail && (
-                  <div>
-                    <p className="mb-2 text-[10px] font-black tracking-wider text-slate-400 uppercase">
-                      Top Spot Lainnya
-                    </p>
-                    <div className="flex gap-2">
+                  {activeTab === "analisis" && (
+                    <div className="animate-in fade-in space-y-2.5 duration-150">
+                      {selectedSpot.breakdown ? (
+                        <div className="space-y-2">
+                          <div>
+                            <div className="mb-0.5 flex items-center justify-between text-[11px] font-semibold text-slate-600">
+                              <span>
+                                🌿 Klorofil-a (
+                                {selectedSpot.breakdown.chlorValue.toFixed(2)}{" "}
+                                mg/m³)
+                              </span>
+                              <span className="font-bold text-emerald-600">
+                                +{selectedSpot.breakdown.chlorCont} pts
+                              </span>
+                            </div>
+                            <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+                              <div
+                                className="h-full rounded-full bg-emerald-400"
+                                style={{
+                                  width: `${selectedSpot.breakdown.chlorCont}%`,
+                                }}
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <div className="mb-0.5 flex items-center justify-between text-[11px] font-semibold text-slate-600">
+                              <span>
+                                🌡️ Suhu Permukaan (
+                                {selectedSpot.breakdown.sstValue.toFixed(1)} °C)
+                              </span>
+                              <span className="font-bold text-blue-600">
+                                +{selectedSpot.breakdown.sstCont} pts
+                              </span>
+                            </div>
+                            <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+                              <div
+                                className="h-full rounded-full bg-blue-400"
+                                style={{
+                                  width: `${selectedSpot.breakdown.sstCont}%`,
+                                }}
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <div className="mb-0.5 flex items-center justify-between text-[11px] font-semibold text-slate-600">
+                              <span>🌊 Kontribusi Pasut Alami</span>
+                              <span className="font-bold text-cyan-600">
+                                +{selectedSpot.breakdown.tideCont} pts
+                              </span>
+                            </div>
+                            <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+                              <div
+                                className="h-full rounded-full bg-cyan-400"
+                                style={{
+                                  width: `${selectedSpot.breakdown.tideCont}%`,
+                                }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="py-4 text-center text-xs text-slate-400">
+                          Data kriteria satelit tidak tersedia.
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {activeTab === "top_spot" && (
+                    <div className="animate-in fade-in flex gap-2 duration-150">
                       {topSpots.map((spot, i) => {
                         const isActive =
                           selectedSpot?.lat === spot.lat &&
@@ -711,17 +859,13 @@ export default function Map() {
                           <button
                             key={i}
                             onClick={() => setSelectedSpot(spot)}
-                            className={`flex flex-1 flex-col items-center rounded-2xl border py-2 transition-all ${
-                              isActive
-                                ? "border-emerald-200 bg-emerald-50"
-                                : "border-slate-100 bg-white hover:bg-slate-50"
-                            }`}
+                            className={`flex flex-1 flex-col items-center rounded-xl border py-2.5 transition-all ${isActive ? "border-emerald-300 bg-emerald-50/50" : "border-slate-100 bg-white hover:bg-slate-50"}`}
                           >
                             <span className="text-[9px] font-bold tracking-wider text-slate-400 uppercase">
                               Spot {String.fromCharCode(65 + i)}
                             </span>
                             <span
-                              className="text-sm font-black"
+                              className="mt-0.5 text-sm font-black"
                               style={{ color: getScoreLabel(spot.value).color }}
                             >
                               {spot.value}
@@ -730,12 +874,12 @@ export default function Map() {
                         );
                       })}
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             ) : (
-              <div className="px-4 pb-4 text-center text-sm text-slate-400">
-                {loading ? "Memuat data ZPPI..." : "Pilih titik pada peta"}
+              <div className="px-4 py-8 pb-4 text-center text-sm text-slate-400">
+                Pilih titik pada peta
               </div>
             )}
           </div>
@@ -743,118 +887,128 @@ export default function Map() {
       </div>
 
       <Navbar />
+      <FamilyContactModal
+        isOpen={showFamilyModal}
+        onClose={() => setShowFamilyModal(false)}
+      />
 
-      {showFishDropdown && (
+      {showActiveUsersModal && (
         <div
-          className="absolute inset-0 z-[1005]"
-          onClick={() => setShowFishDropdown(false)}
-        />
-      )}
-
-      {showFleetModal && (
-        <div
-          className="absolute inset-0 z-[1999] bg-slate-900/20 backdrop-blur-sm transition-all"
-          onClick={() => setShowFleetModal(false)}
-        />
-      )}
-
-      {showFleetModal && (
-        <div className="animate-in slide-in-from-bottom-5 absolute right-4 bottom-36 left-4 z-[2000] max-h-64 overflow-hidden rounded-3xl border border-white/60 bg-white/90 p-4 shadow-2xl backdrop-blur-xl duration-200">
-          <div className="mb-3 flex items-center justify-between">
-            <div>
-              <p className="text-[10px] font-black tracking-widest text-slate-400 uppercase">
-                Kirim Koordinat Target
-              </p>
-              <h4 className="text-xs font-black text-slate-700">
-                {selectedSpot
-                  ? `Spot Skor: ${selectedSpot.value}`
-                  : "Belum Pilih Spot"}
+          className="absolute inset-0 z-50 flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm"
+          onClick={() => setShowActiveUsersModal(false)}
+        >
+          <div
+            className="w-full max-w-sm rounded-3xl bg-white/95 p-5 shadow-2xl backdrop-blur-md"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-4 flex items-center justify-between">
+              <h4 className="text-base font-black text-slate-800">
+                Lobi Nelayan Aktif
               </h4>
+              <button
+                onClick={() => setShowActiveUsersModal(false)}
+                className="rounded-lg p-1 transition hover:bg-slate-100"
+              >
+                <X size={18} className="text-slate-400" />
+              </button>
+            </div>
+
+            <div className="max-h-64 space-y-2 overflow-y-auto pr-1">
+              {activeUsersList.length === 0 ? (
+                <p className="py-6 text-center text-xs text-slate-400">
+                  Belum ada nelayan lain di Lobi.
+                </p>
+              ) : (
+                activeUsersList.map((user) => {
+                  const alreadyShared = outgoingTargets.has(user.id);
+                  return (
+                    <div
+                      key={user.id}
+                      className={`flex items-center justify-between rounded-2xl border p-3 transition-colors ${alreadyShared ? "border-emerald-100 bg-emerald-50/30" : "border-slate-100"}`}
+                    >
+                      <div>
+                        <p className="text-sm font-bold text-slate-700">
+                          {user.name}
+                        </p>
+                        <p
+                          className={`text-[10px] ${alreadyShared ? "font-semibold text-emerald-500" : "text-slate-400"}`}
+                        >
+                          {alreadyShared
+                            ? "✓ Akses diberikan"
+                            : "Belum ada akses"}
+                        </p>
+                      </div>
+
+                      {alreadyShared ? (
+                        <button
+                          onClick={() =>
+                            confirmUnshareFromUser(user.id, user.name)
+                          }
+                          className="rounded-xl border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-bold text-red-600 shadow-sm transition hover:bg-red-100 active:scale-95"
+                        >
+                          Cabut Akses
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => confirmShareToUser(user.id, user.name)}
+                          className="rounded-xl bg-emerald-500 px-3 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-emerald-600 active:scale-95"
+                        >
+                          Bagikan
+                        </button>
+                      )}
+                    </div>
+                  );
+                })
+              )}
             </div>
             <button
-              onClick={() => setShowFleetModal(false)}
-              className="rounded-full bg-slate-100 p-1 text-slate-400 hover:bg-slate-200"
+              onClick={() => setShowActiveUsersModal(false)}
+              className="mt-5 w-full rounded-xl border border-slate-200 py-2.5 text-sm font-bold text-slate-500 transition hover:bg-slate-50 active:scale-95"
             >
-              <X size={14} />
+              Tutup Lobi
             </button>
-          </div>
-
-          <div className="max-h-44 space-y-1.5 overflow-y-auto pr-1">
-            {fleetMembers.length === 0 ? (
-              <div className="py-6 text-center">
-                <p className="text-xs font-semibold text-slate-400">
-                  Tidak ada nelayan aktif di sekitar.
-                </p>
-              </div>
-            ) : (
-              fleetMembers.map((member) => {
-                const isSelected = selectedMemberId === member.userId;
-
-                return (
-                  <div
-                    key={member.userId}
-                    onClick={() =>
-                      setSelectedMemberId(isSelected ? null : member.userId)
-                    }
-                    className={`flex cursor-pointer items-center justify-between rounded-2xl border p-2.5 transition-all hover:bg-white ${
-                      isSelected
-                        ? "border-blue-500 bg-blue-50/40 shadow-sm"
-                        : "border-slate-100 bg-white/60"
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <div className="relative">
-                        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-600">
-                          {(member?.userName || "unknown")
-                            .substring(0, 2)
-                            .toUpperCase()}
-                        </div>
-                        <span className="absolute right-0 bottom-0 h-2 w-2 rounded-full border border-white bg-emerald-500" />
-                      </div>
-                      <div>
-                        <p className="text-xs font-black text-slate-700">
-                          {member.userName}
-                        </p>
-                        <p className="text-[9px] font-medium text-slate-400">
-                          {userLocation
-                            ? `${calculateDistance(userLocation.lat, userLocation.lng, member.latitude, member.longitude).toFixed(1)} Km`
-                            : "Lokasi tidak diketahui"}
-                        </p>
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleShareSpotToFisher(member);
-                        setActiveSharedMemberId(member.userId); // Mengunci ID nelayan agar tali muncul
-                      }}
-                      disabled={!selectedSpot}
-                      className="flex h-7 items-center gap-1.5 rounded-xl bg-emerald-500 px-3 text-[10px] font-black text-white shadow-sm shadow-emerald-100 transition-all hover:bg-emerald-600 active:scale-95 disabled:pointer-events-none disabled:opacity-50"
-                    >
-                      <Send size={10} />
-                      Kirim
-                    </button>
-                  </div>
-                );
-              })
-            )}
+            <button
+              onClick={handleSendSOSFromCardClick}
+              className="mt-3 w-full rounded-xl border border-red-400 bg-red-500 py-2.5 text-sm font-bold text-white transition hover:bg-red-600 active:scale-95"
+            >
+              Kirim Sinyal SOS
+            </button>
           </div>
         </div>
       )}
 
-      {sosAlert && (
-        <div className="absolute top-4 right-4 left-4 z-[2000] rounded-2xl border border-red-200 bg-red-500 p-4 shadow-2xl">
-          <div className="flex items-start gap-3">
-            <span className="text-2xl">🆘</span>
-            <div className="flex-1">
-              <p className="text-[13px] font-black text-white">
-                Sinyal SOS Diterima!
-              </p>
-              <p className="text-[11px] font-medium text-red-100">
-                Nelayan membutuhkan bantuan di koordinat{" "}
-                {sosAlert.latitude.toFixed(4)}, {sosAlert.longitude.toFixed(4)}
-              </p>
+      {confirmDialog && (
+        <div className="animate-in fade-in absolute inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-md duration-200">
+          <div className="scale-in-95 mx-4 w-full max-w-sm rounded-3xl bg-white p-6 shadow-2xl">
+            <h3 className="flex items-center gap-2 text-lg font-black text-slate-800">
+              {confirmDialog.type === "danger" && (
+                <AlertTriangle size={20} className="text-red-500" />
+              )}
+              {confirmDialog.title}
+            </h3>
+            <p className="mt-2 text-sm leading-relaxed text-slate-600">
+              {confirmDialog.message}
+            </p>
+            <div className="mt-6 flex gap-3">
+              <button
+                onClick={() => setConfirmDialog(null)}
+                className="flex-1 rounded-2xl border border-slate-200 py-3 text-sm font-bold text-slate-500 transition hover:bg-slate-50 active:scale-95"
+              >
+                Batal
+              </button>
+              <button
+                onClick={async () => {
+                  await confirmDialog.action();
+                  setConfirmDialog(null);
+                }}
+                className={`flex-1 rounded-2xl py-3 text-sm font-bold text-white shadow-sm transition active:scale-95 ${
+                  confirmDialog.type === "danger"
+                    ? "bg-red-500 shadow-red-200 hover:bg-red-600"
+                    : "bg-emerald-500 shadow-emerald-200 hover:bg-emerald-600"
+                }`}
+              >
+                {confirmDialog.confirmText}
+              </button>
             </div>
             <button onClick={() => setSOSAlert(null)} className="text-red-200">
               <X size={16} />
@@ -862,36 +1016,6 @@ export default function Map() {
           </div>
         </div>
       )}
-
-      <div className="absolute right-4 bottom-24 z-[1000] flex flex-col items-end gap-3">
-        <button
-          onClick={() => {
-            // 1. Pastikan status share tracker internal menyala dulu
-            if (!isSharing) {
-              void handleToggleSharing();
-            }
-            // 2. Buka / tutup modal list nelayan
-            setShowFleetModal((prev) => !prev);
-          }}
-          className={`flex items-center gap-2 rounded-2xl px-3 py-2.5 text-[12px] font-black shadow-lg transition-all active:scale-95 ${
-            isSharing || showFleetModal
-              ? "bg-emerald-500 text-white shadow-emerald-200"
-              : "border border-slate-200 bg-white text-slate-600"
-          }`}
-        >
-          {isSharing ? <UserCheck size={14} /> : <Users size={14} />}
-          {isSharing
-            ? `${fleetMembers.length} Nelayan Online`
-            : "Bagikan Lokasi"}
-        </button>
-
-        {session?.user && <SOSButton />}
-
-        <FamilyContactModal
-          isOpen={showFamilyModal}
-          onClose={() => setShowFamilyModal(false)}
-        />
-      </div>
     </main>
   );
 }

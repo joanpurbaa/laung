@@ -1,19 +1,22 @@
 import { NextResponse } from "next/server";
 import { auth } from "~/lib/auth";
 import { db } from "~/lib/prisma";
+import { redis } from "~/lib/redis";
 
 export async function GET() {
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Fetch semua live locations yang isSharing=true, exclude current user
-    // dan hanya yang update dalam 5 menit terakhir (masih aktif)
+    const CACHE_KEY = `cache:fleet:${session.user.id}`;
+
+    const cachedFleet = await redis.get(CACHE_KEY);
+    if (cachedFleet) {
+      return NextResponse.json(cachedFleet);
+    }
+
     const fleetMembers = await db.liveLocation.findMany({
       where: {
         isSharing: true,
@@ -46,12 +49,14 @@ export async function GET() {
       lastSeen: loc.lastSeen.toISOString(),
     }));
 
+    await redis.set(CACHE_KEY, formatted, { ex: 15 });
+
     return NextResponse.json(formatted);
   } catch (error) {
     console.error("Error fetching fleet members:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

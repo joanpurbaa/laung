@@ -19,14 +19,14 @@ const geist = Geist({
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  return (
-    <html lang="en" className={`${geist.variable}`}>
-      <body>
-        <SessionProvider>
-          {" "}
-          <PWAChecker>{children}</PWAChecker>
-        </SessionProvider>{" "}
-      </body>
-    </html>
-  );
+// Tambahkan suppressHydrationWarning di tag html
+return (
+  <html lang="en" className={`${geist.variable}`} suppressHydrationWarning>
+    <body>
+      <SessionProvider>
+        <PWAChecker>{children}</PWAChecker>
+      </SessionProvider>
+    </body>
+  </html>
+);
 }
