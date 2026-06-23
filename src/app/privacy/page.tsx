@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Navbar2 from "../_components/Navbar2";
+import ChatbotPopup from "../_components/ChatbotPopup";
 
 const LAST_UPDATED = "10 Juni 2026";
 const TEAM_NAME = "Joan Orlando Purba";
@@ -165,6 +166,8 @@ export default function PrivacyPolicy() {
           © 2026 Laung · Dibuat dengan semangat untuk laut Indonesia.
         </p>
       </footer>
+
+      <ChatbotPopup />
     </div>
   );
 }

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import Navbar2 from "../_components/Navbar2";
+import ChatbotPopup from "../_components/ChatbotPopup";
 
 export default function About() {
   return (
@@ -118,6 +119,8 @@ export default function About() {
           © 2026 Laung · Dibuat dengan semangat untuk laut Indonesia.
         </p>
       </footer>
+
+      <ChatbotPopup />
     </div>
   );
 }

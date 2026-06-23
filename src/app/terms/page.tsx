@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Navbar2 from "../_components/Navbar2";
+import ChatbotPopup from "../_components/ChatbotPopup";
 
 const LAST_UPDATED = "10 Juni 2026";
 const CONTACT_EMAIL = "joanpurba562@gmail.com";
@@ -318,6 +319,8 @@ export default function Terms() {
           © 2026 Laung · Dibuat dengan semangat untuk laut Indonesia.
         </p>
       </footer>
+
+      <ChatbotPopup />
     </div>
   );
 }
