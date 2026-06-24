@@ -225,142 +225,148 @@ export default function LandingPage() {
         color: "#1a1a1a",
       }}
     >
-      <Navbar2 />
-      <section className="relative mx-auto max-w-6xl px-5 pt-16 pb-16 md:px-8 md:pt-24 md:pb-20">
-        <WaterParticles />
-        <div className="flex flex-col gap-12 md:flex-row md:items-center md:gap-16">
-          <div
-            className="flex-1"
-            style={{
-              opacity: mounted ? 1 : 0,
-              transform: mounted ? "none" : "translateY(20px)",
-              transition: "opacity 0.7s ease, transform 0.7s ease",
-            }}
-          >
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3.5 py-1.5">
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
-              <span className="text-[11px] font-black tracking-[0.1em] text-emerald-700 uppercase">
-                Untuk Nelayan Indonesia
-              </span>
-            </div>
+     <Navbar2 />
+{/* PERBAIKAN: pt-28 (khusus mobile) agar teks turun dari navbar, dan md:pt-24 (kembali ke original) agar desktop tidak terlalu turun */}
+<section className="relative mx-auto max-w-6xl px-5 pt-28 pb-16 md:px-8 md:pt-24 md:pb-20">
+  <WaterParticles />
+  
+  <div className="flex flex-col gap-12 md:flex-row md:items-center md:gap-16">
+    
+    {/* BAGIAN KIRI - TEKS */}
+    <div
+      className="flex-1"
+      style={{
+        opacity: mounted ? 1 : 0,
+        transform: mounted ? "none" : "translateY(20px)",
+        transition: "opacity 0.7s ease, transform 0.7s ease",
+      }}
+    >
+      <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3.5 py-1.5">
+        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
+        <span className="text-[11px] font-black tracking-[0.1em] text-emerald-700 uppercase">
+          Untuk Nelayan Indonesia
+        </span>
+      </div>
 
-            <h1
-              className="mb-5 text-[44px] leading-[1.0] font-black text-slate-900 md:text-[56px]"
-              style={{ letterSpacing: "-0.04em" }}
-            >
-              Temukan spot
-              <br />
-              mancing terbaik
-              <br />
-              <span
-                style={{
-                  background: "linear-gradient(90deg,#059669,#0d9488)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                }}
-              >
-                pakai data satelit.
-              </span>
-            </h1>
+      <h1
+        className="mb-5 text-[44px] leading-[1.0] font-black text-slate-900 md:text-[56px]"
+        style={{ letterSpacing: "-0.04em" }}
+      >
+        Temukan spot
+        <br />
+        mancing terbaik
+        <br />
+        <span
+          style={{
+            background: "linear-gradient(90deg,#059669,#0d9488)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+          }}
+        >
+          pakai data satelit.
+        </span>
+      </h1>
 
-            <p className="mb-8 max-w-md text-[16px] leading-relaxed font-medium text-slate-500">
-              Laung membaca klorofil laut, suhu permukaan, dan pasang surut dari
-              NASA — lalu tunjukkan persis di mana ikan berkumpul hari ini.
-            </p>
+      <p className="mb-8 max-w-md text-[16px] leading-relaxed font-medium text-slate-500">
+        Laung membaca klorofil laut, suhu permukaan, dan pasang surut dari
+        NASA — lalu tunjukkan persis di mana ikan berkumpul hari ini.
+      </p>
 
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <button
-                onClick={() => router.push("/register")}
-                className="relative flex items-center justify-center gap-2 overflow-hidden rounded-2xl px-6 py-3.5 text-[15px] font-black text-white transition-all hover:opacity-90 active:scale-[0.98]"
-                style={{
-                  background: "linear-gradient(135deg,#059669,#0d9488)",
-                  boxShadow: "0 6px 24px rgba(5,150,105,0.3)",
-                }}
-              >
-                <span>
-                  Install & Mulai Gratis
-                  <span
-                    className="absolute inset-0 translate-x-[-200%] -skew-x-12 animate-[shimmer_3s_ease_2s_infinite]"
-                    style={{
-                      background:
-                        "linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent)",
-                    }}
-                  />
-                  <style>{`@keyframes shimmer { to { transform: skewX(-12deg) translateX(400%); } }`}</style>
-                </span>
-              </button>
-              <button
-                onClick={() => router.push("/home")}
-                className="flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-6 py-3.5 text-[14px] font-bold text-slate-600 transition-all hover:bg-slate-50 active:scale-[0.98]"
-              >
-                Lihat Demo Peta →
-              </button>
-            </div>
-
-            <p className="mt-4 text-[12px] font-semibold text-slate-400">
-              Gratis · Tanpa kartu kredit · Install langsung di HP
-            </p>
-
-            <div className="mt-10 flex items-center gap-6 border-t border-slate-100 pt-6">
-              {[
-                { v: 3, s: "", l: "Variabel satelit" },
-                { v: 40, s: "%", l: "Hemat solar" },
-                { v: 100, s: "+", l: "Spot terpetakan" },
-              ].map((s, i) => (
-                <div key={i}>
-                  <p className="text-[22px] font-black text-slate-900">
-                    <Counter to={s.v} suffix={s.s} />
-                  </p>
-                  <p className="text-[11px] font-semibold text-slate-400">
-                    {s.l}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div
-            className="flex w-full flex-1 justify-center md:justify-end"
-            style={{
-              opacity: mounted ? 1 : 0,
-              transform: mounted ? "none" : "translateY(20px) scale(0.97)",
-              transition: "opacity 0.8s ease 0.15s, transform 0.8s ease 0.15s",
-            }}
-          >
-            <div
+      <div className="flex flex-col gap-3 sm:flex-row">
+        <button
+          onClick={() => router.push("/register")}
+          className="relative flex items-center justify-center gap-2 overflow-hidden rounded-2xl px-6 py-3.5 text-[15px] font-black text-white transition-all hover:opacity-90 active:scale-[0.98]"
+          style={{
+            background: "linear-gradient(135deg,#059669,#0d9488)",
+            boxShadow: "0 6px 24px rgba(5,150,105,0.3)",
+          }}
+        >
+          <span>
+            Install & Mulai Gratis
+            <span
+              className="absolute inset-0 translate-x-[-200%] -skew-x-12 animate-[shimmer_3s_ease_2s_infinite]"
               style={{
-                position: "relative",
-                width: "min(480px, 90vw)",
-                alignSelf: "flex-end",
-                marginBottom: "-80px",
+                background:
+                  "linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent)",
               }}
-            >
-              <div
-                style={{
-                  position: "absolute",
-                  bottom: "10%",
-                  left: "50%",
-                  transform: "translateX(-50%)",
-                  width: "60%",
-                  height: "40%",
-                  background:
-                    "radial-gradient(ellipse, rgba(5,150,105,0.15) 0%, transparent 70%)",
-                  filter: "blur(40px)",
-                  pointerEvents: "none",
-                  zIndex: 0,
-                }}
-              />
-              <Image
-                className="relative z-10 hidden h-auto w-full sm:block"
-                width={500}
-                height={500}
-                src="/maskot.png"
-                alt="Maskot Laung"
-              />
-            </div>
+            />
+            <style>{`@keyframes shimmer { to { transform: skewX(-12deg) translateX(400%); } }`}</style>
+          </span>
+        </button>
+        <button
+          onClick={() => router.push("/home")}
+          className="flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-6 py-3.5 text-[14px] font-bold text-slate-600 transition-all hover:bg-slate-50 active:scale-[0.98]"
+        >
+          Lihat Demo Peta →
+        </button>
+      </div>
+
+      <p className="mt-4 text-[12px] font-semibold text-slate-400">
+        Gratis · Tanpa kartu kredit · Install langsung di HP
+      </p>
+
+      <div className="mt-10 flex items-center gap-6 border-t border-slate-100 pt-6">
+        {[
+          { v: 3, s: "", l: "Variabel satelit" },
+          { v: 40, s: "%", l: "Hemat solar" },
+          { v: 100, s: "+", l: "Spot terpetakan" },
+        ].map((s, i) => (
+          <div key={i}>
+            <p className="text-[22px] font-black text-slate-900">
+              <Counter to={s.v} suffix={s.s} />
+            </p>
+            <p className="text-[11px] font-semibold text-slate-400">
+              {s.l}
+            </p>
           </div>
-        </div>
-      </section>
+        ))}
+      </div>
+    </div>
+
+    {/* BAGIAN KANAN - MASKOT */}
+    <div
+      className="flex w-full flex-1 justify-center md:justify-end"
+      style={{
+        opacity: mounted ? 1 : 0,
+        transform: mounted ? "none" : "translateY(20px) scale(0.97)",
+        transition: "opacity 0.8s ease 0.15s, transform 0.8s ease 0.15s",
+      }}
+    >
+      <div
+        style={{
+          position: "relative",
+          width: "min(480px, 90vw)",
+          alignSelf: "flex-end",
+          // KEMBALIKAN KE ORIGINAL: Mengembalikan -80px agar di desktop titik tengahnya proporsional lagi
+          marginBottom: "-80px", 
+        }}
+      >
+        <div
+          style={{
+            position: "absolute",
+            bottom: "10%",
+            left: "50%",
+            transform: "translateX(-50%)",
+            width: "60%",
+            height: "40%",
+            background:
+              "radial-gradient(ellipse, rgba(5,150,105,0.15) 0%, transparent 70%)",
+            filter: "blur(40px)",
+            pointerEvents: "none",
+            zIndex: 0,
+          }}
+        />
+        <Image
+          className="relative z-10 hidden h-auto w-full sm:block"
+          width={500}
+          height={500}
+          src="/maskot.png"
+          alt="Maskot Laung"
+        />
+      </div>
+    </div>
+  </div>
+</section>
 
       <section
         id="cara-kerja"
