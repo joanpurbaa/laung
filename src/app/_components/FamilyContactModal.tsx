@@ -2,21 +2,33 @@
 
 import { useState, useEffect } from "react";
 import { Settings, Play, Square, X } from "lucide-react";
+import { useSession } from "next-auth/react";
 
 interface FamilyContactModalProps {
   isOpen: boolean;
   onClose: () => void;
+  userLat?: number | null;
+  userLng?: number | null;
 }
 
 export default function FamilyContactModal({
   isOpen,
   onClose,
+  userLat,
+  userLng,
 }: FamilyContactModalProps) {
+  const { data: session } = useSession();
+  const userName =
+    session?.user?.name ?? session?.user?.email?.split("@")[0] ?? "Nelayan";
+
   const [nomorKeluarga, setNomorKeluarga] = useState("082227097005");
-  const [pesan, setPesan] = useState("Status Radar Tracking: Aman di laut.");
+  const [pesan, setPesan] = useState(
+    "aku baik baik aja ya sayang, nanti langsung pulang",
+  );
   const [frekuensi, setFrekuensi] = useState<number>(1);
   const [isActive, setIsActive] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
+  const [cityName, setCityName] = useState<string>("Lokasi GPS");
 
   const [notification, setNotification] = useState<{
     show: boolean;
@@ -35,6 +47,58 @@ export default function FamilyContactModal({
     if (savedPesan) setPesan(savedPesan);
     if (savedFrekuensi) setFrekuensi(Number(savedFrekuensi));
   }, []);
+
+  useEffect(() => {
+    if (!userLat || !userLng) return;
+
+    const fetchCity = async () => {
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?lat=${userLat}&lon=${userLng}&format=json&addressdetails=1`,
+          { headers: { "User-Agent": "ZPPI-Fisherman-App" } },
+        );
+        const json = (await res.json()) as { address: Record<string, string> };
+        const address = json.address;
+        const raw =
+          address.city ??
+          address.regency ??
+          address.county ??
+          address.municipality ??
+          "Lokasi GPS";
+        const clean = raw.replace(/(Kabupaten|Kota|Regency)\s+/gi, "");
+        setCityName(clean);
+      } catch {
+        setCityName("Lokasi GPS");
+      }
+    };
+
+    void fetchCity();
+  }, [userLat, userLng]);
+
+  const buildMessage = () => {
+    const now = new Date();
+    const waktu = now.toLocaleString("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "Asia/Jakarta",
+    });
+
+    const mapsLink =
+      userLat && userLng
+        ? `https://maps.google.com/?q=${userLat},${userLng}`
+        : "Lokasi tidak tersedia";
+
+    return (
+      `${pesan}\n` +
+      `~${userName}\n\n` +
+      `Waktu: ${waktu} WIB\n` +
+      `Lokasi terakhir: ${mapsLink} (${cityName})\n\n` +
+      `Pesan ini dikirim secara otomatis oleh sistem Family View Laung.`
+    );
+  };
 
   const triggerNotification = (
     type: "success" | "error" | "info",
@@ -69,12 +133,11 @@ export default function FamilyContactModal({
 
     setLoading(true);
     try {
+      const finalMessage = buildMessage();
+
       const data = new FormData();
       data.append("target", nomorKeluarga);
-      data.append(
-        "message",
-        `${pesan}\n\n(Pesan otomatis terjadwal: ${frekuensi}x per jam)`,
-      );
+      data.append("message", finalMessage);
       data.append("countryCode", "62");
       data.append("delay", "2");
 
@@ -87,7 +150,10 @@ export default function FamilyContactModal({
         body: data,
       });
 
-      const res = await response.json();
+      const res = (await response.json()) as {
+        status: boolean;
+        reason?: string;
+      };
 
       if (res.status === true) {
         try {
@@ -97,7 +163,7 @@ export default function FamilyContactModal({
             body: JSON.stringify({
               action: "start",
               target: nomorKeluarga,
-              message: pesan,
+              message: buildMessage(),
               frequencyPerHour: frekuensi,
             }),
           });
@@ -132,6 +198,11 @@ export default function FamilyContactModal({
   };
 
   if (!isOpen) return null;
+
+  const mapsLink =
+    userLat && userLng
+      ? `https://maps.google.com/?q=${userLat},${userLng}`
+      : null;
 
   return (
     <>
@@ -175,6 +246,20 @@ export default function FamilyContactModal({
             )}
           </div>
 
+          {mapsLink && (
+            <div className="mt-2 mb-1 flex items-center gap-1.5 rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2">
+              <span className="text-sm">📍</span>
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] font-bold text-emerald-700">
+                  {cityName}
+                </p>
+                <p className="truncate font-mono text-[9px] text-emerald-500">
+                  {mapsLink}
+                </p>
+              </div>
+            </div>
+          )}
+
           <div className="mt-3 mb-6 space-y-4">
             <div>
               <label className="mb-1 block text-[10px] font-bold tracking-wider text-slate-400">
@@ -209,14 +294,19 @@ export default function FamilyContactModal({
 
             <div>
               <label className="mb-1 block text-[10px] font-bold tracking-wider text-slate-400">
-                TEMPLAT PESAN RADAR
+                PESAN KE KELUARGA
               </label>
               <textarea
                 disabled={isActive}
                 value={pesan}
                 onChange={(e) => setPesan(e.target.value)}
+                placeholder="Contoh: aku baik baik aja ya sayang, nanti langsung pulang"
                 className="h-20 w-full resize-none rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-sm text-slate-800 transition-colors focus:border-emerald-500 focus:bg-white focus:outline-none disabled:opacity-60"
               />
+              <p className="mt-1 text-[9px] text-slate-400">
+                Nama pengirim ({userName}), waktu, dan lokasi akan ditambahkan
+                otomatis.
+              </p>
             </div>
           </div>
 

@@ -341,6 +341,8 @@ export default function Map() {
       <FamilyContactModal
         isOpen={showFamilyModal}
         onClose={() => setShowFamilyModal(false)}
+        userLat={userLocation?.lat}
+        userLng={userLocation?.lng}
       />
 
       {showActiveUsersModal && (
