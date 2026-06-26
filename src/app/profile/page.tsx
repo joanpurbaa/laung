@@ -79,14 +79,6 @@ export default function ProfilePage() {
       desc: "Buka peta zona potensi ikan",
       onClick: () => router.push("/map"),
     },
-    {
-      icon: Clock,
-      label: "Riwayat Aktivitas",
-      desc: "Aktivitas terakhir akun kamu",
-      onClick: () => null,
-      disabled: true,
-      badge: "Segera",
-    },
   ];
 
   return (

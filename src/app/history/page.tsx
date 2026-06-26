@@ -201,7 +201,6 @@ Jika foto bukan hewan laut atau tidak dapat diidentifikasi, isi namaLokal dengan
 
   return (
     <main className="relative min-h-screen w-screen bg-slate-50 pb-20 font-sans select-none">
-      {/* HEADER */}
       <div className="sticky top-0 z-10 border-b border-slate-100 bg-white px-4 pt-6 pb-4 shadow-sm">
         <div className="flex items-center justify-between">
           <div>
@@ -225,7 +224,6 @@ Jika foto bukan hewan laut atau tidak dapat diidentifikasi, isi namaLokal dengan
       </div>
 
       <div className="space-y-4 p-4">
-        {/* TOTAL HIGHLIGHT CARD */}
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-500 to-teal-600 p-5 text-white shadow-xl shadow-emerald-100">
           <div className="absolute right-[-10px] bottom-[-10px] text-white opacity-10">
             <Anchor size={140} />
@@ -255,7 +253,6 @@ Jika foto bukan hewan laut atau tidak dapat diidentifikasi, isi namaLokal dengan
           </div>
         </div>
 
-        {/* LOG LIST */}
         <div>
           <p className="mb-2 text-[10px] font-black tracking-wider text-slate-400 uppercase">
             Rincian Log Berkala
@@ -335,7 +332,6 @@ Jika foto bukan hewan laut atau tidak dapat diidentifikasi, isi namaLokal dengan
         </div>
       </div>
 
-      {/* MODAL TAMBAH TANGKAPAN */}
       {isModalOpen && (
         <div className="animate-fade-in fixed inset-0 z-[2000] flex items-end justify-center bg-slate-900/60 backdrop-blur-sm sm:items-center sm:p-4">
           <div className="flex max-h-[85vh] w-full flex-col overflow-y-auto rounded-t-3xl bg-white p-6 shadow-2xl sm:max-w-md sm:rounded-3xl">
@@ -454,11 +450,9 @@ Jika foto bukan hewan laut atau tidak dapat diidentifikasi, isi namaLokal dengan
         </div>
       )}
 
-      {/* MODAL IDENTIFIKASI */}
       {isIdentifyModalOpen && (
         <div className="animate-fade-in fixed inset-0 z-[2000] flex items-end justify-center bg-slate-900/60 backdrop-blur-sm sm:items-center sm:p-4">
           <div className="flex max-h-[90vh] w-full flex-col overflow-y-auto rounded-t-3xl bg-white shadow-2xl sm:max-w-md sm:rounded-3xl">
-            {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-slate-100 px-6 pt-6 pb-4">
               <div className="flex items-center gap-2.5">
                 <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50">
@@ -486,7 +480,6 @@ Jika foto bukan hewan laut atau tidak dapat diidentifikasi, isi namaLokal dengan
             </div>
 
             <div className="space-y-4 p-6">
-              {/* Upload Area */}
               {!previewUrl ? (
                 <button
                   onClick={() => fileInputRef.current?.click()}
@@ -535,14 +528,12 @@ Jika foto bukan hewan laut atau tidak dapat diidentifikasi, isi namaLokal dengan
                 capture="environment"
               />
 
-              {/* Error */}
               {identifyError && (
                 <p className="rounded-xl bg-red-50 px-4 py-2.5 text-xs font-semibold text-red-500">
                   {identifyError}
                 </p>
               )}
 
-              {/* Hasil Identifikasi */}
               {identifyResult && (
                 <div className="space-y-3">
                   <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
@@ -614,7 +605,6 @@ Jika foto bukan hewan laut atau tidak dapat diidentifikasi, isi namaLokal dengan
                 </div>
               )}
 
-              {/* Tombol Identifikasi */}
               {!identifyResult && (
                 <button
                   onClick={() => void handleIdentify()}
@@ -639,7 +629,6 @@ Jika foto bukan hewan laut atau tidak dapat diidentifikasi, isi namaLokal dengan
         </div>
       )}
 
-      {/* FAB IDENTIFIKASI */}
       <button
         onClick={() => setIsIdentifyModalOpen(true)}
         className="fixed right-5 bottom-24 z-[1000] flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500 shadow-lg shadow-emerald-200 transition-all hover:bg-emerald-600 active:scale-90"

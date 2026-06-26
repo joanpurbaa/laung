@@ -3,35 +3,68 @@
     "id": "1",
     "category": "tentang_produk",
     "question": "Apa itu Laung?",
-    "answer": "Laung adalah aplikasi berbasis web (PWA) yang membantu nelayan Indonesia menemukan spot mancing terbaik menggunakan data satelit NASA. Laung membaca data klorofil laut, suhu permukaan, dan pasang surut lalu menunjukkan lokasi di mana ikan berkumpul hari ini.",
-    "keywords": ["laung", "aplikasi", "apa itu", "tentang", "penjelasan"]
+    "answer": "Laung adalah Decision Support System (DSS) berbasis data oseanografi yang membantu nelayan tradisional dan pemancing menemukan zona potensi penangkapan ikan (ZPPI) menggunakan data satelit NASA. Laung mengintegrasikan data klorofil-a, suhu permukaan laut (SST), dan pasang surut ke dalam satu platform yang mudah digunakan, menerjemahkan data ilmiah kompleks menjadi rekomendasi lokasi yang bisa langsung dipahami di lapangan.",
+    "keywords": [
+      "laung",
+      "aplikasi",
+      "apa itu",
+      "tentang",
+      "penjelasan",
+      "DSS",
+      "decision support system"
+    ]
   },
   {
     "id": "2",
     "category": "tentang_produk",
     "question": "Siapa yang membuat Laung?",
-    "answer": "Laung dikembangkan oleh Joan Orlando Purba. Laung lahir dari kesadaran bahwa nelayan tradisional Indonesia sering melaut dengan metode tebak-tebakan tanpa data akurat, sehingga hadir untuk membantu mereka dengan teknologi satelit.",
-    "keywords": ["pembuat", "developer", "siapa", "pengembang", "founder"]
+    "answer": "Laung dikembangkan secara mandiri oleh Joan Orlando Purba, mahasiswa Telkom University Program Studi D3 Rekayasa Perangkat Lunak Aplikasi. Laung lahir dari kesadaran bahwa nelayan tradisional Indonesia sering melaut dengan metode coba-coba tanpa data akurat, sementara data satelit NASA dan NOAA sebenarnya tersedia gratis namun tidak dirancang untuk mereka yang paling membutuhkannya.",
+    "keywords": [
+      "pembuat",
+      "developer",
+      "siapa",
+      "pengembang",
+      "founder",
+      "Joan",
+      "Telkom University"
+    ]
   },
   {
     "id": "3",
     "category": "tentang_produk",
     "question": "Apa visi dan misi Laung?",
-    "answer": "Visi Laung adalah menjadikan teknologi sebagai alat yang memberdayakan nelayan, bukan menjauhkan. Misi kami adalah menghadirkan akses demokratis terhadap data satelit NASA, menyederhanakan data oseanografi yang rumit menjadi skor lokasi yang mudah dibaca, membantu nelayan menentukan arah dengan lebih efisien, hemat, dan aman.",
-    "keywords": ["visi", "misi", "tujuan", "komitmen", "filosofi"]
+    "answer": "Visi Laung adalah menjadikan teknologi sebagai alat yang memberdayakan nelayan, bukan menjauhkan. Misi kami: (1) Menghadirkan akses demokratis terhadap data satelit NASA dan NOAA, (2) Menyederhanakan data oseanografi yang rumit menjadi skor lokasi yang mudah dibaca, (3) Membantu nelayan menentukan arah dengan lebih efisien, hemat BBM, dan aman, (4) Menjembatani kesenjangan antara ketersediaan data ilmiah dan kemampuan pengguna lapangan dalam menginterpretasikannya.",
+    "keywords": [
+      "visi",
+      "misi",
+      "tujuan",
+      "komitmen",
+      "filosofi",
+      "demokratisasi data"
+    ]
   },
   {
     "id": "4",
     "category": "fitur",
     "question": "Apa saja fitur utama Laung?",
-    "answer": "Fitur utama Laung meliputi: (1) Peta ZPPI dengan visualisasi data klorofil-a, suhu permukaan laut, dan pasang surut dari satelit NASA, (2) Sistem scoring otomatis berdasarkan jenis ikan target, (3) Kalkulasi rute efisien dan estimasi konsumsi BBM/solar, (4) Histori pencatatan hasil tangkapan, (5) Informasi cuaca maritim, (6) GPS real-time, dan (7) Mode offline sebagai PWA.",
-    "keywords": ["fitur", "fungsi", "apa saja", "kemampuan", "layanan"]
+    "answer": "Fitur utama Laung meliputi: (1) Pemetaan ZPPI berbasis satelit dengan data klorofil-a, SST, dan pasang surut, (2) Decision Support System dengan skoring otomatis (bobot: klorofil 45%, SST 35%, pasang surut 20%), (3) Geo-Locking area operasional (saat ini fokus di PPN Kejawanan Cirebon), (4) Dashboard cuaca maritim harian (tinggi gelombang, kecepatan angin, visibilitas), (5) Indikator kelayakan melaut (Aman/Waspada/Berbahaya), (6) Catatan hasil tangkapan, (7) AI Assistant chatbot berbasis RAG, (8) Fish Recognition dengan Computer Vision, (9) Family View untuk mengirim kabar ke keluarga, (10) Sistem manajemen akun pengguna.",
+    "keywords": [
+      "fitur",
+      "fungsi",
+      "apa saja",
+      "kemampuan",
+      "layanan",
+      "ZPPI",
+      "DSS",
+      "chatbot",
+      "fish recognition"
+    ]
   },
   {
     "id": "5",
     "category": "fitur",
     "question": "Data satelit apa yang digunakan Laung?",
-    "answer": "Laung menggunakan data dari satelit NASA AQUA MODIS dengan resolusi 4km. Data yang diambil mencakup tiga variabel oseanografi: klorofil-a (indikator keberadaan plankton/ikan), suhu permukaan laut (SST), dan data arus pasang surut.",
+    "answer": "Laung menggunakan data dari NASA OceanColor (satelit AQUA MODIS) dengan resolusi 4km. Data yang diambil mencakup tiga variabel oseanografi utama: (1) Klorofil-a - indikator ketersediaan pakan alami/plankton, (2) Suhu Permukaan Laut (SST) - untuk mengidentifikasi habitat yang sesuai bagi ikan, dan (3) Pasang surut - untuk memperkirakan waktu aktivitas ikan yang lebih optimal. Data cuaca maritim bersumber dari Open-Meteo Marine API dan BMKG Maritim.",
     "keywords": [
       "satelit",
       "NASA",
@@ -39,14 +72,17 @@
       "MODIS",
       "sumber data",
       "klorofil",
-      "SST"
+      "SST",
+      "OceanColor",
+      "NOAA",
+      "BMKG"
     ]
   },
   {
     "id": "6",
     "category": "fitur",
     "question": "Bagaimana cara kerja sistem scoring ZPPI di Laung?",
-    "answer": "Laung menggunakan algoritma Decision Support System (DSS) dengan weighted scoring dari 3 parameter oseanografi: klorofil-a (bobot 45%), suhu permukaan laut/SST (bobot 35%), dan pasang surut (bobot 20%). Hasilnya divisualisasikan di peta — titik hijau berarti konsentrasi ikan tinggi.",
+    "answer": "Laung menggunakan algoritma Decision Support System (DSS) dengan weighted scoring dari 3 parameter oseanografi: Klorofil-a (bobot 45%) - indikator ketersediaan pakan alami, Suhu Permukaan Laut/SST (bobot 35%) - untuk mengidentifikasi habitat yang sesuai bagi ikan, dan Pasang surut (bobot 20%) - untuk memperkirakan waktu aktivitas ikan yang lebih optimal. Hasil perhitungan dikonversi menjadi skor kelayakan dan divisualisasikan di peta dengan titik-titik koordinat yang menunjukkan zona potensi penangkapan ikan.",
     "keywords": [
       "scoring",
       "ZPPI",
@@ -54,69 +90,139 @@
       "cara kerja",
       "DSS",
       "bobot",
-      "weighted"
+      "weighted",
+      "klorofil",
+      "SST",
+      "pasang surut"
     ]
   },
   {
     "id": "7",
     "category": "fitur",
-    "question": "Ikan apa saja yang bisa dipilih di Laung?",
-    "answer": "Laung mendukung berbagai jenis ikan seperti tongkol, tuna, dan kembung. Setiap spesies memiliki preferensi suhu dan plankton yang berbeda, sehingga sistem menyesuaikan scoring secara otomatis berdasarkan jenis ikan yang kamu target.",
+    "question": "Apa itu indikator kelayakan melaut di Laung?",
+    "answer": "Indikator Kelayakan Melaut adalah fitur yang menyederhanakan seluruh data oseanografi dan cuaca hari ini menjadi satu sinyal yang dapat dipahami dalam hitungan detik. Sistem mengombinasikan parameter tinggi gelombang, kecepatan angin, dan skor ZPPI tertinggi pada hari tersebut untuk menghasilkan tiga klasifikasi: (1) Aman - kondisi mendukung untuk melaut, (2) Waspada - perlu kewaspadaan ekstra, (3) Berbahaya - tidak disarankan melaut. Fitur ini merepresentasikan filosofi inti Laung: kompleks di balik layar, sederhana di hadapan pengguna.",
     "keywords": [
-      "jenis ikan",
-      "tongkol",
-      "tuna",
-      "kembung",
-      "spesies",
-      "target ikan"
+      "kelayakan melaut",
+      "indikator",
+      "aman",
+      "waspada",
+      "berbahaya",
+      "keselamatan",
+      "cuaca",
+      "gelombang",
+      "angin"
     ]
   },
   {
     "id": "8",
     "category": "fitur",
-    "question": "Apakah Laung bisa menghitung konsumsi solar?",
-    "answer": "Ya. Laung memiliki fitur kalkulasi BBM otomatis yang menghitung jarak dari posisimu ke spot terbaik dan memperkirakan konsumsi solar. Selisih efisiensinya bisa mencapai 30–50 liter per trip dibanding berlayar tanpa panduan data.",
+    "question": "Apa itu Fish Recognition di Laung?",
+    "answer": "Fish Recognition adalah fitur berbasis Computer Vision yang memungkinkan pengguna mengidentifikasi jenis/spesies ikan hanya dengan mengambil foto. Sistem akan menampilkan nama spesies, tingkat keyakinan (confidence score), hingga nilai ekonomi ikan secara otomatis. Fitur ini sangat membantu nelayan dalam mengidentifikasi hasil tangkapan mereka dengan cepat dan akurat.",
     "keywords": [
-      "solar",
-      "BBM",
-      "bahan bakar",
-      "hemat",
-      "konsumsi",
-      "kalkulasi"
+      "fish recognition",
+      "computer vision",
+      "identifikasi ikan",
+      "foto ikan",
+      "spesies",
+      "nilai ekonomi",
+      "confidence score"
     ]
   },
   {
     "id": "9",
-    "category": "cara_pakai",
-    "question": "Bagaimana cara menggunakan Laung?",
-    "answer": "Ada 3 langkah utama: (1) Buka Peta ZPPI — lihat visualisasi data satelit, titik hijau menandakan banyak ikan. (2) Pilih jenis ikan target — sistem menyesuaikan scoring otomatis. (3) Berangkat lebih hemat — GPS menghitung rute efisien ke spot terbaik dan memperlihatkan estimasi konsumsi solar.",
+    "category": "fitur",
+    "question": "Apa itu AI Assistant di Laung?",
+    "answer": "AI Assistant adalah chatbot interaktif yang menggunakan model GLM 4.5 dengan pendekatan Retrieval-Augmented Generation (RAG) untuk mengedukasi nelayan mengenai fitur-fitur aplikasi. Berbeda dengan FAQ konvensional, AI Assistant dapat menjawab pertanyaan secara kontekstual dan memberikan panduan yang lebih personal. Chatbot ini dirancang untuk membantu pengguna yang mungkin kurang familiar dengan teknologi digital.",
     "keywords": [
-      "cara pakai",
-      "cara menggunakan",
-      "langkah",
-      "tutorial",
+      "AI assistant",
+      "chatbot",
+      "RAG",
+      "GLM 4.5",
+      "asisten",
+      "tanya jawab",
+      "edukasi",
       "panduan"
     ]
   },
   {
     "id": "10",
+    "category": "fitur",
+    "question": "Apa itu Family View di Laung?",
+    "answer": "Family View adalah fitur yang memungkinkan pengguna mengirim kabar kepada keluarga atau orang terdekat hanya dengan menginput nomor telepon dan memilih jadwal pengiriman pesan dalam waktu tertentu. Fitur ini memberikan rasa aman bagi keluarga nelayan yang menunggu di rumah, karena mereka dapat menerima kabar keberadaan dan kondisi nelayan secara berkala.",
+    "keywords": [
+      "family view",
+      "kirim kabar",
+      "nomor telepon",
+      "keluarga",
+      "keamanan",
+      "komunikasi",
+      "jadwal pesan"
+    ]
+  },
+  {
+    "id": "11",
+    "category": "fitur",
+    "question": "Apa itu Geo-Locking di Laung?",
+    "answer": "Geo-Locking adalah fitur yang secara otomatis mengarahkan tampilan peta ke wilayah operasional yang telah ditentukan saat aplikasi pertama kali dibuka. Pada implementasi saat ini, sistem difokuskan pada wilayah Pelabuhan Perikanan Nusantara (PPN) Kejawanan, Cirebon. Fitur ini memungkinkan pengguna langsung melihat area pengamatan tanpa harus melakukan navigasi manual ke lokasi yang relevan, sehingga pengalaman penggunaan menjadi lebih efektif dan efisien.",
+    "keywords": [
+      "geo-locking",
+      "area operasional",
+      "Cirebon",
+      "PPN Kejawanan",
+      "peta",
+      "lokasi",
+      "navigasi"
+    ]
+  },
+  {
+    "id": "12",
+    "category": "fitur",
+    "question": "Apakah Laung bisa mencatat hasil tangkapan?",
+    "answer": "Ya. Laung menyediakan fitur pencatatan hasil tangkapan yang memungkinkan nelayan mendokumentasikan pengalaman melaut mereka secara langsung di dalam platform. Setelah kembali dari laut, pengguna dapat mencatat: (1) Lokasi penangkapan, (2) Berat total hasil tangkapan, (3) Jenis ikan yang berhasil ditangkap pada setiap sesi. Seluruh data tersimpan per akun pengguna dan dapat diakses kembali sebagai riwayat aktivitas melaut. Data ini juga berpotensi menjadi ground truth untuk memvalidasi akurasi algoritma DSS Laung.",
+    "keywords": [
+      "catatan tangkapan",
+      "hasil tangkapan",
+      "riwayat",
+      "dokumentasi",
+      "berat",
+      "jenis ikan",
+      "lokasi"
+    ]
+  },
+  {
+    "id": "13",
+    "category": "cara_pakai",
+    "question": "Bagaimana cara menggunakan Laung?",
+    "answer": "Cara menggunakan Laung: (1) Buka https://laung.id di browser, (2) Lihat dashboard cuaca maritim hari ini untuk mengetahui kondisi laut, (3) Buka peta ZPPI untuk melihat visualisasi zona potensi penangkapan ikan, titik-titik dengan skor tinggi menandakan potensi ikan yang lebih baik, (4) Periksa indikator kelayakan melaut untuk memastikan kondisi aman, (5) Gunakan navigasi untuk menuju spot yang direkomendasikan, (6) Setelah kembali, catat hasil tangkapan Anda di fitur Catatan Hasil Tangkapan.",
+    "keywords": [
+      "cara pakai",
+      "cara menggunakan",
+      "langkah",
+      "tutorial",
+      "panduan",
+      "mulai"
+    ]
+  },
+  {
+    "id": "14",
     "category": "cara_pakai",
     "question": "Bagaimana cara install Laung di HP?",
-    "answer": "Laung adalah PWA (Progressive Web App) jadi tidak perlu App Store. Caranya: (1) Buka laung-id.vercel.app di browser HP, (2) Tap ikon berbagi di Safari atau Chrome, (3) Pilih 'Tambahkan ke Layar Utama', (4) Laung siap dipakai seperti app asli. Proses ini hanya butuh sekitar 2 menit.",
+    "answer": "Laung adalah PWA (Progressive Web App) jadi tidak perlu download dari App Store. Caranya: (1) Buka https://laung.id di browser HP (Safari untuk iPhone, Chrome untuk Android), (2) Tap ikon berbagi di Safari atau menu tiga titik di Chrome, (3) Pilih 'Tambahkan ke Layar Utama' atau 'Add to Home Screen', (4) Beri nama 'Laung' lalu tap 'Tambah'. Laung siap dipakai seperti aplikasi asli. Proses ini hanya butuh sekitar 2 menit dan tidak memakan banyak ruang penyimpanan.",
     "keywords": [
       "install",
       "download",
       "cara install",
       "PWA",
       "layar utama",
-      "App Store"
+      "App Store",
+      "home screen"
     ]
   },
   {
-    "id": "11",
+    "id": "15",
     "category": "cara_pakai",
     "question": "Apakah Laung bisa dipakai tanpa sinyal internet?",
-    "answer": "Ya, Laung dirancang sebagai PWA yang bisa berjalan offline di HP-mu. Kamu bisa menggunakannya di tengah laut sekalipun tanpa sinyal internet setelah sebelumnya membuka aplikasi saat masih ada koneksi.",
+    "answer": "Laung dirancang sebagai PWA yang mendukung penggunaan offline. Kamu bisa mengakses peta dan fitur-fitur tertentu di tengah laut sekalipun tanpa sinyal internet, asalkan sebelumnya sudah membuka aplikasi saat masih ada koneksi. Namun perlu dicatat bahwa data satelit dan cuaca diperbarui secara berkala saat online, sehingga untuk mendapatkan rekomendasi terbaru, disarankan untuk memperbarui data saat ada koneksi internet.",
     "keywords": [
       "offline",
       "tanpa sinyal",
@@ -127,107 +233,147 @@
     ]
   },
   {
-    "id": "12",
+    "id": "16",
     "category": "harga",
     "question": "Apakah Laung gratis?",
-    "answer": "Ya, Laung gratis untuk fitur dasar dan bisa langsung digunakan tanpa kartu kredit. Kamu juga bisa mencoba Laung tanpa mendaftar akun terlebih dahulu melalui opsi 'Coba tanpa akun'.",
-    "keywords": ["gratis", "harga", "biaya", "bayar", "free", "berbayar"]
+    "answer": "Ya, Laung gratis untuk fitur dasar dan bisa langsung digunakan tanpa kartu kredit. Kamu juga bisa mencoba Laung tanpa mendaftar akun terlebih dahulu melalui opsi 'Coba tanpa akun'. Laung dikembangkan sebagai solusi pemberdayaan masyarakat pesisir, sehingga aksesibilitas menjadi prioritas utama.",
+    "keywords": [
+      "gratis",
+      "harga",
+      "biaya",
+      "bayar",
+      "free",
+      "berbayar",
+      "tanpa biaya"
+    ]
   },
   {
-    "id": "13",
+    "id": "17",
     "category": "harga",
     "question": "Apakah perlu daftar akun untuk pakai Laung?",
-    "answer": "Tidak wajib. Kamu bisa mencoba Laung tanpa akun. Namun untuk menyimpan histori tangkapan dan data personal, disarankan mendaftar akun gratis di laung-id.vercel.app.",
+    "answer": "Tidak wajib. Kamu bisa mencoba Laung tanpa akun melalui opsi 'Coba tanpa akun'. Namun untuk menyimpan histori tangkapan, mengakses riwayat aktivitas, dan menggunakan fitur personal lainnya, disarankan mendaftar akun gratis di https://laung.id. Pendaftaran hanya memerlukan email dan password, dan prosesnya sangat cepat.",
     "keywords": [
       "daftar",
       "akun",
       "registrasi",
       "login",
       "tanpa akun",
-      "sign up"
+      "sign up",
+      "email"
     ]
   },
   {
-    "id": "14",
+    "id": "18",
     "category": "akurasi_data",
     "question": "Seberapa akurat rekomendasi spot ikan dari Laung?",
-    "answer": "Rekomendasi spot dari Laung bersifat indikatif dan tidak menjamin keberhasilan tangkapan. Data satelit NASA AQUA MODIS memiliki resolusi 4km dan bisa terkendala tutupan awan atau keterlambatan pembaruan. Skor ZPPI adalah hasil kalkulasi algoritma yang tidak menggantikan pengalaman dan pengetahuan lokal nelayan.",
+    "answer": "Rekomendasi spot dari Laung bersifat indikatif dan tidak menjamin keberhasilan tangkapan 100%. Data satelit NASA AQUA MODIS memiliki resolusi 4km dan bisa terkendala tutupan awan atau keterlambatan pembaruan. Skor ZPPI adalah hasil kalkulasi algoritma yang dirumuskan berdasarkan kajian ekologi perairan, namun tidak menggantikan pengalaman dan pengetahuan lokal nelayan. Laung adalah alat bantu pengambilan keputusan, bukan jaminan hasil tangkapan. Validasi lapangan bersama komunitas nelayan menjadi prioritas pengembangan lanjutan untuk meningkatkan akurasi.",
     "keywords": [
       "akurat",
       "akurasi",
       "jaminan",
       "pasti",
       "rekomendasi",
-      "seberapa tepat"
+      "seberapa tepat",
+      "validasi"
     ]
   },
   {
-    "id": "15",
+    "id": "19",
     "category": "akurasi_data",
     "question": "Apakah data cuaca di Laung bisa diandalkan untuk keselamatan berlayar?",
-    "answer": "Data cuaca di Laung bersifat estimasi dan TIDAK menggantikan prakiraan resmi. Selalu periksa informasi cuaca resmi dari BMKG sebelum berangkat melaut. Keselamatan jiwa adalah prioritas — Laung tidak bertanggung jawab atas kecelakaan yang terjadi selama kegiatan berlayar.",
-    "keywords": ["cuaca", "keselamatan", "BMKG", "prakiraan", "aman", "bahaya"]
+    "answer": "Data cuaca di Laung bersifat estimasi dan TIDAK menggantikan prakiraan resmi dari BMKG Maritim. Selalu periksa informasi cuaca resmi sebelum berangkat melaut. Keselamatan jiwa adalah prioritas utama - Laung tidak bertanggung jawab atas kecelakaan yang terjadi selama kegiatan berlayar. Fitur indikator kelayakan melaut (Aman/Waspada/Berbahaya) adalah panduan tambahan, namun keputusan akhir untuk melaut sepenuhnya berada di tangan pengguna.",
+    "keywords": [
+      "cuaca",
+      "keselamatan",
+      "BMKG",
+      "prakiraan",
+      "aman",
+      "bahaya",
+      "gelombang",
+      "angin"
+    ]
   },
   {
-    "id": "16",
+    "id": "20",
     "category": "privasi",
     "question": "Data pribadi saya aman di Laung?",
-    "answer": "Ya. Laung mengumpulkan data akun (nama, email), data lokasi GPS, dan data penggunaan. Kami tidak menjual data pribadi kamu ke pihak ketiga. Data lokasi hanya digunakan untuk keperluan layanan rekomendasi spot ikan. Kami menggunakan Supabase sebagai database dengan standar keamanan tinggi.",
+    "answer": "Ya. Laung mengumpulkan data akun (nama, email), data lokasi GPS, dan data penggunaan. Kami tidak menjual data pribadi Anda ke pihak ketiga. Data lokasi hanya digunakan untuk keperluan layanan rekomendasi spot ikan dan peningkatan pengalaman pengguna. Laung menggunakan Supabase sebagai database dengan standar keamanan tinggi dan Auth.js untuk sistem autentikasi yang aman. Seluruh data disimpan dengan enkripsi dan perlindungan sesuai standar industri.",
     "keywords": [
       "privasi",
       "data pribadi",
       "aman",
       "keamanan",
       "dijual",
-      "rahasia"
+      "rahasia",
+      "Supabase"
     ]
   },
   {
-    "id": "17",
+    "id": "21",
     "category": "privasi",
     "question": "Apakah Laung menjual data lokasi saya?",
-    "answer": "Tidak. Data lokasi GPS kamu tidak diperjualbelikan kepada pihak ketiga. Data lokasi hanya digunakan semata-mata untuk meningkatkan akurasi rekomendasi spot ikan yang kamu terima.",
-    "keywords": ["lokasi", "GPS", "jual data", "pihak ketiga", "privasi lokasi"]
+    "answer": "Tidak. Data lokasi GPS Anda tidak diperjualbelikan kepada pihak ketiga. Data lokasi hanya digunakan semata-mata untuk meningkatkan akurasi rekomendasi spot ikan yang Anda terima dan untuk pengembangan fitur seperti pelacakan armada nelayan, sistem notifikasi personal, dan layanan darurat berbasis lokasi di masa depan. Kami berkomitmen untuk menjaga privasi pengguna dan hanya menggunakan data sesuai dengan Kebijakan Privasi yang dapat diakses di halaman Privacy Policy Laung.",
+    "keywords": [
+      "lokasi",
+      "GPS",
+      "jual data",
+      "pihak ketiga",
+      "privasi lokasi",
+      "keamanan"
+    ]
   },
   {
-    "id": "18",
+    "id": "22",
     "category": "privasi",
     "question": "Apa hak saya sebagai pengguna Laung?",
-    "answer": "Sebagai pengguna Laung, kamu berhak: (1) Meminta akses ke data pribadi yang kami simpan, (2) Meminta penghapusan data atau penutupan akun, (3) Menarik persetujuan penggunaan lokasi kapan saja melalui pengaturan perangkat.",
+    "answer": "Sebagai pengguna Laung, Anda berhak: (1) Meminta akses ke data pribadi yang kami simpan, (2) Meminta penghapusan data atau penutupan akun kapan saja, (3) Menarik persetujuan penggunaan lokasi kapan saja melalui pengaturan perangkat, (4) Mengakses informasi tentang bagaimana data Anda digunakan melalui halaman Kebijakan Privasi di https://laung.id/privacy, (5) Menolak penggunaan data untuk tujuan tertentu. Informasi lengkap tentang hak pengguna tersedia di halaman Terms & Conditions dan Privacy Policy Laung.",
     "keywords": [
       "hak pengguna",
       "hapus data",
       "akses data",
       "tutup akun",
-      "persetujuan"
+      "persetujuan",
+      "privasi"
     ]
   },
   {
-    "id": "19",
+    "id": "23",
     "category": "legal",
     "question": "Apakah Laung sudah resmi atau masih prototype?",
-    "answer": "Laung saat ini berstatus prototipe/MVP yang dikembangkan untuk tujuan penelitian dan kompetisi inovasi. Fitur dan layanan dapat berubah sewaktu-waktu. Laung tersedia di https://laung-id.vercel.app.",
-    "keywords": ["resmi", "prototype", "MVP", "status", "beta", "kompetisi"]
-  },
-  {
-    "id": "20",
-    "category": "kontak",
-    "question": "Bagaimana cara menghubungi tim Laung?",
-    "answer": "Kamu bisa menghubungi pengembang Laung melalui: Email: joanpurba562@gmail.com atau melalui website: https://laung-id.vercel.app",
+    "answer": "Laung saat ini berstatus prototipe/MVP (Minimum Viable Product) yang dikembangkan untuk tujuan penelitian dan kompetisi inovasi ITFEST 2026. Fitur dan layanan dapat berubah sewaktu-waktu seiring dengan pengembangan lanjutan. Laung tersedia di https://laung.id. Meskipun masih dalam tahap pengembangan, Laung telah memiliki sistem autentikasi, visualisasi peta ZPPI, DSS, dan berbagai fitur inti lainnya yang dapat digunakan. Kami terus mengembangkan Laung menuju versi produksi yang lebih matang.",
     "keywords": [
-      "kontak",
-      "hubungi",
-      "email",
-      "support",
-      "bantuan",
-      "customer service"
+      "resmi",
+      "prototype",
+      "MVP",
+      "status",
+      "beta",
+      "kompetisi",
+      "ITFEST"
     ]
   },
   {
-    "id": "21",
+    "id": "24",
     "category": "teknis",
-    "question": "Di browser apa saja Laung bisa diinstall?",
-    "answer": "Laung bisa diinstall sebagai PWA di Safari (iPhone/iPad) maupun Chrome (Android/desktop). Cukup buka laung-id.vercel.app, tap ikon berbagi, lalu pilih 'Tambahkan ke Layar Utama'.",
+    "question": "Apa teknologi yang digunakan untuk mengembangkan Laung?",
+    "answer": "Laung dibangun menggunakan teknologi web modern: (1) Frontend: Next.js 15 dengan TypeScript dan Tailwind CSS, (2) Pemetaan: Leaflet & React Leaflet, (3) Backend: Next.js API Routes, (4) Database: PostgreSQL dengan Prisma ORM, (5) Autentikasi: Auth.js dengan Supabase Authentication, (6) Cache: Upstash Redis, (7) Deployment: Vercel. Teknologi ini dipilih untuk mendukung visualisasi data geospasial, pengelolaan data oseanografi, keamanan sistem, dan performa tinggi. Detail selengkapnya tersedia di dokumentasi proposal Laung.",
+    "keywords": [
+      "teknologi",
+      "Next.js",
+      "TypeScript",
+      "Tailwind",
+      "Leaflet",
+      "PostgreSQL",
+      "Prisma",
+      "Supabase",
+      "Auth.js",
+      "Vercel"
+    ]
+  },
+  {
+    "id": "25",
+    "category": "teknis",
+    "question": "Di browser apa saja Laung bisa dijalankan?",
+    "answer": "Laung bisa diakses dan diinstall sebagai PWA di berbagai browser modern: Safari (iPhone/iPad), Chrome (Android/desktop), Firefox, dan Edge. Cukup buka https://laung.id di browser favorit Anda, dan untuk install sebagai PWA tap ikon berbagi lalu pilih 'Tambahkan ke Layar Utama' (Safari) atau menu tiga titik lalu 'Install App' atau 'Add to Home Screen' (Chrome). Laung dioptimalkan untuk berjalan di berbagai perangkat, termasuk perangkat dengan spesifikasi terbatas yang umum digunakan oleh nelayan di wilayah pesisir.",
     "keywords": [
       "browser",
       "Safari",
@@ -235,20 +381,255 @@
       "install",
       "iPhone",
       "Android",
-      "kompatibel"
+      "kompatibel",
+      "Firefox",
+      "Edge"
     ]
   },
   {
-    "id": "22",
+    "id": "26",
     "category": "teknis",
-    "question": "Berapa banyak spot ikan yang sudah terpetakan di Laung?",
-    "answer": "Laung telah memetakan lebih dari 100 spot ikan di perairan Indonesia berdasarkan data satelit NASA.",
+    "question": "Berapa banyak data yang digunakan Laung untuk pemetaan?",
+    "answer": "Laung memproses data geospasial dengan jumlah titik koordinat yang sangat besar - mencapai puluhan hingga ratusan ribu data dari hasil pengolahan satelit. Untuk menjaga performa aplikasi tetap optimal, Laung menerapkan mekanisme optimasi dengan membatasi jumlah data yang dikirim ke perangkat pengguna hanya pada titik-titik yang memiliki skor tertinggi dan paling relevan. Pendekatan ini mengurangi ukuran data yang ditransfer, mempercepat pemuatan peta, dan menekan penggunaan memori perangkat, sangat penting mengingat keterbatasan jaringan dan spesifikasi perangkat pengguna di wilayah pesisir.",
     "keywords": [
-      "jumlah spot",
-      "berapa spot",
-      "terpetakan",
-      "coverage",
-      "wilayah"
+      "data",
+      "titik koordinat",
+      "optimasi",
+      "performa",
+      "geospasial",
+      "memori",
+      "ukuran data"
+    ]
+  },
+  {
+    "id": "27",
+    "category": "fitur",
+    "question": "Apakah Laung memiliki fitur keselamatan darurat?",
+    "answer": "Saat ini Laung telah memiliki fitur Sinyal SOS antar nelayan yang memungkinkan pengguna mengirimkan sinyal darurat kepada sesama nelayan di area terdekat. Ke depan, Laung berencana mengembangkan Geospatial Emergency SOS yang lebih komprehensif: sistem yang mampu mengirimkan sinyal darurat secara otomatis kepada kapal terdekat berdasarkan radius geografis tertentu, serta berpotensi diintegrasikan dengan lembaga terkait seperti BASARNAS dan komunitas nelayan setempat untuk mempercepat respon awal terhadap keadaan darurat di laut.",
+    "keywords": [
+      "SOS",
+      "darurat",
+      "keselamatan",
+      "bantuan",
+      "emergency",
+      "BASARNAS",
+      "sinyal darurat"
+    ]
+  },
+  {
+    "id": "28",
+    "category": "masa_depan",
+    "question": "Apa rencana pengembangan Laung ke depan?",
+    "answer": "Rencana pengembangan Laung ke depan meliputi: (1) Integrasi parameter oseanografi tambahan (gelombang, arus laut, data historis), (2) Smart Maritime Alert System - notifikasi cerdas peringatan dini, (3) Community-Based Maritime Network - Live Fleet Tracking dan berbagi lokasi antar nelayan, (4) Geospatial Emergency SOS - sistem keselamatan dan respon darurat, (5) Integrasi Data Nasional - BMKG, KKP, dan validasi lapangan, (6) 100% Offline first, (7) Integrated fish marketplace. Visi jangka panjang Laung adalah menjadi ekosistem digital pendukung aktivitas maritim yang mengintegrasikan informasi oseanografi, keselamatan pelayaran skala kecil, dan kolaborasi komunitas nelayan.",
+    "keywords": [
+      "pengembangan",
+      "rencana",
+      "masa depan",
+      "fitur baru",
+      "smart alert",
+      "fleet tracking",
+      "marketplace",
+      "offline"
+    ]
+  },
+  {
+    "id": "29",
+    "category": "dampak",
+    "question": "Apa dampak ekonomi Laung bagi nelayan?",
+    "answer": "Laung berpotensi membantu nelayan menghemat biaya operasional melalui pengurangan waktu pencarian lokasi ikan. Dengan asumsi konservatif: jika Laung membantu nelayan memangkas 1 jam pencarian per trip, dengan konsumsi solar 5 liter/jam dan harga solar Rp6.800/liter, potensi penghematan mencapai Rp34.000 per trip. Bagi nelayan kecil yang melaut 20 hari/bulan, efisiensi biaya bisa mencapai Rp680.000/bulan. Angka ini merupakan ilustrasi estimasi dan efektivitas aktual memerlukan validasi lapangan bersama komunitas nelayan. Selain itu, Laung membantu mengurangi pemborosan BBM dan meningkatkan efisiensi operasional secara berkelanjutan.",
+    "keywords": [
+      "ekonomi",
+      "hemat",
+      "BBM",
+      "solar",
+      "biaya",
+      "efisiensi",
+      "penghematan",
+      "operasional"
+    ]
+  },
+  {
+    "id": "30",
+    "category": "dampak",
+    "question": "Apa dampak sosial Laung bagi nelayan tradisional?",
+    "answer": "Laung memberikan dampak sosial yang signifikan: (1) Demokratisasi data satelit - informasi yang sebelumnya hanya diakses peneliti kini tersedia untuk nelayan tradisional, (2) Pemerataan akses teknologi - nelayan di wilayah pesisir dengan perangkat terbatas tetap bisa mengakses, (3) Peningkatan keselamatan - melalui informasi cuaca dan indikator kelayakan melaut, (4) Pemberdayaan masyarakat pesisir - melalui pengambilan keputusan berbasis data, (5) Pengurangan kesenjangan digital - dengan antarmuka sederhana dan dukungan offline, (6) Dokumentasi pengetahuan lokal - melalui fitur catatan tangkapan yang mengumpulkan data dari lapangan. Laung adalah jembatan antara teknologi modern dan kebutuhan nyata masyarakat pesisir Indonesia.",
+    "keywords": [
+      "sosial",
+      "dampak",
+      "pemberdayaan",
+      "kesenjangan digital",
+      "masyarakat pesisir",
+      "demokratisasi",
+      "teknologi"
+    ]
+  },
+  {
+    "id": "31",
+    "category": "tentang_produk",
+    "question": "Mengapa namanya Laung?",
+    "answer": "Nama Laung terinspirasi dari filosofi 'menyuarakan' atau 'menggema' dalam bahasa daerah - mencerminkan misi aplikasi untuk menyuarakan dan menyebarluaskan akses data kelautan kepada masyarakat pesisir yang selama ini terpinggirkan dari teknologi. Laung hadir untuk menjadi suara yang menggema, membawa informasi dari langit (data satelit) ke laut (tempat nelayan beraktivitas), dan menjembatani kesenjangan antara dunia ilmiah dan kebutuhan nyata di lapangan.",
+    "keywords": ["nama", "Laung", "arti nama", "filosofi", "makna"]
+  },
+  {
+    "id": "32",
+    "category": "kontak",
+    "question": "Bagaimana cara menghubungi tim Laung?",
+    "answer": "Kamu bisa menghubungi pengembang Laung melalui: (1) Email: joanpurba562@gmail.com, (2) Website: https://laung.id, (3) Melalui formulir kontak yang tersedia di halaman About Laung. Kami sangat terbuka terhadap masukan, saran, dan pertanyaan dari pengguna untuk terus mengembangkan Laung menjadi platform yang lebih baik dan lebih bermanfaat bagi masyarakat pesisir Indonesia.",
+    "keywords": [
+      "kontak",
+      "hubungi",
+      "email",
+      "support",
+      "bantuan",
+      "customer service",
+      "masukan"
+    ]
+  },
+  {
+    "id": "33",
+    "category": "teknis",
+    "question": "Apakah Laung menggunakan AI?",
+    "answer": "Ya, Laung menggunakan kecerdasan buatan (AI) dalam dua fitur utama: (1) AI Assistant - chatbot berbasis Retrieval-Augmented Generation (RAG) menggunakan model GLM 4.5 yang dapat menjawab pertanyaan pengguna secara kontekstual dan memberikan panduan personal tentang penggunaan aplikasi, (2) Fish Recognition - sistem Computer Vision yang dapat mengidentifikasi jenis/spesies ikan dari foto, menampilkan tingkat keyakinan (confidence score) dan nilai ekonomi ikan secara otomatis. Ke depan, AI akan terus dikembangkan untuk fitur prediksi dan analisis yang lebih canggih.",
+    "keywords": [
+      "AI",
+      "artificial intelligence",
+      "chatbot",
+      "RAG",
+      "GLM 4.5",
+      "computer vision",
+      "fish recognition"
+    ]
+  },
+  {
+    "id": "34",
+    "category": "fitur",
+    "question": "Apa perbedaan Laung dengan aplikasi nelayan lainnya?",
+    "answer": "Laung berbeda secara fundamental dari aplikasi maritim lainnya karena: (1) Membangun pipeline pemrosesan data sendiri - data NetCDF NASA diproses langsung, bukan sekadar integrasi API cuaca biasa, (2) Formula DSS transparan dan dapat dipertanggungjawabkan - bobot klorofil 45%, SST 35%, pasang surut 20% dirumuskan berdasarkan kajian ekologi perairan, (3) Dirancang untuk kondisi lapangan nyata - optimasi data untuk perangkat lama, akses web tanpa instalasi, dukungan offline, (4) Demokratisasi data satelit - mengubah data ilmiah kompleks menjadi visualisasi yang mudah dipahami, (5) Pendekatan end-to-end - dari data satelit hingga rekomendasi lokasi dalam satu platform terpadu.",
+    "keywords": [
+      "perbedaan",
+      "aplikasi lain",
+      "kompetitor",
+      "keunggulan",
+      "unik",
+      "dibandingkan"
+    ]
+  },
+  {
+    "id": "35",
+    "category": "cara_pakai",
+    "question": "Bagaimana cara memilih jenis ikan di Laung?",
+    "answer": "Untuk memilih jenis ikan di Laung, cukup buka halaman peta ZPPI, lalu cari opsi pemilihan jenis ikan yang tersedia. Saat ini Laung mendukung berbagai jenis ikan seperti tongkol, tuna, dan kembung. Setiap spesies memiliki preferensi suhu dan plankton yang berbeda, sehingga sistem akan menyesuaikan scoring secara otomatis berdasarkan jenis ikan yang Anda targetkan. Setelah memilih, peta akan memperbarui tampilan rekomendasi spot yang paling sesuai untuk jenis ikan tersebut.",
+    "keywords": [
+      "jenis ikan",
+      "memilih ikan",
+      "tongkol",
+      "tuna",
+      "kembung",
+      "target ikan",
+      "spesies"
+    ]
+  },
+  {
+    "id": "36",
+    "category": "tentang_produk",
+    "question": "Untuk siapa Laung dibuat?",
+    "answer": "Laung dibuat untuk: (1) Nelayan tradisional Indonesia yang masih mengandalkan metode coba-coba dalam mencari lokasi penangkapan ikan, (2) Pemancing pemula yang ingin mengetahui spot-spot potensial, (3) Masyarakat pesisir yang ingin memanfaatkan teknologi data satelit, (4) Komunitas nelayan yang membutuhkan platform kolaborasi dan keselamatan, (5) Seluruh pihak yang ingin mendukung demokratisasi data kelautan dan pemberdayaan masyarakat pesisir. Laung dirancang khusus dengan mempertimbangkan kondisi lapangan: keterbatasan jaringan, perangkat dengan spesifikasi rendah, dan kemudahan penggunaan tanpa latar belakang teknis.",
+    "keywords": [
+      "target pengguna",
+      "untuk siapa",
+      "nelayan",
+      "pemancing",
+      "masyarakat pesisir",
+      "komunitas"
+    ]
+  },
+  {
+    "id": "37",
+    "category": "fitur",
+    "question": "Apa itu dashboard cuaca maritim di Laung?",
+    "answer": "Dashboard Cuaca Maritim adalah fitur yang menampilkan ringkasan kondisi laut hari ini langsung di halaman utama Laung. Dashboard ini menyajikan parameter cuaca maritim secara real-time meliputi: (1) Tinggi gelombang, (2) Kecepatan angin, (3) Visibilitas laut. Data bersumber dari Open-Meteo Marine API yang diperbarui secara berkala. Pendekatan ini memastikan pengguna mendapatkan gambaran kondisi umum perairan sebelum mengambil keputusan untuk melaut, tanpa harus berpindah ke platform lain untuk memeriksa informasi cuaca secara terpisah.",
+    "keywords": [
+      "dashboard",
+      "cuaca maritim",
+      "gelombang",
+      "angin",
+      "visibilitas",
+      "Open-Meteo",
+      "kondisi laut"
+    ]
+  },
+  {
+    "id": "38",
+    "category": "akurasi_data",
+    "question": "Apa keterbatasan Laung saat ini?",
+    "answer": "Keterbatasan Laung saat ini antara lain: (1) Validasi lapangan belum dilakukan secara menyeluruh - rekomendasi masih berdasarkan kajian ilmiah tanpa ground truth dari nelayan, (2) Resolusi data satelit 4km - cukup untuk indikasi umum namun tidak detail untuk area kecil, (3) Potensi keterlambatan data - data satelit bisa tertunda karena tutupan awan, (4) Cakupan wilayah terbatas - saat ini fokus di PPN Kejawanan Cirebon, (5) Status MVP - masih dalam pengembangan dan fitur dapat berubah, (6) Ketergantungan pada koneksi internet untuk pembaruan data. Kami terus mengembangkan Laung untuk mengatasi keterbatasan ini melalui validasi lapangan, integrasi data tambahan, dan optimasi berkelanjutan.",
+    "keywords": [
+      "keterbatasan",
+      "kekurangan",
+      "validasi",
+      "resolusi",
+      "cakupan",
+      "MVP",
+      "tutupan awan"
+    ]
+  },
+  {
+    "id": "39",
+    "category": "harga",
+    "question": "Apakah ada versi berbayar Laung?",
+    "answer": "Saat ini Laung sepenuhnya gratis untuk semua fitur dasar. Tidak ada versi berbayar atau langganan yang diperlukan. Laung dikembangkan sebagai proyek penelitian dan kompetisi dengan tujuan pemberdayaan masyarakat pesisir. Ke depan, jika ada pengembangan fitur premium, akan diinformasikan secara transparan kepada pengguna. Namun komitmen kami adalah memastikan fitur-fitur esensial tetap dapat diakses secara gratis oleh nelayan tradisional.",
+    "keywords": [
+      "versi berbayar",
+      "premium",
+      "langganan",
+      "subscription",
+      "pro",
+      "gratis tetap"
+    ]
+  },
+  {
+    "id": "40",
+    "category": "fitur",
+    "question": "Apa itu Catatan Hasil Tangkapan di Laung?",
+    "answer": "Catatan Hasil Tangkapan adalah fitur yang memungkinkan nelayan mendokumentasikan pengalaman melaut mereka secara langsung di dalam platform. Setelah kembali dari laut, pengguna dapat mencatat: lokasi penangkapan (otomatis dari GPS atau manual), berat total hasil tangkapan, jenis ikan yang berhasil ditangkap pada setiap sesi, dan catatan tambahan lainnya. Seluruh data tersimpan per akun pengguna dan dapat diakses kembali sebagai riwayat aktivitas melaut. Fitur ini memiliki nilai strategis jangka panjang: data tangkapan yang dikumpulkan secara kolektif dapat menjadi ground truth untuk memvalidasi akurasi algoritma DSS Laung, menjawab keterbatasan validasi yang selama ini diakui.",
+    "keywords": [
+      "catatan",
+      "hasil tangkapan",
+      "riwayat",
+      "dokumentasi",
+      "berat",
+      "jenis ikan",
+      "lokasi"
+    ]
+  },
+  {
+    "id": "41",
+    "category": "teknis",
+    "question": "Bagaimana Laung mengoptimalkan performa peta?",
+    "answer": "Laung menerapkan beberapa strategi optimasi data geospasial: (1) Pembatasan data - hanya mengirim titik-titik dengan skor tertinggi ke perangkat pengguna, bukan seluruh dataset, (2) Teknik pemilihan titik prioritas - memastikan informasi paling relevan tetap tersedia, (3) Pengurangan ukuran data transfer - mempercepat pemuatan peta, (4) Penggunaan memori yang efisien - mencegah penggunaan memori berlebihan pada perangkat, (5) Caching dengan Upstash Redis - menyimpan data sementara untuk akses lebih cepat. Strategi ini sangat penting karena sebagian besar pengguna potensial berada di wilayah pesisir dengan keterbatasan kualitas jaringan internet dan spesifikasi perangkat yang beragam.",
+    "keywords": [
+      "optimasi",
+      "performa",
+      "peta",
+      "data",
+      "caching",
+      "Redis",
+      "memori",
+      "loading"
+    ]
+  },
+  {
+    "id": "42",
+    "category": "masa_depan",
+    "question": "Apakah Laung akan memiliki fitur marketplace ikan?",
+    "answers": "Ya, Integrated Fish Marketplace adalah salah satu fitur yang telah memasuki tahap eksplorasi dan pengembangan awal. Fitur ini bertujuan untuk menghubungkan nelayan langsung dengan pembeli, mengurangi rantai distribusi yang panjang, dan meningkatkan nilai jual hasil tangkapan. Dengan marketplace terintegrasi, nelayan dapat menjual hasil tangkapannya secara lebih efisien dan mendapatkan harga yang lebih baik, sementara pembeli dapat memperoleh ikan segar langsung dari sumbernya. Fitur ini diharapkan dapat memberikan nilai tambah ekonomi yang signifikan bagi komunitas nelayan.",
+    "keywords": [
+      "marketplace",
+      "jual ikan",
+      "pembeli",
+      "distribusi",
+      "ekonomi",
+      "nilai tambah"
     ]
   }
 ]
