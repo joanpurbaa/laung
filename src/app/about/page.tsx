@@ -79,27 +79,46 @@ export default function About() {
             </p>
           </section>
 
-          <section className="border-t border-slate-100 pt-10">
-            <h2
-              className="mb-6 text-[20px] font-black text-slate-900"
-              style={{ letterSpacing: "-0.02em" }}
-            >
-              Pengembang
-            </h2>
-            <div className="flex items-center gap-4">
-              <Image
-                className="h-12 w-12 rounded-full object-cover"
-                src="/me.webp"
-                width={100}
-                height={100}
-                alt="developer"
-              />
-              <div>
-                <p className="font-black text-slate-900">Joan Orlando Purba</p>
-                <p className="text-[14px] text-slate-500">Pengembang</p>
-              </div>
-            </div>
-          </section>
+         <section className="border-t border-slate-100 pt-10">
+  <h2
+    className="mb-6 text-[20px] font-black text-slate-900"
+    style={{ letterSpacing: "-0.02em" }}
+  >
+    Pengembang
+  </h2>
+  
+  <div className="flex flex-wrap gap-8">
+    {/* Pengembang 1 */}
+    <div className="flex items-center gap-4">
+      <Image
+        className="h-12 w-12 rounded-full object-cover"
+        src="/me.webp"
+        width={100}
+        height={100}
+        alt="Joan Orlando Purba"
+      />
+      <div>
+        <p className="font-black text-slate-900">Joan Orlando Purba</p>
+        <p className="text-[14px] text-slate-500">Pengembang</p>
+      </div>
+    </div>
+
+    {/* Pengembang 2 */}
+    <div className="flex items-center gap-4">
+      <Image
+        className="h-12 w-12 rounded-full object-cover"
+        src="/djob.webp"
+        width={100}
+        height={100}
+        alt="Djob Misael"
+      />
+      <div>
+        <p className="font-black text-slate-900">Djob Misael</p>
+        <p className="text-[14px] text-slate-500">Pengembang</p>
+      </div>
+    </div>
+  </div>
+</section>
         </div>
       </main>
 
