@@ -360,7 +360,7 @@ export default function LandingPage() {
           className="relative z-10 hidden h-auto w-full sm:block"
           width={500}
           height={500}
-          src="/maskot.png"
+          src="/maskot.webp"
           alt="Maskot Laung"
         />
       </div>
@@ -492,7 +492,7 @@ export default function LandingPage() {
                 />
                 <Image
                   className="relative block h-auto w-full"
-                  src="/mockup.png"
+                  src="/mockup.webp"
                   alt="Laung app di HP"
                   width={1500}
                   height={1500}

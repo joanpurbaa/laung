@@ -8,4 +8,5 @@ export interface WeatherData {
   tempAir: number;
   humidity: number;
   safeToSail: boolean;
+  stale?: boolean;
 }

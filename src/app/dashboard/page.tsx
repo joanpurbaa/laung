@@ -20,30 +20,38 @@ function useWeather(coords: LocationCoords) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const controller = new AbortController();
+
     const fetchWeather = async () => {
       try {
         setLoading(true);
         const res = await fetch(
-          `https://api.open-meteo.com/v1/forecast?latitude=${coords.latitude}&longitude=${coords.longitude}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,wind_direction_10m,weather_code,visibility&wind_speed_unit=kmh&timezone=Asia%2FJakarta`,
+          `/api/weather?lat=${coords.latitude}&lon=${coords.longitude}`,
+          { signal: controller.signal },
         );
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
+        if (!res.ok) throw new Error(`status ${res.status}`);
+
         const json = await res.json();
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
         const c = json.current;
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-        const wCode: number = c.weather_code ?? 0;
+        const isStale = json.stale === true;
+        const wCode: number = c.weather_code ?? 0; // <- ini yang kemarin ilang
 
         const getCondition = (
           code: number,
         ): { label: string; icon: string } => {
-          if (code === 0) return { label: "Cerah Sempurna", icon: "☀️" };
-          if (code <= 2) return { label: "Berawan Sebagian", icon: "⛅" };
-          if (code <= 3) return { label: "Mendung", icon: "☁️" };
-          if (code <= 48) return { label: "Berkabut", icon: "🌫️" };
-          if (code <= 67) return { label: "Hujan Ringan", icon: "🌧️" };
-          if (code <= 77) return { label: "Salju / Hujan Es", icon: "🌨️" };
-          if (code <= 82) return { label: "Hujan Lebat", icon: "⛈️" };
-          return { label: "Badai", icon: "🌪️" };
+          if (code >= 200 && code < 300)
+            return { label: "Badai Petir", icon: "⛈️" };
+          if (code >= 300 && code < 400)
+            return { label: "Gerimis", icon: "🌦️" };
+          if (code >= 500 && code < 600) return { label: "Hujan", icon: "🌧️" };
+          if (code >= 600 && code < 700) return { label: "Salju", icon: "🌨️" };
+          if (code >= 700 && code < 800)
+            return { label: "Berkabut", icon: "🌫️" };
+          if (code === 800) return { label: "Cerah Sempurna", icon: "☀️" };
+          if (code === 801 || code === 802)
+            return { label: "Berawan Sebagian", icon: "⛅" };
+          return { label: "Mendung", icon: "☁️" }; // 803, 804
         };
 
         const getWindDir = (deg: number): string => {
@@ -51,37 +59,36 @@ function useWeather(coords: LocationCoords) {
           return dirs[Math.round(deg / 45) % 8] ?? "U";
         };
 
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
         const windKmh: number = c.wind_speed_10m ?? 0;
         const waveEst = Math.max(0.1, (windKmh / 60) * 2.5);
         const cond = getCondition(wCode);
 
         setData({
           windSpeed: Math.round(windKmh),
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
           windDir: getWindDir(c.wind_direction_10m ?? 0),
           waveHeight: parseFloat(waveEst.toFixed(1)),
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
           visibility: Math.round((c.visibility ?? 10000) / 1000),
           condition: cond.label,
           conditionIcon: cond.icon,
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
           tempAir: Math.round(c.temperature_2m ?? 28),
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
           humidity: Math.round(c.relative_humidity_2m ?? 75),
-          safeToSail: windKmh < 30 && wCode < 60,
+          safeToSail: windKmh < 30 && wCode >= 700,
+          stale: isStale,
         });
-      } catch {
+      } catch (err) {
+        if ((err as Error).name === "AbortError") return;
+        console.error("Gagal ambil cuaca:", err);
         setData({
-          windSpeed: 14,
-          windDir: "TL",
-          waveHeight: 0.6,
-          visibility: 12,
-          condition: "Cerah Sebagian",
-          conditionIcon: "⛅",
-          tempAir: 29,
-          humidity: 78,
-          safeToSail: true,
+          windSpeed: 0,
+          windDir: "-",
+          waveHeight: 0,
+          visibility: 0,
+          condition: "Data Tidak Tersedia",
+          conditionIcon: "⚠️",
+          tempAir: 0,
+          humidity: 0,
+          safeToSail: false,
+          stale: false,
         });
       } finally {
         setLoading(false);
@@ -90,7 +97,11 @@ function useWeather(coords: LocationCoords) {
 
     void fetchWeather();
     const iv = setInterval(() => void fetchWeather(), 5 * 60 * 1000);
-    return () => clearInterval(iv);
+
+    return () => {
+      controller.abort();
+      clearInterval(iv);
+    };
   }, [coords.latitude, coords.longitude]);
 
   return { data, loading };
@@ -418,6 +429,11 @@ export default function Dashboard() {
                 </div>
                 {wLoading ? (
                   <div className="h-4 w-16 animate-pulse rounded-full bg-slate-100" />
+                ) : weather?.stale ? (
+                  <div className="flex shrink-0 items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-[10px] font-black text-amber-600">
+                    <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                    Data Terakhir
+                  </div>
                 ) : (
                   <div
                     className={`flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-black ${

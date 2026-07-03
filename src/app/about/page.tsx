@@ -89,7 +89,7 @@ export default function About() {
             <div className="flex items-center gap-4">
               <Image
                 className="h-12 w-12 rounded-full object-cover"
-                src="/me.jpg"
+                src="/me.webp"
                 width={100}
                 height={100}
                 alt="developer"
