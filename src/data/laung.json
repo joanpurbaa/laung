@@ -18,7 +18,7 @@
     "id": "2",
     "category": "tentang_produk",
     "question": "Siapa yang membuat Laung?",
-    "answer": "Laung dikembangkan secara mandiri oleh Joan Orlando Purba, mahasiswa Telkom University Program Studi D3 Rekayasa Perangkat Lunak Aplikasi. Laung lahir dari kesadaran bahwa nelayan tradisional Indonesia sering melaut dengan metode coba-coba tanpa data akurat, sementara data satelit NASA dan NOAA sebenarnya tersedia gratis namun tidak dirancang untuk mereka yang paling membutuhkannya.",
+    "answer": "Laung dikembangkan bersama oleh Joan Orlando Purba (mahasiswa Telkom University, Program Studi D3 Rekayasa Perangkat Lunak Aplikasi) dan Djob Misael (mahasiswa Binus University, Jurusan Computer Science).Aplikasi ini lahir dari kesadaran bahwa nelayan tradisional Indonesia sering kali melaut dengan metode coba-coba tanpa dukungan data yang akurat. Di sisi lain, data satelit berharga dari NASA dan NOAA sebenarnya tersedia secara gratis, namun sayangnya belum dimanfaatkan secara optimal oleh para nelayan karena keterbatasan akses dan pemahaman teknis..",
     "keywords": [
       "pembuat",
       "developer",
