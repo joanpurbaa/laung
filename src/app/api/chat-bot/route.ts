@@ -1,4 +1,3 @@
-import Cerebras from "@cerebras/cerebras_cloud_sdk";
 import { NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
@@ -48,9 +47,8 @@ function keywordScore(query: string, text: string): number {
   return score;
 }
 
-const client = new Cerebras({
-  apiKey: process.env.CEREBRAS_API_KEY,
-});
+const GEMINI_API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+const GEMINI_MODEL = "gemini-2.5-flash";
 
 export async function GET(request: Request) {
   try {
@@ -77,13 +75,18 @@ export async function GET(request: Request) {
 
     const bestContext = topChunks.map((c) => c.content).join("\n\n---\n\n");
 
-    const aiResponse = await client.chat.completions.create({
-      model: "zai-glm-4.7",
-      max_tokens: 2048,
-      messages: [
-        {
-          role: "system",
-          content: `Anda adalah asisten virtual resmi untuk aplikasi Laung, aplikasi yang membantu nelayan menemukan lokasi tangkapan ikan menggunakan data satelit.
+    const aiResponse = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [
+            {
+              role: "user",
+              parts: [
+                {
+                  text: `Anda adalah asisten virtual resmi untuk aplikasi Laung, aplikasi yang membantu nelayan menemukan lokasi tangkapan ikan menggunakan data satelit.
 
 SIAPA PENGGUNA ANDA:
 Pengguna utama adalah orang tua usia sekitar 30-50 tahun yang berprofesi sebagai nelayan, dengan latar belakang pendidikan dan keakraban teknologi yang beragam. Mereka mungkin mengetik tidak rapi, memakai bahasa daerah, bahasa gaul, singkatan, atau kalimat tidak baku dan typo (contoh: "apatuh laung coy", "laung itu apa sih", "gmn cara pake laung", "laung buat apaan ya", "harga laung brp"). Ada juga pengguna lebih muda (gen Z, anak/cucu nelayan) yang memakai gaya bahasa santai dan singkatan.
@@ -103,17 +106,40 @@ ATURAN GAYA JAWABAN (PALING PENTING):
 5. Jawaban maksimal 2-4 kalimat singkat, atau poin-poin pendek jika informasinya berupa beberapa hal (misalnya daftar fitur atau langkah-langkah). Jangan menjawab lebih dari itu meskipun konteksnya panjang.
 6. Boleh menyesuaikan sedikit gaya bicara mengikuti gaya pengguna (santai untuk yang santai, lebih kalem untuk yang formal), tapi isi jawaban tetap sederhana dan mudah dipahami semua kalangan, dari anak muda sampai orang tua nelayan.
 7. Tetap ramah dan hangat, seperti berbicara dengan tetangga di pelabuhan, bukan seperti membaca buku panduan teknis.`,
-        },
-        {
-          role: "user",
-          content: `Konteks Data Produk:\n${bestContext}\n\nPertanyaan Pelanggan (boleh tidak baku/santai, pahami maksudnya): ${question}\n\nJawaban (Bahasa Indonesia, sederhana, singkat, ramah, langsung ke inti):`,
-        },
-      ],
-    });
+                },
+                {
+                  text: `Konteks Data Produk:\n${bestContext}\n\nPertanyaan Pelanggan (boleh tidak baku/santai, pahami maksudnya): ${question}\n\nJawaban (Bahasa Indonesia, sederhana, singkat, ramah, langsung ke inti):`,
+                },
+              ],
+            },
+          ],
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 2048,
+          },
+        }),
+      },
+    );
 
-    const choices = (aiResponse as any)?.choices;
+    const aiData = await aiResponse.json();
+
+    if (!aiResponse.ok) {
+      console.error("Gemini API error:", aiData);
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            (aiData as any)?.error?.message ?? "Gemini API error",
+          question: "Terjadi kesalahan internal",
+        },
+        { status: 502 },
+      );
+    }
+
     const answer =
-      choices?.[0]?.message?.content ??
+      (aiData as any)?.candidates?.[0]?.content?.parts
+        ?.map((part: any) => part.text)
+        .join("") ??
       "Maaf, kami sedang mengalami kendala teknis dalam memproses jawaban Anda.";
 
     return NextResponse.json({
