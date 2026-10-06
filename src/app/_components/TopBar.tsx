@@ -20,7 +20,7 @@ export default function TopBar({
   const activeFish = FISH_OPTIONS.find((f) => f.value === fishType)!;
 
   return (
-    <div className="absolute top-0 right-0 left-0 z-10 px-3 pt-3 pb-2">
+    <div className="absolute top-0 right-0 left-0 z-[35] px-3 pt-3 pb-2">
       <div className="flex items-center gap-2">
         <div className="flex flex-1 items-center gap-2.5 rounded-2xl border border-white/60 bg-white/90 px-3.5 py-2.5 shadow-lg backdrop-blur-md">
           <Image
@@ -58,7 +58,7 @@ export default function TopBar({
         <div className="relative">
           <button
             onClick={onToggleFishDropdown}
-            className="relative z-10 flex h-[52px] items-center gap-1.5 rounded-2xl border border-white/60 bg-white/90 px-3 shadow-lg backdrop-blur-md"
+            className="relative z-[35] flex h-[52px] items-center gap-1.5 rounded-2xl border border-white/60 bg-white/90 px-3 shadow-lg backdrop-blur-md"
           >
             <span className="text-base">{activeFish.emoji}</span>
             <svg
