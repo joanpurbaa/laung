@@ -121,7 +121,7 @@ export async function toggleShareLocationAction(
       where: { userId: session.user.id },
       update: {
         isSharing,
-        isSOS: isSharing ? undefined : false,
+        isSOS: false,
         lastSeen: new Date(),
       },
       create: {

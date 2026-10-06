@@ -215,6 +215,7 @@ export default function Map() {
           message: "Butuh bantuan segera!",
         });
         if (result.success) {
+          setIsSharing(true);
           alert("Sinyal SOS telah dikirim ke seluruh armada terdekat!");
         }
         setSelectedMemberForDetail(null);
