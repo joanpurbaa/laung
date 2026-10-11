@@ -1,14 +1,36 @@
 "use server";
 
 import bcrypt from "bcryptjs";
+import { randomBytes } from "crypto";
 import { signIn, signOut } from "~/lib/auth";
 import { db } from "~/lib/prisma";
 import { registerSchema, loginSchema } from "~/lib/validators/auth";
+import { usernameBaseFrom } from "~/lib/username";
 import { AuthError } from "next-auth";
 
 type ActionResult =
   | { success: true; message: string }
   | { success: false; error: string };
+
+async function buildUniqueUsername(
+  name: string,
+  email: string,
+): Promise<string> {
+  const base =
+    usernameBaseFrom(name, email) ||
+    ("USER" + randomBytes(4).toString("hex").toUpperCase());
+
+  for (let i = 1; i <= 20; i++) {
+    const candidate = i === 1 ? base : `${base}_${i}`;
+    const exists = await db.user.findFirst({
+      where: { username: { equals: candidate, mode: "insensitive" } },
+      select: { id: true },
+    });
+    if (!exists) return candidate;
+  }
+
+  return `USER${randomBytes(4).toString("hex").toUpperCase()}`;
+}
 
 export async function registerAction(formData: unknown): Promise<ActionResult> {
   const parsed = registerSchema.safeParse(formData);
@@ -27,10 +49,12 @@ export async function registerAction(formData: unknown): Promise<ActionResult> {
   }
 
   const hashedPassword = await bcrypt.hash(password, 12);
+  const username = await buildUniqueUsername(name, email);
 
   await db.user.create({
     data: {
       name,
+      username,
       email,
       password: hashedPassword,
       isVerified: true,

@@ -2,7 +2,15 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { History, Home, MapIcon, UserCircle } from "lucide-react";
+import { History, Home, MapIcon, UserCircle, LifeBuoy } from "lucide-react";
+
+type NavItem = {
+  href: string;
+  label: string;
+  icon: typeof Home;
+  protected: boolean;
+  emergency?: boolean;
+};
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -12,9 +20,16 @@ export default function Navbar() {
   const isLoading = status === "loading";
   const isAuth = status === "authenticated" && !!session?.user;
 
-  const navItems = [
+  const navItems: NavItem[] = [
     { href: "/dashboard", label: "Beranda", icon: Home, protected: true },
     { href: "/map", label: "Peta ZPPI", icon: MapIcon, protected: false },
+    {
+      href: "/lapor-hilang",
+      label: "Lapor Hilang",
+      icon: LifeBuoy,
+      protected: false,
+      emergency: true,
+    },
     { href: "/history", label: "Histori", icon: History, protected: true },
     { href: "/profile", label: "Profil", icon: UserCircle, protected: true },
   ];
@@ -35,16 +50,20 @@ export default function Navbar() {
         const Icon = item.icon;
         const isLocked = item.protected && !isAuth && !isLoading;
 
+        const colorClass = item.emergency
+          ? isActive
+            ? "font-bold text-rose-600"
+            : "text-rose-400 hover:text-rose-500"
+          : isActive
+            ? "font-bold text-emerald-600"
+            : "text-slate-400 hover:text-slate-600";
+
         return (
           <button
             key={item.href}
             onClick={() => handleNavClick(item)}
             disabled={isLoading}
-            className={`flex h-full w-full flex-col items-center justify-center gap-1 transition-colors disabled:opacity-50 ${
-              isActive
-                ? "font-bold text-emerald-600"
-                : "text-slate-400 hover:text-slate-600"
-            }`}
+            className={`flex h-full w-full flex-col items-center justify-center gap-1 transition-colors disabled:opacity-50 ${colorClass}`}
           >
             <div className="relative">
               <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />

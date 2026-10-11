@@ -580,6 +580,9 @@ export default function LandingPage() {
 
       <footer className="border-t border-slate-100 bg-white py-12 text-center">
         <div className="flex justify-center gap-6 text-[13px] font-bold text-slate-400">
+          <Link href="/lapor-hilang" className="hover:text-emerald-600">
+            Lapor Hilang
+          </Link>
           <Link href="/terms" className="hover:text-emerald-600">
             Syarat & Ketentuan
           </Link>

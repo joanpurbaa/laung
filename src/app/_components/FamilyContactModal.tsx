@@ -1,8 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Settings, Play, Square, X } from "lucide-react";
-import { useSession } from "next-auth/react";
+import { Settings, Play, Square, X, KeyRound } from "lucide-react";
+import {
+  startFamilyViewAction,
+  stopFamilyViewAction,
+  getFamilyViewActiveAction,
+  type FamilyViewSessionInfo,
+} from "~/lib/actions/familyView";
 
 interface FamilyContactModalProps {
   isOpen: boolean;
@@ -17,18 +22,14 @@ export default function FamilyContactModal({
   userLat,
   userLng,
 }: FamilyContactModalProps) {
-  const { data: session } = useSession();
-  const userName =
-    session?.user?.name ?? session?.user?.email?.split("@")[0] ?? "Nelayan";
-
-  const [nomorKeluarga, setNomorKeluarga] = useState("082227097005");
-  const [pesan, setPesan] = useState(
-    "aku baik baik aja ya sayang, nanti langsung pulang",
-  );
+  const [nomorKeluarga, setNomorKeluarga] = useState("");
+  const [pesan, setPesan] = useState("");
   const [frekuensi, setFrekuensi] = useState<number>(1);
   const [isActive, setIsActive] = useState<boolean>(false);
+  const [activeInfo, setActiveInfo] = useState<FamilyViewSessionInfo | null>(
+    null,
+  );
   const [loading, setLoading] = useState<boolean>(false);
-  const [cityName, setCityName] = useState<string>("Lokasi GPS");
 
   const [notification, setNotification] = useState<{
     show: boolean;
@@ -37,68 +38,24 @@ export default function FamilyContactModal({
   }>({ show: false, type: "info", message: "" });
 
   useEffect(() => {
-    const savedActive = localStorage.getItem("radar_tracking_active");
     const savedNomor = localStorage.getItem("radar_tracking_nomor");
     const savedPesan = localStorage.getItem("radar_tracking_pesan");
     const savedFrekuensi = localStorage.getItem("radar_tracking_frekuensi");
 
-    if (savedActive === "true") setIsActive(true);
     if (savedNomor) setNomorKeluarga(savedNomor);
     if (savedPesan) setPesan(savedPesan);
     if (savedFrekuensi) setFrekuensi(Number(savedFrekuensi));
-  }, []);
 
-  useEffect(() => {
-    if (!userLat || !userLng) return;
-
-    const fetchCity = async () => {
-      try {
-        const res = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?lat=${userLat}&lon=${userLng}&format=json&addressdetails=1`,
-          { headers: { "User-Agent": "ZPPI-Fisherman-App" } },
-        );
-        const json = (await res.json()) as { address: Record<string, string> };
-        const address = json.address;
-        const raw =
-          address.city ??
-          address.regency ??
-          address.county ??
-          address.municipality ??
-          "Lokasi GPS";
-        const clean = raw.replace(/(Kabupaten|Kota|Regency)\s+/gi, "");
-        setCityName(clean);
-      } catch {
-        setCityName("Lokasi GPS");
+    void (async () => {
+      const result = await getFamilyViewActiveAction();
+      if (result.success && result.active) {
+        setIsActive(true);
+        setActiveInfo(result.session);
+        if (result.session.phone) setNomorKeluarga(result.session.phone);
+        if (result.session.message) setPesan(result.session.message);
       }
-    };
-
-    void fetchCity();
-  }, [userLat, userLng]);
-
-  const buildMessage = () => {
-    const now = new Date();
-    const waktu = now.toLocaleString("id-ID", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      timeZone: "Asia/Jakarta",
-    });
-
-    const mapsLink =
-      userLat && userLng
-        ? `https://maps.google.com/?q=${userLat},${userLng}`
-        : "Lokasi tidak tersedia";
-
-    return (
-      `${pesan}\n` +
-      `~${userName}\n\n` +
-      `Waktu: ${waktu} WIB\n` +
-      `Lokasi terakhir: ${mapsLink} (${cityName})\n\n` +
-      `Pesan ini dikirim secara otomatis oleh sistem Family View Laung.`
-    );
-  };
+    })();
+  }, []);
 
   const triggerNotification = (
     type: "success" | "error" | "info",
@@ -107,89 +64,51 @@ export default function FamilyContactModal({
     setNotification({ show: true, type, message });
     setTimeout(() => {
       setNotification((prev) => ({ ...prev, show: false }));
-    }, 4000);
+    }, 5000);
   };
 
   const handleToggleTracking = async () => {
     if (isActive) {
-      try {
-        await fetch("/api/cron/notify", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "stop", target: nomorKeluarga }),
-        });
-      } catch (err) {
-        console.error(err);
-      }
-
+      const result = await stopFamilyViewAction();
       setIsActive(false);
+      setActiveInfo(null);
       localStorage.setItem("radar_tracking_active", "false");
       triggerNotification(
-        "info",
-        "Otomatisasi tracking dihentikan. Anda bisa fokus menangkap ikan tanpa kirim pesan otomatis.",
+        result.success ? "info" : "error",
+        result.success
+          ? "Family View dimatikan. Pesan otomatis tidak akan dikirim lagi."
+          : result.error,
       );
       return;
     }
 
     setLoading(true);
     try {
-      const finalMessage = buildMessage();
-
-      const data = new FormData();
-      data.append("target", nomorKeluarga);
-      data.append("message", finalMessage);
-      data.append("countryCode", "62");
-      data.append("delay", "2");
-
-      const response = await fetch("https://api.fonnte.com/send", {
-        method: "POST",
-        mode: "cors",
-        headers: new Headers({
-          Authorization: process.env.FONNTE_TOKEN ?? "HREeZZbcSo7854nairPN",
-        }),
-        body: data,
+      const result = await startFamilyViewAction({
+        phone: nomorKeluarga,
+        message: pesan,
+        frequencyPerHour: frekuensi,
+        latitude: userLat ?? null,
+        longitude: userLng ?? null,
       });
 
-      const res = (await response.json()) as {
-        status: boolean;
-        reason?: string;
-      };
-
-      if (res.status === true) {
-        try {
-          await fetch("/api/cron/notify", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              action: "start",
-              target: nomorKeluarga,
-              message: buildMessage(),
-              frequencyPerHour: frekuensi,
-            }),
-          });
-        } catch (cronErr) {
-          console.error("Gagal mendaftarkan cron job:", cronErr);
-        }
-
-        setIsActive(true);
-        localStorage.setItem("radar_tracking_active", "true");
-        localStorage.setItem("radar_tracking_nomor", nomorKeluarga);
-        localStorage.setItem("radar_tracking_pesan", pesan);
-        localStorage.setItem("radar_tracking_frekuensi", String(frekuensi));
-
-        triggerNotification(
-          "success",
-          `Otomatisasi aktif! Pesan pertama terkirim. Sistem akan mengirim pesan ${frekuensi}x setiap jam.`,
-        );
-        setTimeout(() => onClose(), 1500);
-      } else {
-        triggerNotification(
-          "error",
-          `Gagal mengaktifkan! Alasan: ${res.reason ?? "Perangkat terputus"}`,
-        );
+      if (!result.success) {
+        triggerNotification("error", result.error);
+        return;
       }
+
+      setIsActive(true);
+      setActiveInfo(result.session);
+      localStorage.setItem("radar_tracking_active", "true");
+      localStorage.setItem("radar_tracking_nomor", nomorKeluarga);
+      localStorage.setItem("radar_tracking_pesan", pesan);
+      localStorage.setItem("radar_tracking_frekuensi", String(frekuensi));
+
+      triggerNotification(
+        "success",
+        `Family View aktif! Kode laporan ${result.session.code} sudah terkirim ke WhatsApp keluarga.`,
+      );
     } catch (err: unknown) {
-      console.error(err);
       const message = err instanceof Error ? err.message : String(err);
       triggerNotification("error", `Terjadi kesalahan koneksi: ${message}`);
     } finally {
@@ -199,10 +118,16 @@ export default function FamilyContactModal({
 
   if (!isOpen) return null;
 
-  const mapsLink =
-    userLat && userLng
+  const activeLink =
+    activeInfo?.lat != null && activeInfo?.lng != null
+      ? `https://maps.google.com/?q=${activeInfo.lat},${activeInfo.lng}`
+      : null;
+  const currentLink =
+    !isActive && userLat && userLng
       ? `https://maps.google.com/?q=${userLat},${userLng}`
       : null;
+  const shownLink = activeLink ?? currentLink;
+  const shownArea = activeInfo?.area ?? "Lokasi GPS";
 
   return (
     <>
@@ -235,7 +160,7 @@ export default function FamilyContactModal({
             <div className="flex items-center gap-2">
               <Settings className="h-4 w-4 text-slate-500" />
               <h3 className="text-base font-bold tracking-wide text-slate-800">
-                Otomatisasi Kontak Rumah
+                Family View
               </h3>
             </div>
             {isActive && (
@@ -246,15 +171,37 @@ export default function FamilyContactModal({
             )}
           </div>
 
-          {mapsLink && (
+          {isActive && activeInfo && (
+            <div className="mt-3 mb-2 rounded-xl border border-emerald-100 bg-emerald-50 p-3">
+              <div className="flex items-center gap-1.5">
+                <KeyRound className="h-3.5 w-3.5 text-emerald-600" />
+                <p className="text-[10px] font-bold tracking-wider text-emerald-700 uppercase">
+                  Kode Laporan Hilang
+                </p>
+              </div>
+              <p className="mt-1 font-mono text-2xl font-black tracking-[0.3em] text-emerald-700">
+                {activeInfo.code}
+              </p>
+              <p className="mt-1 text-[10px] leading-relaxed font-semibold text-emerald-600">
+                Username:{" "}
+                <span className="font-mono font-black">
+                  {activeInfo.username || "-"}
+                </span>
+                . Jika tidak ada kabar, keluarga bisa melapor di halaman Lapor
+                Hilang (menu Beranda) menggunakan kode ini.
+              </p>
+            </div>
+          )}
+
+          {shownLink && (
             <div className="mt-2 mb-1 flex items-center gap-1.5 rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2">
               <span className="text-sm">📍</span>
               <div className="min-w-0 flex-1">
                 <p className="text-[10px] font-bold text-emerald-700">
-                  {cityName}
+                  {shownArea}
                 </p>
                 <p className="truncate font-mono text-[9px] text-emerald-500">
-                  {mapsLink}
+                  {shownLink}
                 </p>
               </div>
             </div>
@@ -301,11 +248,12 @@ export default function FamilyContactModal({
                 value={pesan}
                 onChange={(e) => setPesan(e.target.value)}
                 placeholder="Contoh: aku baik baik aja ya sayang, nanti langsung pulang"
+                maxLength={1500}
                 className="h-20 w-full resize-none rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-sm text-slate-800 transition-colors focus:border-emerald-500 focus:bg-white focus:outline-none disabled:opacity-60"
               />
               <p className="mt-1 text-[9px] text-slate-400">
-                Nama pengirim ({userName}), waktu, dan lokasi akan ditambahkan
-                otomatis.
+                Nama pengirim, waktu, dan lokasi akan ditambahkan otomatis.
+                Pesan juga memuat kode laporan untuk aplikasi Lapor Hilang.
               </p>
             </div>
           </div>
@@ -321,7 +269,7 @@ export default function FamilyContactModal({
             </button>
 
             <button
-              onClick={handleToggleTracking}
+              onClick={() => void handleToggleTracking()}
               disabled={loading}
               type="button"
               className={`flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-xs font-bold text-white shadow-md transition disabled:opacity-50 ${

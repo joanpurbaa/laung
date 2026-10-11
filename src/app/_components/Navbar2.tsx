@@ -43,6 +43,16 @@ export default function Navbar2() {
 
           <div className="hidden items-center gap-6 md:flex">
             <Link
+              href="/lapor-hilang"
+              className="flex items-center gap-1.5 text-[14px] font-black text-rose-500 transition-colors hover:text-rose-600"
+            >
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-rose-500" />
+              </span>
+              Lapor Hilang
+            </Link>
+            <Link
               href="/#cara-kerja"
               className="text-[14px] font-semibold text-slate-500 transition-colors hover:text-slate-900"
             >
@@ -115,6 +125,18 @@ export default function Navbar2() {
           }`}
         >
           <div className="flex flex-col gap-0.5 border-t border-slate-100 px-5 pt-3 pb-4">
+            <Link
+              key="/lapor-hilang"
+              href="/lapor-hilang"
+              onClick={() => setMobileOpen(false)}
+              className="mb-1 flex items-center gap-2 rounded-xl bg-rose-50 px-3 py-2.5 text-[14px] font-black text-rose-600 transition-colors hover:bg-rose-100"
+            >
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-rose-500" />
+              </span>
+              Lapor Hilang di Laut
+            </Link>
             {[
               { href: "/#cara-kerja", label: "Cara Kerja" },
               { href: "/about", label: "About" },

@@ -670,6 +670,34 @@ export default function Dashboard() {
                 </svg>
               </button>
 
+              <button
+                onClick={() => router.push("/lapor-hilang")}
+                className="group relative mt-3 flex w-full items-center justify-center gap-3 overflow-hidden rounded-2xl border border-rose-200 bg-rose-50 px-6 py-4 shadow-sm transition-all active:scale-[0.98]"
+              >
+                <span className="relative text-xl">🆘</span>
+                <div className="relative text-left">
+                  <p className="text-sm leading-none font-black text-rose-600">
+                    Lapor Nelayan Hilang
+                  </p>
+                  <p className="mt-0.5 text-[10px] leading-none font-semibold text-rose-400">
+                    Buat laporan resmi PDF untuk BASARNAS &amp; Polairud
+                  </p>
+                </div>
+                <svg
+                  className="relative ml-auto h-5 w-5 text-rose-400 transition-transform duration-200 group-hover:translate-x-1"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2.5}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M13 7l5 5m0 0l-5 5m5-5H6"
+                  />
+                </svg>
+              </button>
+
               <p className="mt-4 text-center text-[9px] font-semibold text-slate-400">
                 Sistem Informasi Maritim Nelayan © 2026 · Live GPS Tracker
                 Actived
