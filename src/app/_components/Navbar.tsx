@@ -23,13 +23,6 @@ export default function Navbar() {
   const navItems: NavItem[] = [
     { href: "/dashboard", label: "Beranda", icon: Home, protected: true },
     { href: "/map", label: "Peta ZPPI", icon: MapIcon, protected: false },
-    {
-      href: "/lapor-hilang",
-      label: "Lapor Hilang",
-      icon: LifeBuoy,
-      protected: false,
-      emergency: true,
-    },
     { href: "/history", label: "Histori", icon: History, protected: true },
     { href: "/profile", label: "Profil", icon: UserCircle, protected: true },
   ];
