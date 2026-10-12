@@ -152,10 +152,15 @@ export async function stopFamilyViewAction(): Promise<FamilyViewStopResult> {
   const userId = session?.user?.id;
   if (!userId) return { success: false, error: "Sesi berakhir, silakan login dulu." };
 
-  await db.familyViewSession.updateMany({
-    where: { userId, isActive: true },
-    data: { isActive: false, endedAt: new Date() },
-  });
+  try {
+    await db.familyViewSession.updateMany({
+      where: { userId, isActive: true },
+      data: { isActive: false, endedAt: new Date() },
+    });
+  } catch (error) {
+    console.error("stopFamilyViewAction error:", error);
+    return { success: false, error: "Koneksi sedang bermasalah, coba lagi." };
+  }
 
   return { success: true };
 }
@@ -167,37 +172,42 @@ export async function getFamilyViewActiveAction(): Promise<FamilyViewActiveResul
     return { success: false, error: "Sesi berakhir, silakan login dulu." };
   }
 
-  const active = await db.familyViewSession.findFirst({
-    where: { userId, isActive: true },
-    orderBy: { startedAt: "desc" },
-  });
+  try {
+    const active = await db.familyViewSession.findFirst({
+      where: { userId, isActive: true },
+      orderBy: { startedAt: "desc" },
+    });
 
-  if (!active) return { success: true, active: false };
+    if (!active) return { success: true, active: false };
 
-  const user = await db.user.findUnique({
-    where: { id: userId },
-    select: { name: true, username: true },
-  });
+    const user = await db.user.findUnique({
+      where: { id: userId },
+      select: { name: true, username: true },
+    });
 
-  const lastLog = await db.locationLog.findFirst({
-    where: { sessionId: active.id },
-    orderBy: { sentAt: "desc" },
-  });
+    const lastLog = await db.locationLog.findFirst({
+      where: { sessionId: active.id },
+      orderBy: { sentAt: "desc" },
+    });
 
-  return {
-    success: true,
-    active: true,
-    session: {
-      code: active.code,
-      username: user?.username ?? "",
-      name: user?.name ?? null,
-      frequencyPerHour: active.frequencyPerHour,
-      phone: active.phone,
-      message: active.message,
-      startedAt: active.startedAt.toISOString(),
-      area: lastLog?.areaName ?? null,
-      lat: lastLog?.latitude ?? null,
-      lng: lastLog?.longitude ?? null,
-    },
-  };
+    return {
+      success: true,
+      active: true,
+      session: {
+        code: active.code,
+        username: user?.username ?? "",
+        name: user?.name ?? null,
+        frequencyPerHour: active.frequencyPerHour,
+        phone: active.phone,
+        message: active.message,
+        startedAt: active.startedAt.toISOString(),
+        area: lastLog?.areaName ?? null,
+        lat: lastLog?.latitude ?? null,
+        lng: lastLog?.longitude ?? null,
+      },
+    };
+  } catch (error) {
+    console.error("getFamilyViewActiveAction error:", error);
+    return { success: false, error: "Koneksi sedang bermasalah, coba lagi." };
+  }
 }

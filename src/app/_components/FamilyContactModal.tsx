@@ -47,12 +47,16 @@ export default function FamilyContactModal({
     if (savedFrekuensi) setFrekuensi(Number(savedFrekuensi));
 
     void (async () => {
-      const result = await getFamilyViewActiveAction();
-      if (result.success && result.active) {
-        setIsActive(true);
-        setActiveInfo(result.session);
-        if (result.session.phone) setNomorKeluarga(result.session.phone);
-        if (result.session.message) setPesan(result.session.message);
+      try {
+        const result = await getFamilyViewActiveAction();
+        if (result.success && result.active) {
+          setIsActive(true);
+          setActiveInfo(result.session);
+          if (result.session.phone) setNomorKeluarga(result.session.phone);
+          if (result.session.message) setPesan(result.session.message);
+        }
+      } catch (error) {
+        console.error("Gagal memuat sesi Family View:", error);
       }
     })();
   }, []);
