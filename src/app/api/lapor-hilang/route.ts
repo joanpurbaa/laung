@@ -146,14 +146,6 @@ export async function POST(req: Request) {
       }
     : null;
 
-  await db.missingReportAudit.create({
-    data: {
-      reportedUserId: user.id,
-      reporterName: parsed.data.reporterName,
-      reporterPhone: parsed.data.reporterPhone,
-    },
-  });
-
   const buffer = await generateLaporanHilangPdf({
     nama: user.name ?? "Tanpa nama",
     username: user.username ?? usernameKey,
@@ -167,6 +159,14 @@ export async function POST(req: Request) {
       telepon: parsed.data.reporterPhone,
     },
     foto: fotoBuffer,
+  });
+
+  await db.missingReportAudit.create({
+    data: {
+      reportedUserId: user.id,
+      reporterName: parsed.data.reporterName,
+      reporterPhone: parsed.data.reporterPhone,
+    },
   });
 
   const filename = `laporan-hilang-${(user.username ?? usernameKey).toLowerCase()}-${formatDateFile(new Date())}.pdf`;

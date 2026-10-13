@@ -14,6 +14,13 @@ const config = {
     // Abaikan error lint saat build
     ignoreDuringBuilds: true,
   },
+  // pdfkit 0.20 memakai internal imports "#standard-fonts/*" yang tidak
+  // di-resolve dengan benar oleh bundler. Jadikan external agar Node
+  // me-resolve-nya saat runtime, dan sertakan data font ke serverless.
+  serverExternalPackages: ["pdfkit"],
+  outputFileTracingIncludes: {
+    "/api/lapor-hilang": ["./node_modules/pdfkit/**/*"],
+  },
   // ── TAMBAHAN UNTUK FIX DEV TUNNELS MOBILE (NEXT.JS 15) ────────────────
   experimental: {
     serverActions: {
