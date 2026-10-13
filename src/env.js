@@ -20,7 +20,6 @@ export const env = createEnv({
     VAPID_PRIVATE_KEY: z.string().min(1),
     VAPID_SUBJECT: z.string().min(1),
     FONNTE_TOKEN: z.string().min(1),
-    CRON_SECRET: z.string().min(1),
     CEREBRAS_API_KEY: z.string().min(1)
   },
 
@@ -44,7 +43,6 @@ export const env = createEnv({
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     FONNTE_TOKEN: process.env.FONNTE_TOKEN,
-    CRON_SECRET: process.env.CRON_SECRET,
     CEREBRAS_API_KEY: process.env.CEREBRAS_API_KEY
   },
 
