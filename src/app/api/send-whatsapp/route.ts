@@ -12,7 +12,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const FONNTE_TOKEN = process.env.FONNTE_TOKEN;
+    const FONNTE_TOKEN = process.env.FONNTE_TOKEN ?? "";
 
     const formData = new URLSearchParams();
     formData.append("target", target);

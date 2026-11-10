@@ -18,7 +18,7 @@ import {
   deleteCatchLogAction,
 } from "~/lib/actions/catch";
 import { FISH_TYPES, LOCATIONS } from "~/lib/validators/catch";
-import type { CatchLog } from "@prisma/client";
+import type { CatchLog } from "~/types/catch";
 
 interface IdentificationResult {
   namaLokal: string;
@@ -201,60 +201,57 @@ Jika foto bukan hewan laut atau tidak dapat diidentifikasi, isi namaLokal dengan
 
   return (
     <main className="relative min-h-screen w-screen bg-slate-50 pb-20 font-sans select-none">
-      <div className="sticky top-0 z-10 border-b border-slate-100 bg-white px-4 pt-6 pb-4 shadow-sm">
+      <div className="sticky top-0 z-10 border-b border-slate-100 bg-white/95 px-4 pt-4 pb-3 shadow-sm backdrop-blur-md">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-[10px] font-bold tracking-wider text-slate-400 uppercase">
               Ringkasan Kerja
             </p>
-            <h1 className="text-xl font-black tracking-tight text-slate-800">
+            <h1 className="text-xl font-bold tracking-tight text-slate-900">
               Histori Tangkapan
             </h1>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setIsModalOpen(true)}
-              className="flex items-center gap-1.5 rounded-xl bg-emerald-500 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-emerald-100 transition-all hover:bg-emerald-600 active:scale-95"
+              className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-2 text-xs font-bold text-white shadow-sm transition-all hover:bg-emerald-700 active:scale-95"
             >
-              <Plus size={14} strokeWidth={3} />
-              Tambah Data
+              <Plus size={15} strokeWidth={2.5} />
+              <span>Tambah Data</span>
             </button>
           </div>
         </div>
       </div>
 
-      <div className="space-y-4 p-4">
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-500 to-teal-600 p-5 text-white shadow-xl shadow-emerald-100">
-          <div className="absolute right-[-10px] bottom-[-10px] text-white opacity-10">
-            <Anchor size={140} />
-          </div>
-          <p className="text-xs font-bold tracking-widest text-emerald-100 uppercase">
+      <div className="space-y-3 p-3.5">
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-600 to-teal-700 p-4 text-white shadow-md">
+          <p className="text-[10px] font-bold tracking-wider text-emerald-100 uppercase">
             Total Tangkapan Hari Ini
           </p>
-          <p className="mt-1 text-4xl font-black tracking-tight">
+          <p className="mt-0.5 text-3xl font-bold tracking-tight">
             {totalWeightToday.toFixed(1)}{" "}
-            <span className="text-lg font-medium text-emerald-100">Kg</span>
+            <span className="text-base font-normal text-emerald-100">Kg</span>
           </p>
-          <div className="mt-4 grid grid-cols-2 gap-2 border-t border-white/20 pt-4 text-center">
+          <div className="mt-3 grid grid-cols-2 gap-2 border-t border-white/15 pt-2.5 text-center">
             <div>
-              <p className="text-[10px] font-bold text-emerald-100 uppercase">
+              <p className="text-[9px] font-medium text-emerald-100 uppercase">
                 Total Trip
               </p>
-              <p className="text-sm font-black">
+              <p className="text-xs font-bold">
                 {todayLogs.length} Kali Labuh
               </p>
             </div>
-            <div className="border-l border-white/20">
-              <p className="text-[10px] font-bold text-emerald-100 uppercase">
+            <div className="border-l border-white/15">
+              <p className="text-[9px] font-medium text-emerald-100 uppercase">
                 Efisiensi Rute
               </p>
-              <p className="text-sm font-black">Sangat Baik</p>
+              <p className="text-xs font-bold">Sangat Baik (~40% BBM)</p>
             </div>
           </div>
         </div>
 
         <div>
-          <p className="mb-2 text-[10px] font-black tracking-wider text-slate-400 uppercase">
+          <p className="mb-1.5 text-[10px] font-bold tracking-wider text-slate-400 uppercase">
             Rincian Log Berkala
           </p>
 
@@ -629,12 +626,14 @@ Jika foto bukan hewan laut atau tidak dapat diidentifikasi, isi namaLokal dengan
         </div>
       )}
 
+      {/* Floating Action Button untuk Pindai Ikan AI */}
       <button
         onClick={() => setIsIdentifyModalOpen(true)}
-        className="fixed right-5 bottom-24 z-[1000] flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500 shadow-lg shadow-emerald-200 transition-all hover:bg-emerald-600 active:scale-90"
-        aria-label="Identifikasi tangkapan"
+        className="fixed right-5 bottom-20 z-[1000] flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500 text-white shadow-xl shadow-emerald-500/40 transition-all hover:bg-emerald-600 hover:scale-105 active:scale-90"
+        aria-label="Identifikasi tangkapan AI"
+        title="Pindai Ikan AI (Kamera)"
       >
-        <Camera size={22} strokeWidth={2} className="text-white" />
+        <Camera size={26} strokeWidth={2.2} />
       </button>
 
       <Navbar />

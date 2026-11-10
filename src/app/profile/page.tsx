@@ -10,7 +10,6 @@ import {
   ChevronRight,
   Fish,
   MapPin,
-  Clock,
 } from "lucide-react";
 import Navbar from "../_components/Navbar";
 import { logoutAction } from "~/lib/actions/auth";
@@ -66,7 +65,14 @@ export default function ProfilePage() {
     },
   ];
 
-  const menuItems = [
+  const menuItems: {
+    icon: typeof Fish;
+    label: string;
+    desc: string;
+    onClick: () => void;
+    disabled?: boolean;
+    badge?: string;
+  }[] = [
     {
       icon: Fish,
       label: "Histori Tangkapan",

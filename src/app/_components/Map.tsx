@@ -15,6 +15,13 @@ import {
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import type { GeoSpot, MapProps } from "~/types/map";
+import { getLayerOffline, saveLayerOffline } from "~/lib/offline-storage";
+import {
+  OFFICIAL_MARITIME_POSKO,
+  calculateDistanceKm,
+  kmToNauticalMiles,
+  estimateRescueTimeMinutes,
+} from "~/lib/maritime-safety";
 
 interface ExtendedMapProps extends MapProps {
   selectedMemberId?: string | null;
@@ -64,6 +71,91 @@ const pulsingDotIcon = (color = "#3b82f6") =>
     popupAnchor: [0, -18],
   });
 
+const poskoIcon = L.divIcon({
+  className: "",
+  html: `
+    <div style="
+      background:#0284c7;
+      color:white;
+      border:1.5px solid white;
+      border-radius:10px;
+      padding:1px 5px;
+      font-size:9px;
+      font-weight:800;
+      white-space:nowrap;
+      box-shadow:0 2px 5px rgba(0,0,0,0.25);
+      display:flex;
+      align-items:center;
+      gap:2px;
+    ">
+      <span>🏢</span>
+      <span>POSKO</span>
+    </div>
+  `,
+  iconSize: [62, 18],
+  iconAnchor: [31, 9],
+});
+
+const waypointIcon = (name: string) =>
+  L.divIcon({
+    className: "",
+    html: `
+      <div style="
+        background:#d97706;
+        color:white;
+        border:1.5px solid white;
+        border-radius:10px;
+        padding:1px 5px;
+        font-size:9px;
+        font-weight:800;
+        white-space:nowrap;
+        box-shadow:0 2px 5px rgba(0,0,0,0.25);
+        display:flex;
+        align-items:center;
+        gap:2px;
+      ">
+        <span>📍</span>
+        <span>${name}</span>
+      </div>
+    `,
+    iconSize: [80, 18],
+    iconAnchor: [40, 9],
+  });
+
+const rescueTargetIcon = (label: string) =>
+  L.divIcon({
+    className: "",
+    html: `
+      <div style="position:relative;width:40px;height:40px;display:flex;align-items:center;justify-content:center;">
+        <div style="
+          position:absolute;
+          width:44px;height:44px;
+          border-radius:50%;
+          background:#ef4444;
+          opacity:0.4;
+          animation:zppi-pulse 1.2s ease-out infinite;
+        "></div>
+        <div style="
+          position:relative;
+          background:#dc2626;
+          border:2px solid white;
+          color:white;
+          border-radius:50%;
+          width:26px;height:26px;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          font-size:13px;
+          box-shadow:0 0 10px #ef4444;
+        ">
+          🆘
+        </div>
+      </div>
+    `,
+    iconSize: [44, 44],
+    iconAnchor: [22, 22],
+  });
+
 function LegendItem({ color, label }: { color: string; label: string }) {
   return (
     <div className="flex items-center gap-2">
@@ -101,6 +193,23 @@ function RecenterController({
   return null;
 }
 
+function RescuePanController({
+  rescueTarget,
+}: {
+  rescueTarget?: { lat: number; lng: number } | null;
+}) {
+  const map = useMap();
+  useEffect(() => {
+    if (rescueTarget) {
+      map.flyTo([rescueTarget.lat, rescueTarget.lng], 11, {
+        animate: true,
+        duration: 1.5,
+      });
+    }
+  }, [rescueTarget, map]);
+  return null;
+}
+
 export default function Map({
   viewMode,
   selectedSpot,
@@ -113,8 +222,12 @@ export default function Map({
   myLocation,
   selectedMemberId,
   onSelectMember,
+  customWaypoints = [],
+  rescueTarget,
+  onClearRescueRoute,
 }: ExtendedMapProps) {
   const [isMounted, setIsMounted] = useState(false);
+  const [showLegend, setShowLegend] = useState(false);
 
   const [chlorophyllSpots, setChlorophyllSpots] = useState<GeoSpot[]>([]);
   const [sstSpots, setSstSpots] = useState<GeoSpot[]>([]);
@@ -125,26 +238,55 @@ export default function Map({
     return () => setIsMounted(false);
   }, []);
 
+  // Fetch koordinat peta dengan strategi fallback offline IndexedDB
   useEffect(() => {
+    let isCancelled = false;
+
+    // Muat layer klorofil & sst dari IndexedDB seketika
+    void getLayerOffline<GeoSpot[]>("chlorophyll").then((cached) => {
+      if (!isCancelled && cached && Array.isArray(cached)) {
+        setChlorophyllSpots(cached.filter((s) => s.value > 0.01 && s.lat < -6.15));
+      }
+    });
+
+    void getLayerOffline<GeoSpot[]>("sst").then((cached) => {
+      if (!isCancelled && cached && Array.isArray(cached)) {
+        setSstSpots(
+          cached.filter((s) => s.value >= 26.0 && s.value <= 32.0 && s.lat < -6.15),
+        );
+      }
+    });
+
     Promise.all([
       fetch("/api/chlorophyll").then((r) => r.json()),
       fetch("/api/sst").then((r) => r.json()),
       fetch(`/api/zppi?fish=${fishType}`).then((r) => r.json()),
     ])
       .then(([chlorData, sstData, zppiData]) => {
-        if (Array.isArray(chlorData))
+        if (isCancelled) return;
+        if (Array.isArray(chlorData)) {
           setChlorophyllSpots(
             chlorData.filter((s) => s.value > 0.01 && s.lat < -6.15),
           );
-        if (Array.isArray(sstData))
+          void saveLayerOffline("chlorophyll", chlorData);
+        }
+        if (Array.isArray(sstData)) {
           setSstSpots(
             sstData.filter(
               (s) => s.value >= 26.0 && s.value <= 32.0 && s.lat < -6.15,
             ),
           );
+          void saveLayerOffline("sst", sstData);
+        }
         if (Array.isArray(zppiData)) setZppiSpots(zppiData);
       })
-      .catch((err) => console.error("Gagal memuat data koordinat peta:", err));
+      .catch((err) => {
+        console.warn("Gagal memuat online, memakai memori perangkat offline:", err);
+      });
+
+    return () => {
+      isCancelled = true;
+    };
   }, [fishType]);
 
   const getChlorophyllColor = (v: number) =>
@@ -171,6 +313,25 @@ export default function Map({
 
   const routeOrigin = userLocation ?? baseOrigin;
 
+  // Hitung metrik navigasi jika ada target penyelamatan SAR aktif
+  const rescueMetrics = rescueTarget
+    ? (() => {
+        const distKm = calculateDistanceKm(
+          routeOrigin.lat,
+          routeOrigin.lng,
+          rescueTarget.lat,
+          rescueTarget.lng,
+        );
+        const distNm = kmToNauticalMiles(distKm);
+        const eta = estimateRescueTimeMinutes(distKm);
+        return {
+          distKm: distKm.toFixed(1),
+          distNm: distNm.toFixed(1),
+          eta,
+        };
+      })()
+    : null;
+
   if (!isMounted) {
     return (
       <div className="flex h-full w-full items-center justify-center bg-slate-100">
@@ -183,46 +344,87 @@ export default function Map({
 
   return (
     <div className="relative h-full w-full">
-      <div className="absolute top-20 right-3 z-[1010] w-40 space-y-1 rounded-2xl border border-white/60 bg-white/90 px-3 py-2.5 shadow-lg backdrop-blur-md">
-        {viewMode === "zppi" || viewMode === "tides" ? (
-          <>
-            <p className="mb-1.5 text-[9px] font-black tracking-widest text-slate-400 uppercase">
-              ZPPI Skor
-            </p>
-            <LegendItem color="#059669" label="Sangat Baik ≥ 85" />
-            <LegendItem color="#10b981" label="Baik 70–84" />
-            <LegendItem color="#f59e0b" label="Sedang 55–69" />
-            <LegendItem color="#ef4444" label="Kurang < 55" />
-          </>
-        ) : viewMode === "chlorophyll" ? (
-          <>
-            <p className="mb-1.5 text-[9px] font-black tracking-widest text-slate-400 uppercase">
-              Klorofil
-            </p>
-            <LegendItem color="#006837" label="> 1.0 mg/m³" />
-            <LegendItem color="#31a354" label="0.5–1.0" />
-            <LegendItem color="#78c679" label="0.2–0.5" />
-            <LegendItem color="#c2e699" label="< 0.2" />
-          </>
-        ) : (
-          <>
-            <p className="mb-1.5 text-[9px] font-black tracking-widest text-slate-400 uppercase">
-              Suhu (°C)
-            </p>
-            <LegendItem color="#d73027" label="> 30.5°C" />
-            <LegendItem color="#fdae61" label="29.5–30.5°C" />
-            <LegendItem color="#fee090" label="28.5–29.5°C" />
-            <LegendItem color="#abd9e9" label="< 28.5°C" />
-          </>
-        )}
+      {/* Banner Navigasi Rute SAR Aktif */}
+      {rescueTarget && rescueMetrics && (
+        <div className="animate-in fade-in slide-in-from-top-3 absolute top-16 left-2.5 right-2.5 z-[1015] rounded-xl border border-rose-200 bg-white/95 p-2.5 shadow-md backdrop-blur-md">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="flex h-2.5 w-2.5 relative shrink-0">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-600"></span>
+              </span>
+              <div className="min-w-0">
+                <h4 className="text-[11px] font-bold text-rose-600 truncate">
+                  Rute SAR: {rescueTarget.title}
+                </h4>
+                <p className="text-[10px] font-mono text-slate-500">
+                  {rescueMetrics.distKm} km ({rescueMetrics.distNm} NM) • ~{rescueMetrics.eta} menit
+                </p>
+              </div>
+            </div>
+            {onClearRescueRoute && (
+              <button
+                onClick={onClearRescueRoute}
+                className="shrink-0 rounded-lg bg-slate-100 px-2 py-1 text-[10px] font-bold text-slate-600 hover:bg-slate-200 active:scale-95"
+              >
+                Tutup
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
-        {fleetMembers.length > 0 && (
-          <div className="mt-2 border-t border-slate-100 pt-2">
-            <p className="mb-1.5 text-[9px] font-black tracking-widest text-slate-400 uppercase">
-              Armada
-            </p>
-            <LegendItem color="#0ea5e9" label="Nelayan Online" />
-            <LegendItem color="#ef4444" label="SOS Aktif" />
+      {/* Tombol & Popover Legenda Peta (Collapsible, tidak menutupi layar) */}
+      <div className="absolute top-16 left-2.5 z-[1010]">
+        <button
+          onClick={() => setShowLegend((v) => !v)}
+          className="flex h-7 items-center gap-1.5 rounded-xl border border-slate-200/80 bg-white/95 px-2.5 text-[10px] font-bold text-slate-700 shadow-sm backdrop-blur-md active:scale-95"
+        >
+          <span className="text-xs">ℹ️</span>
+          <span>{showLegend ? "Tutup" : "Legenda"}</span>
+        </button>
+
+        {showLegend && (
+          <div className="animate-in fade-in zoom-in-95 duration-150 mt-1.5 w-36 rounded-xl border border-slate-200/90 bg-white/95 p-2.5 shadow-lg backdrop-blur-md space-y-1">
+            {viewMode === "zppi" || viewMode === "tides" ? (
+              <>
+                <p className="mb-1 text-[8.5px] font-bold tracking-wider text-slate-400 uppercase">
+                  ZPPI Skor
+                </p>
+                <LegendItem color="#059669" label="Sangat Baik ≥ 85" />
+                <LegendItem color="#10b981" label="Baik 70–84" />
+                <LegendItem color="#f59e0b" label="Sedang 55–69" />
+                <LegendItem color="#ef4444" label="Kurang < 55" />
+              </>
+            ) : viewMode === "chlorophyll" ? (
+              <>
+                <p className="mb-1 text-[8.5px] font-bold tracking-wider text-slate-400 uppercase">
+                  Klorofil
+                </p>
+                <LegendItem color="#006837" label="> 1.0 mg/m³" />
+                <LegendItem color="#31a354" label="0.5–1.0" />
+                <LegendItem color="#78c679" label="0.2–0.5" />
+                <LegendItem color="#c2e699" label="< 0.2" />
+              </>
+            ) : (
+              <>
+                <p className="mb-1 text-[8.5px] font-bold tracking-wider text-slate-400 uppercase">
+                  Suhu (°C)
+                </p>
+                <LegendItem color="#d73027" label="> 30.5°C" />
+                <LegendItem color="#fdae61" label="29.5–30.5°C" />
+                <LegendItem color="#fee090" label="28.5–29.5°C" />
+                <LegendItem color="#abd9e9" label="< 28.5°C" />
+              </>
+            )}
+
+            <div className="mt-1.5 border-t border-slate-100 pt-1.5">
+              <p className="mb-1 text-[8.5px] font-bold tracking-wider text-slate-400 uppercase">
+                Titik Peta
+              </p>
+              <LegendItem color="#0284c7" label="Posko SAR Pantai" />
+              <LegendItem color="#d97706" label="Waypoint Pribadi" />
+            </div>
           </div>
         )}
       </div>
@@ -245,7 +447,9 @@ export default function Map({
           recenterTrigger={recenterTrigger}
           baseOrigin={baseOrigin}
         />
+        <RescuePanController rescueTarget={rescueTarget} />
 
+        {/* Posisi Kapal Pengguna (GPS) */}
         {userLocation && (
           <Marker
             position={[userLocation.lat, userLocation.lng]}
@@ -275,6 +479,84 @@ export default function Map({
           </Marker>
         )}
 
+        {/* POSKO RESMI SAR & KEAMANAN MARITIM */}
+        {OFFICIAL_MARITIME_POSKO.map((posko) => (
+          <Marker
+            key={posko.id}
+            position={[posko.latitude, posko.longitude]}
+            icon={poskoIcon}
+          >
+            <Popup>
+              <div className="p-1 font-sans text-xs space-y-1">
+                <p className="font-black text-slate-900">{posko.fullName}</p>
+                <p className="text-[11px] text-slate-500">{posko.locationName}</p>
+                <p className="text-[10px] font-mono text-blue-600 font-bold">
+                  📻 {posko.radioChannel}
+                </p>
+                <p className="text-[10px] font-mono text-emerald-600 font-bold">
+                  📞 Telp: {posko.phone}
+                </p>
+              </div>
+            </Popup>
+          </Marker>
+        ))}
+
+        {/* WAYPOINT PRIBADI / TITIK RAHASIA NELAYAN */}
+        {customWaypoints.map((wp) => (
+          <Marker
+            key={wp.id}
+            position={[wp.lat, wp.lng]}
+            icon={waypointIcon(wp.name)}
+          >
+            <Popup>
+              <div className="p-1 font-sans text-xs">
+                <p className="font-black text-amber-900">📍 {wp.name}</p>
+                <p className="font-mono text-[10px] text-slate-500">
+                  {wp.lat.toFixed(4)}, {wp.lng.toFixed(4)}
+                </p>
+                {wp.notes && (
+                  <p className="mt-1 text-[11px] italic text-slate-600">
+                    "{wp.notes}"
+                  </p>
+                )}
+              </div>
+            </Popup>
+          </Marker>
+        ))}
+
+        {/* TARGET PENYELAMATAN SAR AKTIF & GARIS LINTASAN */}
+        {rescueTarget && (
+          <>
+            <Marker
+              position={[rescueTarget.lat, rescueTarget.lng]}
+              icon={rescueTargetIcon(rescueTarget.title)}
+            >
+              <Popup>
+                <div className="p-1 font-sans text-xs text-red-700">
+                  <p className="font-black">🆘 {rescueTarget.title}</p>
+                  <p className="font-mono text-[10px]">
+                    {rescueTarget.lat.toFixed(4)}, {rescueTarget.lng.toFixed(4)}
+                  </p>
+                </div>
+              </Popup>
+            </Marker>
+
+            <Polyline
+              positions={[
+                [routeOrigin.lat, routeOrigin.lng],
+                [rescueTarget.lat, rescueTarget.lng],
+              ]}
+              pathOptions={{
+                color: "#ef4444",
+                weight: 4,
+                dashArray: "10, 10",
+                opacity: 0.95,
+              }}
+            />
+          </>
+        )}
+
+        {/* FLEET MEMBERS & SOS BEACON */}
         {fleetMembers.map((member) => {
           const isSelected = selectedMemberId === member.userId;
           const routeColor = member.isSOS ? "#ef4444" : "#3b82f6";
@@ -283,7 +565,7 @@ export default function Map({
             <Fragment key={member.userId}>
               <CircleMarker
                 center={[member.latitude, member.longitude]}
-                radius={member.isSOS ? 14 : isSelected ? 12 : 9}
+                radius={member.isSOS ? 15 : isSelected ? 12 : 9}
                 eventHandlers={{
                   click: () => {
                     if (onSelectMember) {
@@ -302,13 +584,12 @@ export default function Map({
                     : isSelected
                       ? "#3b82f6"
                       : "#0ea5e9",
-                  fillOpacity: 0.85,
-                  weight: member.isSOS ? 3 : isSelected ? 4 : 2,
+                  fillOpacity: member.isSOS ? 0.95 : 0.85,
+                  weight: member.isSOS ? 4 : isSelected ? 4 : 2,
                 }}
               />
 
-              {/* TALI JARAK INTERAKTIF ANTAR FLEET MEMBERS */}
-              {isSelected && routeOrigin && (
+              {isSelected && routeOrigin && !rescueTarget && (
                 <Polyline
                   positions={[
                     [routeOrigin.lat, routeOrigin.lng],
@@ -326,7 +607,8 @@ export default function Map({
           );
         })}
 
-        {selectedSpot && (
+        {/* RUTE KE TARGET IKAN PILIHAN */}
+        {selectedSpot && !rescueTarget && (
           <Polyline
             positions={[
               [routeOrigin.lat, routeOrigin.lng],
@@ -341,6 +623,7 @@ export default function Map({
           />
         )}
 
+        {/* TITIK SPOT IKAN ZPPI / KLOROFIL / SST */}
         {currentSpots.map((spot, idx) => {
           const isSelected =
             selectedSpot?.lat === spot.lat && selectedSpot?.lng === spot.lng;

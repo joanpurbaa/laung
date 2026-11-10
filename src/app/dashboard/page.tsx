@@ -362,22 +362,18 @@ export default function Dashboard() {
               transition: "opacity 0.5s ease, transform 0.5s ease",
             }}
           >
-            <div className="pt-10 pb-5">
-              <h1
-                className="text-3xl leading-tight font-black text-slate-900"
-                style={{ letterSpacing: "-0.03em" }}
-              >
-                Selamat Datang,
-                <br />
-                <span className="text-emerald-500">{userName}</span> 🎣
+            <div className="pt-5 pb-3">
+              <h1 className="text-2xl leading-tight font-bold text-slate-900 tracking-tight">
+                Selamat Datang, <span className="text-emerald-600">{userName}</span> 🎣
               </h1>
-              <p className="mt-1.5 text-[13px] font-medium text-slate-400 capitalize">
-                {deviceCoords.name} · {nowTime} WIB
-              </p>
-              <span className="mt-0.5 block font-mono text-[10px] text-slate-300">
-                ({deviceCoords.latitude.toFixed(4)},{" "}
-                {deviceCoords.longitude.toFixed(4)})
-              </span>
+              <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-500">
+                <span className="font-medium capitalize">{deviceCoords.name}</span>
+                <span>·</span>
+                <span className="font-medium">{nowTime} WIB</span>
+                <span className="font-mono text-[10px] text-slate-400">
+                  ({deviceCoords.latitude.toFixed(3)}, {deviceCoords.longitude.toFixed(3)})
+                </span>
+              </div>
             </div>
 
             {/* ── STATUS SAIL WINDOW ── */}
@@ -636,71 +632,86 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* ── BUTTON REDIRECT TO MAP ── */}
-            <div className="pt-3">
+            {/* ── QUICK NAVIGATION HUB (MOBILE FIRST) ── */}
+            <div className="pt-2 space-y-2.5">
+              {/* Primary Action Hero Card */}
               <button
                 onClick={() => router.push("/map")}
-                className="group relative flex w-full items-center justify-center gap-3 overflow-hidden rounded-2xl px-6 py-4 shadow-xl shadow-emerald-200 transition-all active:scale-[0.98]"
-                style={{
-                  background:
-                    "linear-gradient(135deg, #059669 0%, #0d9488 100%)",
-                }}
+                className="group relative flex w-full items-center justify-between overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 p-4 text-white shadow-md transition-all active:scale-[0.98]"
               >
-                <span className="relative text-xl">🗺️</span>
-                <div className="relative text-left">
-                  <p className="text-sm leading-none font-black text-white">
-                    Buka Peta ZPPI
-                  </p>
-                  <p className="mt-0.5 text-[10px] leading-none font-semibold text-emerald-200">
-                    Temukan spot mancing terbaik sekarang
-                  </p>
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">🗺️</span>
+                  <div className="text-left">
+                    <p className="text-sm font-bold leading-tight">Buka Peta ZPPI</p>
+                    <p className="text-[11px] text-emerald-100 font-medium mt-0.5">
+                      Rekomendasi spot tangkap &amp; hemat BBM
+                    </p>
+                  </div>
                 </div>
                 <svg
-                  className="relative ml-auto h-5 w-5 text-emerald-300 transition-transform duration-200 group-hover:translate-x-1"
+                  className="h-5 w-5 text-emerald-200 transition-transform duration-200 group-hover:translate-x-1"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
                   strokeWidth={2.5}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M13 7l5 5m0 0l-5 5m5-5H6"
-                  />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                 </svg>
               </button>
 
-              <button
-                onClick={() => router.push("/lapor-hilang")}
-                className="group relative mt-3 flex w-full items-center justify-center gap-3 overflow-hidden rounded-2xl border border-rose-200 bg-rose-50 px-6 py-4 shadow-sm transition-all active:scale-[0.98]"
-              >
-                <span className="relative text-xl">🆘</span>
-                <div className="relative text-left">
-                  <p className="text-sm leading-none font-black text-rose-600">
-                    Lapor Nelayan Hilang
-                  </p>
-                  <p className="mt-0.5 text-[10px] leading-none font-semibold text-rose-400">
-                    Buat laporan resmi PDF untuk BASARNAS &amp; Polairud
-                  </p>
-                </div>
-                <svg
-                  className="relative ml-auto h-5 w-5 text-rose-400 transition-transform duration-200 group-hover:translate-x-1"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2.5}
+              {/* 2x2 Quick Services Grid */}
+              <div className="grid grid-cols-2 gap-2">
+                {/* Pusat Darurat & SAR */}
+                <button
+                  onClick={() => router.push("/map?emergency=true")}
+                  className="flex flex-col items-start rounded-2xl border border-rose-200/80 bg-rose-50/70 p-3 text-left transition-all active:scale-[0.97]"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M13 7l5 5m0 0l-5 5m5-5H6"
-                  />
-                </svg>
-              </button>
+                  <span className="text-xl mb-1">🚨</span>
+                  <p className="text-xs font-bold text-rose-900 leading-tight">Darurat &amp; SAR</p>
+                  <p className="text-[10px] text-rose-600/80 leading-tight mt-0.5">
+                    Posko siaga &amp; SOS armada
+                  </p>
+                </button>
 
-              <p className="mt-4 text-center text-[9px] font-semibold text-slate-400">
-                Sistem Informasi Maritim Nelayan © 2026 · Live GPS Tracker
-                Actived
+                {/* Peta Offline */}
+                <button
+                  onClick={() => router.push("/map?offline=true")}
+                  className="flex flex-col items-start rounded-2xl border border-slate-200 bg-white p-3 text-left transition-all active:scale-[0.97] shadow-sm"
+                >
+                  <span className="text-xl mb-1">💾</span>
+                  <p className="text-xs font-bold text-slate-800 leading-tight">Peta Offline</p>
+                  <p className="text-[10px] text-slate-500 leading-tight mt-0.5">
+                    Akses tanpa sinyal internet
+                  </p>
+                </button>
+
+                {/* Lapor Hilang */}
+                <button
+                  onClick={() => router.push("/lapor-hilang")}
+                  className="flex flex-col items-start rounded-2xl border border-slate-200 bg-white p-3 text-left transition-all active:scale-[0.97] shadow-sm"
+                >
+                  <span className="text-xl mb-1">📋</span>
+                  <p className="text-xs font-bold text-slate-800 leading-tight">Lapor Hilang</p>
+                  <p className="text-[10px] text-slate-500 leading-tight mt-0.5">
+                    Form resmi BASARNAS PDF
+                  </p>
+                </button>
+
+                {/* Log Tangkapan */}
+                <button
+                  onClick={() => router.push("/history")}
+                  className="flex flex-col items-start rounded-2xl border border-slate-200 bg-white p-3 text-left transition-all active:scale-[0.97] shadow-sm"
+                >
+                  <span className="text-xl mb-1">🐟</span>
+                  <p className="text-xs font-bold text-slate-800 leading-tight">Log Tangkapan</p>
+                  <p className="text-[10px] text-slate-500 leading-tight mt-0.5">
+                    Histori &amp; timbangan ikan
+                  </p>
+                </button>
+              </div>
+
+              <p className="pt-2 text-center text-[10px] font-medium text-slate-400">
+                Sistem Informasi Maritim Nelayan Pantura © 2026
               </p>
             </div>
           </div>

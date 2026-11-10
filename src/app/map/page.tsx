@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import Navbar from "../_components/Navbar";
 import { useSession } from "next-auth/react";
@@ -14,7 +14,7 @@ import type { ConfirmDialogState, FishType, ViewMode } from "~/types/type";
 import { useGeoLocation } from "~/hooks/useGeoLocation";
 import { useZppiData } from "~/hooks/useZppiData";
 import { calculateDistance } from "~/types/utils";
-import type { GeoSpot } from "~/types/map";
+import type { GeoSpot, RescueTarget } from "~/types/map";
 import TopBar from "../_components/TopBar";
 import { baseOrigin } from "~/types/constants";
 import SOSAlertBanner from "../_components/SOSAlertBanner";
@@ -25,6 +25,12 @@ import BottomSheetCollapsed from "../_components/BottomSheetCollapsed";
 import BottomSheetExpanded from "../_components/BottomSheetExpanded";
 import ActiveUsersModal from "../_components/ActiveUsersModal";
 import ConfirmDialog from "../_components/ConfirmDialog";
+import OfflineHubModal from "../_components/OfflineHubModal";
+import EmergencyHubModal from "../_components/EmergencyHubModal";
+import {
+  getCustomWaypoints,
+  type LocalWaypoint,
+} from "~/lib/offline-storage";
 
 const FishingMap = dynamic(() => import("../_components/Map"), {
   ssr: false,
@@ -61,6 +67,11 @@ export default function Map() {
   );
 
   const [showFamilyModal, setShowFamilyModal] = useState(false);
+  const [showOfflineModal, setShowOfflineModal] = useState(false);
+  const [showEmergencyModal, setShowEmergencyModal] = useState(false);
+  const [isSimulatedOffline, setIsSimulatedOffline] = useState(false);
+  const [rescueTarget, setRescueTarget] = useState<RescueTarget | null>(null);
+  const [customWaypoints, setCustomWaypoints] = useState<LocalWaypoint[]>([]);
 
   const { userLocation, gpsActive } = useGeoLocation();
 
@@ -73,7 +84,34 @@ export default function Map() {
     setSheetExpanded,
     topSpot,
     topSpots,
+    isOfflineData,
   } = useZppiData(fishType);
+
+  // Muat waypoint offline dari IndexedDB
+  const refreshWaypoints = useCallback(async () => {
+    try {
+      const wp = await getCustomWaypoints();
+      setCustomWaypoints(wp);
+    } catch (err) {
+      console.warn("Gagal membaca waypoint:", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshWaypoints();
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (
+        params.get("emergency") === "true" ||
+        params.get("sos") === "true"
+      ) {
+        setShowEmergencyModal(true);
+      }
+      if (params.get("offline") === "true") {
+        setShowOfflineModal(true);
+      }
+    }
+  }, [refreshWaypoints]);
 
   const distance =
     selectedSpot && userLocation
@@ -173,7 +211,7 @@ export default function Map() {
     setConfirmDialog({
       isOpen: true,
       title: "Bagikan Lokasi?",
-      message: `Bagikan lokasimu secara langsung ke ${userName}? Mereka akan bisa melihat posisposimu di peta.`,
+      message: `Bagikan lokasimu secara langsung ke ${userName}? Mereka akan bisa melihat posisimu di peta.`,
       confirmText: "Bagikan",
       type: "success",
       action: async () => {
@@ -196,31 +234,8 @@ export default function Map() {
     });
   };
 
-  const handleSendSOSFromCardClick = () => {
-    if (!myLocation) {
-      alert("GPS belum siap");
-      return;
-    }
-    setConfirmDialog({
-      isOpen: true,
-      title: "DARURAT SOS",
-      message:
-        "Kirim sinyal bahaya sekarang? Semua nelayan dalam radius 50km akan diberitahu lokasi akurat Anda.",
-      confirmText: "KIRIM SOS SEKARANG",
-      type: "danger",
-      action: async () => {
-        const result = await sendSOSAction({
-          latitude: myLocation.latitude,
-          longitude: myLocation.longitude,
-          message: "Butuh bantuan segera!",
-        });
-        if (result.success) {
-          setIsSharing(true);
-          alert("Sinyal SOS telah dikirim ke seluruh armada terdekat!");
-        }
-        setSelectedMemberForDetail(null);
-      },
-    });
+  const handleOpenEmergencyHub = () => {
+    setShowEmergencyModal(true);
   };
 
   const handleMapMemberSelect = (memberId: string | null) => {
@@ -231,6 +246,18 @@ export default function Map() {
     } else {
       setSelectedMemberForDetail(null);
     }
+  };
+
+  const handleStartRescueNavigation = (
+    lat: number,
+    lng: number,
+    name: string,
+  ) => {
+    setRescueTarget({
+      lat,
+      lng,
+      title: name,
+    });
   };
 
   return (
@@ -251,6 +278,9 @@ export default function Map() {
           myLocation={myLocation}
           selectedMemberId={selectedMemberForDetail?.userId ?? null}
           onSelectMember={handleMapMemberSelect}
+          customWaypoints={customWaypoints}
+          rescueTarget={rescueTarget}
+          onClearRescueRoute={() => setRescueTarget(null)}
         />
       </div>
 
@@ -263,6 +293,10 @@ export default function Map() {
         }}
         showFishDropdown={showFishDropdown}
         onToggleFishDropdown={() => setShowFishDropdown((v) => !v)}
+        isOffline={isOfflineData || isSimulatedOffline}
+        onOpenOfflineModal={() => setShowOfflineModal(true)}
+        onOpenEmergencyModal={handleOpenEmergencyHub}
+        activeEmergencyCount={fleetMembers.filter((m) => m.isSOS).length}
       />
 
       {showFishDropdown && (
@@ -272,10 +306,12 @@ export default function Map() {
         />
       )}
 
+      {/* Banner Sinyal SOS Darurat Masuk */}
       {sosAlert && (
         <SOSAlertBanner
           sosAlert={sosAlert}
           onDismiss={() => setSOSAlert(null)}
+          onStartRescue={handleStartRescueNavigation}
         />
       )}
 
@@ -286,6 +322,7 @@ export default function Map() {
         onRecenter={handleRecenter}
       />
 
+      {/* Kartu Detail Anggota Armada / Nelayan SOS */}
       {selectedMemberForDetail && (
         <MemberDetailCard
           member={selectedMemberForDetail}
@@ -293,14 +330,15 @@ export default function Map() {
           onClose={() => setSelectedMemberForDetail(null)}
           onShare={confirmShareToUser}
           onUnshare={confirmUnshareFromUser}
-          onSendSOS={handleSendSOSFromCardClick}
+          onSendSOS={handleOpenEmergencyHub}
+          onStartRescueNavigation={handleStartRescueNavigation}
         />
       )}
 
-      <div className="absolute right-0 bottom-[80px] left-0 z-10 flex flex-col gap-2">
+      <div className="absolute right-0 bottom-[68px] left-0 z-10 flex flex-col gap-1.5">
         <ActionButtons
           isSharing={isSharing}
-          onSendSOS={handleSendSOSFromCardClick}
+          onSendSOS={handleOpenEmergencyHub}
           onToggleSharing={handleToggleSharingClick}
         />
 
@@ -315,7 +353,7 @@ export default function Map() {
             onExpand={() => setSheetExpanded(true)}
           />
         ) : (
-          <div className="mx-3">
+          <div className="mx-2.5">
             <BottomSheetExpanded
               selectedSpot={selectedSpot}
               loading={loading}
@@ -339,6 +377,7 @@ export default function Map() {
       </div>
 
       <Navbar />
+
       <FamilyContactModal
         isOpen={showFamilyModal}
         onClose={() => setShowFamilyModal(false)}
@@ -355,6 +394,43 @@ export default function Map() {
           onUnshare={confirmUnshareFromUser}
         />
       )}
+
+      {/* Modal Pusat Navigasi & Caching Peta Offline */}
+      <OfflineHubModal
+        isOpen={showOfflineModal}
+        onClose={() => setShowOfflineModal(false)}
+        userLat={userLocation?.lat}
+        userLng={userLocation?.lng}
+        isSimulatedOffline={isSimulatedOffline}
+        onToggleSimulatedOffline={setIsSimulatedOffline}
+        onSelectWaypoint={(wp) => {
+          setSelectedSpot({
+            lat: wp.lat,
+            lng: wp.lng,
+            value: 99,
+          });
+          setRecenterTrigger((n) => n + 1);
+        }}
+        onRefreshMapData={() => void refreshWaypoints()}
+      />
+
+      {/* Modal Pusat Keselamatan & Laporan Darurat Komunitas & Posko */}
+      <EmergencyHubModal
+        isOpen={showEmergencyModal}
+        onClose={() => setShowEmergencyModal(false)}
+        userLat={userLocation?.lat ?? -6.465}
+        userLng={userLocation?.lng ?? 108.452}
+        userName={session?.user?.name ?? "Nelayan"}
+        isSimulatedOffline={isSimulatedOffline}
+        onFocusSOSOnMap={(targetLat, targetLng, victimName) => {
+          setRescueTarget({
+            lat: targetLat,
+            lng: targetLng,
+            title: victimName,
+          });
+          setRecenterTrigger((n) => n + 1);
+        }}
+      />
 
       {confirmDialog && (
         <ConfirmDialog

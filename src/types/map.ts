@@ -1,5 +1,6 @@
 import type { ComponentProps } from "react";
 import { type FleetMember } from "~/hooks/useFleetTracking";
+import type { LocalWaypoint } from "~/lib/offline-storage";
 
 export interface GeoSpot {
   lat: number;
@@ -14,6 +15,13 @@ export interface GeoSpot {
   };
 }
 
+export interface RescueTarget {
+  lat: number;
+  lng: number;
+  title: string;
+  categoryLabel?: string;
+}
+
 export interface MapProps {
   viewMode: "zppi" | "chlorophyll" | "sst" | "tides";
   selectedSpot: GeoSpot | null;
@@ -24,10 +32,13 @@ export interface MapProps {
   recenterTrigger: number;
   fleetMembers?: FleetMember[];
   myLocation?: GeolocationCoordinates | null;
+  customWaypoints?: LocalWaypoint[];
+  rescueTarget?: RescueTarget | null;
+  onClearRescueRoute?: () => void;
 }
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-imports
-export type ActualMapProps = ComponentProps<typeof import("./Map").default>;
+export type ActualMapProps = ComponentProps<typeof import("~/app/_components/Map").default>;
 
 export interface MapClientProps extends ActualMapProps {
   fleetMembers?: FleetMember[];

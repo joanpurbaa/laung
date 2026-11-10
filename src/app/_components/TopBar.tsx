@@ -1,6 +1,8 @@
-import Image from "next/image";
+"use client";
+
 import { FISH_OPTIONS } from "~/types/constants";
 import type { FishType } from "~/types/type";
+import { HardDrive, LifeBuoy, ChevronDown, WifiOff } from "lucide-react";
 
 interface TopBarProps {
   gpsActive: boolean;
@@ -8,91 +10,101 @@ interface TopBarProps {
   onFishTypeChange: (fishType: FishType) => void;
   showFishDropdown: boolean;
   onToggleFishDropdown: () => void;
+  isOffline?: boolean;
+  onOpenOfflineModal?: () => void;
+  onOpenEmergencyModal?: () => void;
+  activeEmergencyCount?: number;
 }
 
 export default function TopBar({
-  gpsActive,
   fishType,
   onFishTypeChange,
   showFishDropdown,
   onToggleFishDropdown,
+  isOffline = false,
+  onOpenOfflineModal,
+  onOpenEmergencyModal,
+  activeEmergencyCount = 0,
 }: TopBarProps) {
   const activeFish = FISH_OPTIONS.find((f) => f.value === fishType)!;
 
   return (
-    <div className="absolute top-0 right-0 left-0 z-[35] px-3 pt-3 pb-2">
-      <div className="flex items-center gap-2">
-        <div className="flex flex-1 items-center gap-2.5 rounded-2xl border border-white/60 bg-white/90 px-3.5 py-2.5 shadow-lg backdrop-blur-md">
-          <Image
-            className="h-8 w-8"
-            src={"/icon.svg"}
-            width={100}
-            height={100}
-            alt="icon"
-          />
-          <div className="min-w-0 flex-1">
-            <div className="mt-0.5 flex items-center gap-1">
-              {gpsActive ? (
-                <>
-                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
-                  <span className="text-[9px] font-bold text-emerald-600">
-                    GPS Terhubung
-                  </span>
-                </>
-              ) : (
-                <>
-                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-amber-400" />
-                  <span className="text-[9px] font-bold text-amber-600">
-                    Menunggu GPS…
-                  </span>
-                </>
-              )}
-            </div>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-blue-500" />
-            <span className="text-[9px] font-bold text-blue-600">LIVE</span>
-          </div>
-        </div>
-
-        <div className="relative">
+    <div className="absolute top-2.5 right-2.5 left-2.5 z-[35]">
+      <div className="flex h-11 items-center justify-between gap-2 rounded-2xl border border-slate-200/80 bg-white/95 px-2.5 shadow-sm backdrop-blur-md">
+        {/* Left: Offline / Cache button */}
+        {onOpenOfflineModal ? (
           <button
-            onClick={onToggleFishDropdown}
-            className="relative z-[35] flex h-[52px] items-center gap-1.5 rounded-2xl border border-white/60 bg-white/90 px-3 shadow-lg backdrop-blur-md"
+            onClick={onOpenOfflineModal}
+            title="Penyimpanan Peta Offline"
+            className={`flex h-7 items-center gap-1.5 rounded-xl px-2.5 text-xs font-bold transition-all active:scale-95 ${
+              isOffline
+                ? "border border-amber-300 bg-amber-50 text-amber-800"
+                : "border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100"
+            }`}
           >
-            <span className="text-base">{activeFish.emoji}</span>
-            <svg
-              className="h-3 w-3 text-slate-400"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2.5}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M19 9l-7 7-7-7"
-              />
-            </svg>
+            {isOffline ? (
+              <WifiOff size={13} className="text-amber-600" />
+            ) : (
+              <HardDrive size={13} className="text-slate-600" />
+            )}
+            <span>{isOffline ? "Offline" : "Peta Offline"}</span>
           </button>
-          {showFishDropdown && (
-            <div className="absolute top-full right-0 z-20 mt-1.5 w-44 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-xl">
-              {FISH_OPTIONS.map((f) => (
-                <button
-                  key={f.value}
-                  onClick={() => onFishTypeChange(f.value)}
-                  className={`flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-xs font-semibold transition-colors ${
-                    fishType === f.value
-                      ? "bg-emerald-50 text-emerald-700"
-                      : "text-slate-700 hover:bg-slate-50"
-                  }`}
-                >
-                  <span className="text-sm">{f.emoji}</span>
-                  {f.label}
-                </button>
-              ))}
-            </div>
+        ) : (
+          <div />
+        )}
+
+        {/* Right Actions: SOS and Fish Selector */}
+        <div className="flex items-center gap-2 shrink-0">
+          {/* SOS button */}
+          {onOpenEmergencyModal && (
+            <button
+              onClick={onOpenEmergencyModal}
+              title="Pusat Darurat Laut"
+              className="relative flex h-7 items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 px-2.5 text-xs font-bold text-rose-600 transition-all hover:bg-rose-100 active:scale-95 shadow-sm shadow-rose-100/50"
+            >
+              <LifeBuoy
+                size={13}
+                className={activeEmergencyCount > 0 ? "animate-spin text-rose-600" : "text-rose-500"}
+              />
+              <span>SOS</span>
+              {activeEmergencyCount > 0 && (
+                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-rose-600 text-[9px] font-black text-white">
+                  {activeEmergencyCount}
+                </span>
+              )}
+            </button>
           )}
+
+          {/* Fish Selector Pill */}
+          <div className="relative">
+            <button
+              onClick={onToggleFishDropdown}
+              className="flex h-7 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2.5 text-xs font-bold text-slate-700 transition-all hover:bg-slate-50 active:scale-95 shadow-sm"
+            >
+              <span className="text-sm">{activeFish.emoji}</span>
+              <span className="max-w-[120px] truncate">{activeFish.label}</span>
+              <ChevronDown size={12} className="text-slate-400 shrink-0" />
+            </button>
+
+            {showFishDropdown && (
+              <div className="animate-in fade-in zoom-in-95 duration-100 absolute top-full right-0 z-50 mt-1.5 w-44 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-xl">
+                {FISH_OPTIONS.map((f) => (
+                  <button
+                    key={f.value}
+                    onClick={() => onFishTypeChange(f.value)}
+                    className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs font-medium transition-colors ${
+                      fishType === f.value
+                        ? "bg-emerald-50 text-emerald-700 font-bold"
+                        : "text-slate-700 hover:bg-slate-50"
+                    }`}
+                  >
+                    <span>{f.emoji}</span>
+                    <span>{f.label}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

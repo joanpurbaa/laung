@@ -16,9 +16,11 @@ export default function LayerControls({
   onRecenter,
 }: LayerControlsProps) {
   return (
-    <div className="absolute top-1/2 right-3 z-10 flex -translate-y-1/2 flex-col gap-2">
+    <div className="absolute top-[48%] right-2.5 z-10 flex -translate-y-1/2 flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white/95 shadow-md backdrop-blur-md divide-y divide-slate-100">
       {LAYER_OPTIONS.map((layer) => {
         const IconComponent = layer.icon;
+        const isActive = viewMode === layer.value;
+
         return (
           <button
             key={layer.value}
@@ -30,24 +32,27 @@ export default function LayerControls({
               }
             }}
             title={layer.label}
-            className={`flex h-11 w-11 flex-col items-center justify-center rounded-2xl border shadow-lg backdrop-blur-md transition-all ${
-              viewMode === layer.value && layer.value !== "pesan"
-                ? "border-emerald-300 bg-emerald-500 text-white shadow-emerald-200"
-                : "border-white/60 bg-white/90 text-slate-600 hover:bg-white"
+            className={`flex h-10 w-10 flex-col items-center justify-center transition-all active:scale-90 ${
+              isActive
+                ? "bg-emerald-500 text-white font-bold"
+                : "text-slate-600 hover:bg-slate-50"
             }`}
           >
-            <IconComponent size={18} strokeWidth={2} />
-            <span className="mt-0.5 text-[8px] font-bold">{layer.label}</span>
+            <IconComponent size={16} strokeWidth={isActive ? 2.5 : 2} />
+            <span className="text-[7.5px] font-bold leading-none mt-0.5">
+              {layer.label}
+            </span>
           </button>
         );
       })}
 
       <button
         onClick={onRecenter}
-        className="flex h-11 w-11 flex-col items-center justify-center rounded-2xl border border-white/60 bg-white/90 text-blue-500 shadow-lg backdrop-blur-md"
+        title="Pusatkan GPS"
+        className="flex h-10 w-10 flex-col items-center justify-center text-blue-600 transition-all hover:bg-slate-50 active:scale-90"
       >
-        <Satellite size={18} strokeWidth={2} />
-        <span className="mt-0.5 text-[8px] font-bold">GPS</span>
+        <Satellite size={16} strokeWidth={2} />
+        <span className="text-[7.5px] font-bold leading-none mt-0.5">GPS</span>
       </button>
     </div>
   );

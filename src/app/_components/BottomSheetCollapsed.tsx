@@ -1,5 +1,6 @@
 import type { GeoSpot } from "~/types/map";
 import { getScoreLabel } from "~/types/utils";
+import { ChevronUp } from "lucide-react";
 
 interface BottomSheetCollapsedProps {
   topSpot: GeoSpot | null;
@@ -14,96 +15,63 @@ interface BottomSheetCollapsedProps {
 export default function BottomSheetCollapsed({
   topSpot,
   loading,
-  zppiSpots,
   userLocation,
   distance,
   fuelSavingPercent,
   onExpand,
 }: BottomSheetCollapsedProps) {
+  const scoreInfo = topSpot ? getScoreLabel(topSpot.value) : null;
+
   return (
-    <div className="mx-3">
+    <div className="mx-2.5">
       <button
         onClick={onExpand}
-        className="w-full overflow-hidden rounded-3xl border border-white/60 bg-white/95 shadow-2xl backdrop-blur-md"
+        className="flex w-full items-center justify-between gap-2.5 rounded-2xl border border-slate-200/80 bg-white/95 px-3 py-2.5 shadow-md backdrop-blur-md transition-all active:scale-[0.99]"
       >
-        <div className="flex items-center gap-3 px-4 py-3.5">
-          {topSpot && (
-            <>
-              <div
-                className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-2xl text-white shadow-sm"
-                style={{
-                  backgroundColor: getScoreLabel(topSpot.value).color,
-                }}
-              >
-                <span className="text-lg leading-none font-black">
-                  {topSpot.value}
-                </span>
-                <span className="text-[8px] leading-none font-bold opacity-80">
-                  SKOR
-                </span>
-              </div>
-              <div className="min-w-0 flex-1 text-left">
-                <p className="text-[10px] font-bold tracking-wider text-slate-400 uppercase">
-                  Rekomendasi Terbaik Hari Ini
-                </p>
-                <p className="text-sm font-black text-slate-800">
-                  Spot A · Hemat {fuelSavingPercent}% Solar
-                </p>
-                <p className="text-[10px] font-semibold text-slate-400">
-                  {userLocation
-                    ? `${distance.toFixed(1)} Km dari posisimu`
-                    : "Menunggu GPS…"}{" "}
-                  · 09:00–15:00 WIB
-                </p>
-              </div>
-              <div className="shrink-0">
-                <svg
-                  className="h-5 w-5 text-slate-300"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M5 15l7-7 7 7"
-                  />
-                </svg>
-              </div>
-            </>
-          )}
-          {!topSpot && (
-            <p className="text-sm text-slate-400">
-              {loading ? "Memuat data..." : "Tap untuk melihat rekomendasi"}
-            </p>
-          )}
-        </div>
+        {topSpot ? (
+          <>
+            {/* Skor badge */}
+            <div
+              className="flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-xl text-white shadow-sm"
+              style={{
+                backgroundColor: scoreInfo?.color ?? "#059669",
+              }}
+            >
+              <span className="text-base font-black leading-none">
+                {topSpot.value}
+              </span>
+              <span className="text-[7.5px] font-bold uppercase leading-none opacity-90">
+                SKOR
+              </span>
+            </div>
 
-        <div className="grid grid-cols-3 divide-x divide-slate-100 border-t border-slate-100">
-          <div className="py-2 text-center">
-            <p className="text-[9px] font-bold tracking-wider text-slate-400 uppercase">
-              Potensial
-            </p>
-            <p className="text-sm font-black text-emerald-600">
-              {zppiSpots.filter((s) => s.value >= 70).length}
-            </p>
+            {/* Rekomendasi Spot Info */}
+            <div className="min-w-0 flex-1 text-left">
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-bold text-slate-800 truncate">
+                  Spot Terbaik · Hemat {fuelSavingPercent}% BBM
+                </span>
+              </div>
+              <p className="text-[10px] text-slate-500 font-medium truncate mt-0.5">
+                {userLocation
+                  ? `${distance.toFixed(1)} km dari posisi`
+                  : "Menunggu GPS"}
+                {" · "}
+                <span className="text-emerald-600 font-semibold">09:00–15:00 WIB</span>
+              </p>
+            </div>
+
+            {/* Expand indicator */}
+            <div className="flex items-center gap-1 shrink-0 text-slate-400 pl-1">
+              <span className="text-[10px] font-semibold hidden sm:inline">Detail</span>
+              <ChevronUp size={16} />
+            </div>
+          </>
+        ) : (
+          <div className="flex w-full items-center justify-center py-1 text-xs text-slate-400">
+            {loading ? "Memuat rekomendasi tangkapan..." : "Pilih titik di peta"}
           </div>
-          <div className="py-2 text-center">
-            <p className="text-[9px] font-bold tracking-wider text-slate-400 uppercase">
-              Sangat Baik
-            </p>
-            <p className="text-sm font-black text-blue-600">
-              {zppiSpots.filter((s) => s.value >= 85).length}
-            </p>
-          </div>
-          <div className="py-2 text-center">
-            <p className="text-[9px] font-bold tracking-wider text-slate-400 uppercase">
-              Kondisi Air
-            </p>
-            <p className="text-sm font-black text-cyan-600">Optimal</p>
-          </div>
-        </div>
+        )}
       </button>
     </div>
   );
